@@ -50,6 +50,8 @@ extern "C" {
 
 /* USER CODE END EM */
 
+void HAL_TIM_MspPostInit(TIM_HandleTypeDef *htim);
+
 /* Exported functions prototypes ---------------------------------------------*/
 void Error_Handler(void);
 
@@ -60,6 +62,32 @@ void Error_Handler(void);
 /* Private defines -----------------------------------------------------------*/
 #define BLUE_LED_Pin GPIO_PIN_13
 #define BLUE_LED_GPIO_Port GPIOC
+#define BATTERY_ADC_Pin GPIO_PIN_5
+#define BATTERY_ADC_GPIO_Port GPIOA
+#define MOTOR_1_IN_2_Pin GPIO_PIN_4
+#define MOTOR_1_IN_2_GPIO_Port GPIOC
+#define MOTOR_1_IN_1_Pin GPIO_PIN_5
+#define MOTOR_1_IN_1_GPIO_Port GPIOC
+#define MOTOR_2_IN_1_Pin GPIO_PIN_0
+#define MOTOR_2_IN_1_GPIO_Port GPIOB
+#define MOTOR_2_IN_2_Pin GPIO_PIN_1
+#define MOTOR_2_IN_2_GPIO_Port GPIOB
+#define MOTOR_2_PWM_Pin GPIO_PIN_6
+#define MOTOR_2_PWM_GPIO_Port GPIOC
+#define MOTOR_1_PWM_Pin GPIO_PIN_7
+#define MOTOR_1_PWM_GPIO_Port GPIOC
+#define MOTOR_3_PWM_Pin GPIO_PIN_8
+#define MOTOR_3_PWM_GPIO_Port GPIOC
+#define MOTOR_4_PWM_Pin GPIO_PIN_9
+#define MOTOR_4_PWM_GPIO_Port GPIOC
+#define MOTOR_4_IN_2_Pin GPIO_PIN_12
+#define MOTOR_4_IN_2_GPIO_Port GPIOC
+#define MOTOR_4_IN_1_Pin GPIO_PIN_2
+#define MOTOR_4_IN_1_GPIO_Port GPIOD
+#define MOTOR_3_IN_1_Pin GPIO_PIN_4
+#define MOTOR_3_IN_1_GPIO_Port GPIOB
+#define MOTOR_3_IN_2_Pin GPIO_PIN_5
+#define MOTOR_3_IN_2_GPIO_Port GPIOB
 /* USER CODE BEGIN Private defines */
 
 /* USER CODE END Private defines */

@@ -2,13 +2,33 @@
 
 #include "stm32f1xx_hal.h"
 #include "utils.h"
+#include "log.h"
 
-uint8_t BLUETOOTH_CONTROL_rxBuffer[12] = {0};
+#define BITBAND(addr, bitnum) ((addr & 0xF0000000)+0x2000000+((addr &0xFFFFF)<<5)+(bitnum<<2))
+#define MEM_ADDR(addr)  *((volatile unsigned long  *)(addr))
+#define BIT_ADDR(addr, bitnum)   MEM_ADDR(BITBAND(addr, bitnum))
 
-uint16_t Handkey;
-uint8_t Comd[2]={0x01,0x42};
-uint8_t Data[9]={0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00};
-uint16_t MASK[]={
+#define GPIOA_ODR_Addr    (GPIOA_BASE+12)
+#define GPIOC_ODR_Addr    (GPIOC_BASE+12)
+#define GPIOC_IDR_Addr    (GPIOC_BASE+8)
+
+#define PAout(n)   BIT_ADDR(GPIOA_ODR_Addr,n)
+#define PCout(n)   BIT_ADDR(GPIOC_ODR_Addr,n)
+#define PCin(n)    BIT_ADDR(GPIOC_IDR_Addr,n)
+
+#define DI   PCin(2)
+
+#define DO_H PCout(1)=1
+#define DO_L PCout(1)=0
+
+#define CS_H PCout(3)=1
+#define CS_L PCout(3)=0
+
+#define CLK_H PAout(4)=1
+#define CLK_L PAout(4)=0
+
+uint8_t BLUETOOTH_CONTROL_buffer[9]={0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00};
+uint16_t BLUETOOTH_CONTROL_mask[]={
     PSB_SELECT,
     PSB_L3,
     PSB_R3 ,
@@ -21,26 +41,31 @@ uint16_t MASK[]={
     PSB_R2,
     PSB_L1,
     PSB_R1 ,
-    PSB_GREEN,
-    PSB_RED,
-    PSB_BLUE,
-    PSB_PINK
+    PSB_GREEN_TRIANGLE,
+    PSB_RED_CIRCLE,
+    PSB_BLUE_CROSS,
+    PSB_PINK_SQUARE
 };
+
+#define BLUETOOTH_CONTROL_RIGHT_X 5
+#define BLUETOOTH_CONTROL_RIGHT_Y 6
+#define BLUETOOTH_CONTROL_LEFT_X  7
+#define BLUETOOTH_CONTROL_LEFT_Y  8
+
 uint8_t PS2_LX, PS2_LY, PS2_RX, PS2_RY, PS2_KEY;
 
+static void    BLUETOOTH_CONTROL_readData(void);
+static void    BLUETOOTH_CONTROL_sendCommand(uint8_t command);
+static uint8_t BLUETOOTH_CONTROL_getDataKey(void);
+static void    BLUETOOTH_CONTROL_clearData(void);
 
-static void PS2_ReadData(void);
-static void PS2_Cmd(uint8_t CMD);
-static uint8_t PS2_DataKey(void);
-static void PS2_ClearData(void);
-
-void PS2_Cmd(uint8_t CMD)
+void BLUETOOTH_CONTROL_sendCommand(uint8_t command)
 {
   volatile uint16_t ref=0x01;
-  Data[1] = 0;
+  BLUETOOTH_CONTROL_buffer[1] = 0;
   for(ref=0x01;ref<0x0100;ref<<=1)
   {
-    if(ref&CMD)
+    if(ref&command)
     {
       DO_H;
     }
@@ -52,18 +77,20 @@ void PS2_Cmd(uint8_t CMD)
     UTILS_delayUs(5);
     CLK_H;
     if(DI)
-      Data[1] = ref|Data[1];
+      BLUETOOTH_CONTROL_buffer[1] = ref|BLUETOOTH_CONTROL_buffer[1];
   }
   UTILS_delayUs(16);
+
+  return;
 }
 
-void PS2_ReadData(void)
+void BLUETOOTH_CONTROL_readData(void)
 {
   volatile uint8_t byte=0;
   volatile uint16_t ref=0x01;
   CS_L;
-  PS2_Cmd(Comd[0]);
-  PS2_Cmd(Comd[1]);
+  BLUETOOTH_CONTROL_sendCommand(0x01);
+  BLUETOOTH_CONTROL_sendCommand(0x42);
   for(byte=2;byte<9;byte++)
   {
     for(ref=0x01;ref<0x100;ref<<=1)
@@ -74,39 +101,45 @@ void PS2_ReadData(void)
       UTILS_delayUs(5);
       CLK_H;
           if(DI)
-          Data[byte] = ref|Data[byte];
+          BLUETOOTH_CONTROL_buffer[byte] = ref|BLUETOOTH_CONTROL_buffer[byte];
     }
         UTILS_delayUs(16);
   }
   CS_H;
+
+  return;
 }
 
-uint8_t PS2_DataKey()
+uint8_t BLUETOOTH_CONTROL_getDataKey()
 {
   uint8_t index;
+  uint16_t handkey;
 
-  PS2_ClearData();
-  PS2_ReadData();
-
-  Handkey=(Data[4]<<8)|Data[3];
+  BLUETOOTH_CONTROL_clearData();
+  BLUETOOTH_CONTROL_readData();
+  handkey=(BLUETOOTH_CONTROL_buffer[4]<<8)|BLUETOOTH_CONTROL_buffer[3];
   for(index=0;index<16;index++)
   {
-    if((Handkey&(1<<(MASK[index]-1)))==0)
+    if((handkey&(1<<(BLUETOOTH_CONTROL_mask[index]-1)))==0)
     return index+1;
   }
 
   return 0;
 }
 
-void PS2_ClearData()
+void BLUETOOTH_CONTROL_clearData()
 {
   uint8_t a;
   for(a=0;a<9;a++)
-    Data[a]=0x00;
+    BLUETOOTH_CONTROL_buffer[a]=0x00;
+
+  return;
 }
 
 void BLUETOOTH_CONTROL_init(void)
 {
+  LOG_info("Initializing Bluetooth control");
+
   RCC->APB2ENR|=1<<2;     // PORTA
   RCC->APB2ENR|=1<<4;     // PORTC
   GPIOC->CRL&=0XFFFFF0FF;
@@ -118,14 +151,20 @@ void BLUETOOTH_CONTROL_init(void)
 
   GPIOA->CRL&=0XFFF0FFFF;
   GPIOA->CRL|=0X00030000; // PA4
+
+  return;
 }
 
 void BLUETOOTH_CONTROL_receiveData(void)
 {
-  PS2_LX = Data[PSS_LX];
-  PS2_LY = Data[PSS_LY];
-  PS2_RX = Data[PSS_RX];
-  PS2_RY = Data[PSS_RY];
+  LOG_info("Receiving Bluetooth data");
 
-  PS2_KEY = PS2_DataKey();
+  PS2_LX = BLUETOOTH_CONTROL_buffer[BLUETOOTH_CONTROL_LEFT_X];
+  PS2_LY = BLUETOOTH_CONTROL_buffer[BLUETOOTH_CONTROL_LEFT_Y];
+  PS2_RX = BLUETOOTH_CONTROL_buffer[BLUETOOTH_CONTROL_RIGHT_X];
+  PS2_RY = BLUETOOTH_CONTROL_buffer[BLUETOOTH_CONTROL_RIGHT_Y];
+
+  PS2_KEY = BLUETOOTH_CONTROL_getDataKey();
+
+  return;
 }

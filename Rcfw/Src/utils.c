@@ -7,6 +7,8 @@ TIM_HandleTypeDef *UTILS_delayTimerHandle;
 void UTILS_delayUsInit(TIM_HandleTypeDef *htim)
 {
   UTILS_delayTimerHandle = htim;
+
+  return;
 }
 
 void UTILS_delayUs(uint16_t delay)
@@ -19,4 +21,6 @@ void UTILS_delayUs(uint16_t delay)
   {
     ; /* Nothing to do */
   }
+
+  return;
 }

@@ -8,5 +8,6 @@ void MASTER_CONTROL_receiveData(UART_HandleTypeDef *huart)
 {
   HAL_UART_Receive_IT(huart, MASTER_CONTROL_rxBuffer, 1);
 
+  return;
 }
 
