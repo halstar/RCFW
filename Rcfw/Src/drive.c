@@ -6,69 +6,167 @@
 
 #include "utils.h"
 
-MOTOR_Handle motor1, motor2, motor3, motor4;
+MOTOR_Handle motorFrontRight, motorFrontLeft, motorRearLeft, motorRearRight;
+
+static void DRIVE_moveForward   (uint32_t speed);
+static void DRIVE_moveBackward  (uint32_t speed);
+static void DRIVE_turnLeft      (uint32_t speed);
+static void DRIVE_turnRight     (uint32_t speed);
+static void DRIVE_translateLeft (uint32_t speed);
+static void DRIVE_translateRight(uint32_t speed);
 
 void DRIVE_init(TIM_HandleTypeDef *htim)
 {
   LOG_info("Initializing Drive module");
 
-  motor1.dirPin1Port    = MOTOR_1_IN_1_GPIO_Port;
-  motor1.dirPin1        = MOTOR_1_IN_1_Pin;
-  motor1.dirPin2Port    = MOTOR_1_IN_2_GPIO_Port;
-  motor1.dirPin2        = MOTOR_1_IN_2_Pin;
-  motor1.pwmTimerHandle = htim;
-  motor1.pwmChannel     = TIM_CHANNEL_1;
+  motorFrontRight.dirPin1Port    = MOTOR_FRONT_RIGHT_IN_1_GPIO_Port;
+  motorFrontRight.dirPin1        = MOTOR_FRONT_RIGHT_IN_1_Pin;
+  motorFrontRight.dirPin2Port    = MOTOR_FRONT_RIGHT_IN_2_GPIO_Port;
+  motorFrontRight.dirPin2        = MOTOR_FRONT_RIGHT_IN_2_Pin;
+  motorFrontRight.pwmTimerHandle = htim;
+  motorFrontRight.pwmChannel     = TIM_CHANNEL_2;
 
-  motor2.dirPin1Port    = MOTOR_2_IN_1_GPIO_Port;
-  motor2.dirPin1        = MOTOR_2_IN_1_Pin;
-  motor2.dirPin2Port    = MOTOR_2_IN_2_GPIO_Port;
-  motor2.dirPin2        = MOTOR_2_IN_2_Pin;
-  motor2.pwmTimerHandle = htim;
-  motor2.pwmChannel     = TIM_CHANNEL_2;
+  motorFrontLeft.dirPin1Port    = MOTOR_FRONT_LEFT_IN_1_GPIO_Port;
+  motorFrontLeft.dirPin1        = MOTOR_FRONT_LEFT_IN_1_Pin;
+  motorFrontLeft.dirPin2Port    = MOTOR_FRONT_LEFT_IN_2_GPIO_Port;
+  motorFrontLeft.dirPin2        = MOTOR_FRONT_LEFT_IN_2_Pin;
+  motorFrontLeft.pwmTimerHandle = htim;
+  motorFrontLeft.pwmChannel     = TIM_CHANNEL_1;
 
-  motor3.dirPin1Port    = MOTOR_3_IN_1_GPIO_Port;
-  motor3.dirPin1        = MOTOR_3_IN_1_Pin;
-  motor3.dirPin2Port    = MOTOR_3_IN_2_GPIO_Port;
-  motor3.dirPin2        = MOTOR_3_IN_2_Pin;
-  motor3.pwmTimerHandle = htim;
-  motor3.pwmChannel     = TIM_CHANNEL_3;
+  motorRearLeft.dirPin1Port    = MOTOR_REAR_LEFT_IN_1_GPIO_Port;
+  motorRearLeft.dirPin1        = MOTOR_REAR_LEFT_IN_1_Pin;
+  motorRearLeft.dirPin2Port    = MOTOR_REAR_LEFT_IN_2_GPIO_Port;
+  motorRearLeft.dirPin2        = MOTOR_REAR_LEFT_IN_2_Pin;
+  motorRearLeft.pwmTimerHandle = htim;
+  motorRearLeft.pwmChannel     = TIM_CHANNEL_4;
 
-  motor4.dirPin1Port    = MOTOR_4_IN_1_GPIO_Port;
-  motor4.dirPin1        = MOTOR_4_IN_1_Pin;
-  motor4.dirPin2Port    = MOTOR_4_IN_2_GPIO_Port;
-  motor4.dirPin2        = MOTOR_4_IN_2_Pin;
-  motor4.pwmTimerHandle = htim;
-  motor4.pwmChannel     = TIM_CHANNEL_4;
+  motorRearRight.dirPin1Port    = MOTOR_REAR_RIGHT_IN_1_GPIO_Port;
+  motorRearRight.dirPin1        = MOTOR_REAR_RIGHT_IN_1_Pin;
+  motorRearRight.dirPin2Port    = MOTOR_REAR_RIGHT_IN_2_GPIO_Port;
+  motorRearRight.dirPin2        = MOTOR_REAR_RIGHT_IN_2_Pin;
+  motorRearRight.pwmTimerHandle = htim;
+  motorRearRight.pwmChannel     = TIM_CHANNEL_3;
 
-  MOTOR_init(&motor1, "MOTOR_1");
-  MOTOR_init(&motor2, "MOTOR_2");
-  MOTOR_init(&motor3, "MOTOR_3");
-  MOTOR_init(&motor4, "MOTOR_4");
+  MOTOR_init(&motorFrontRight, "FRONT_RIGHT");
+  MOTOR_init(&motorFrontLeft , "FRONT_LEFT" );
+  MOTOR_init(&motorRearLeft  , "REAR_LEFT"  );
+  MOTOR_init(&motorRearRight , "REAR_RIGHT" );
 
-  MOTOR_setSpeed(&motor1, 20);
-  MOTOR_setSpeed(&motor2, 20);
-  MOTOR_setSpeed(&motor3, 20);
-  MOTOR_setSpeed(&motor4, 20);
+  /* Start motors (but with a 0 speed at this point) */
+  MOTOR_start(&motorFrontRight);
+  MOTOR_start(&motorFrontLeft );
+  MOTOR_start(&motorRearRight );
+  MOTOR_start(&motorRearLeft  );
 
-  MOTOR_start(&motor1);
-  MOTOR_start(&motor2);
-  MOTOR_start(&motor3);
-  MOTOR_start(&motor4);
+  // DRIVE_turnLeft(20);
 
-  while (1)
-    UTILS_delayUs(60000);
+//  while (1)
+//    UTILS_delayUs(60000);
+//
+  return;
+}
 
-  MOTOR_stop(&motor1);
-  MOTOR_stop(&motor2);
-  MOTOR_stop(&motor3);
-  MOTOR_stop(&motor4);
+void DRIVE_update(BLUETOOTH_CONTROL_DATA *data)
+{
+  LOG_debug("Updating Drive module");
 
   return;
 }
 
-void DRIVE_update(void)
+static void DRIVE_moveForward(uint32_t speed)
 {
-  LOG_debug("Updating Drive module");
+  LOG_info("Driving forward @%u", speed);
+
+  MOTOR_setDirection(&motorFrontRight, MOTOR_DIRECTION_FORWARD);
+  MOTOR_setDirection(&motorFrontLeft , MOTOR_DIRECTION_FORWARD);
+  MOTOR_setDirection(&motorRearRight , MOTOR_DIRECTION_FORWARD);
+  MOTOR_setDirection(&motorRearLeft  , MOTOR_DIRECTION_FORWARD);
+
+  MOTOR_setSpeed(&motorFrontRight, speed);
+  MOTOR_setSpeed(&motorFrontLeft , speed);
+  MOTOR_setSpeed(&motorRearRight , speed);
+  MOTOR_setSpeed(&motorRearLeft  , speed);
+
+  return;
+}
+
+static void DRIVE_moveBackward(uint32_t speed)
+{
+  LOG_info("Driving backward @%u", speed);
+
+  MOTOR_setDirection(&motorFrontRight, MOTOR_DIRECTION_BACKWARD);
+  MOTOR_setDirection(&motorFrontLeft , MOTOR_DIRECTION_BACKWARD);
+  MOTOR_setDirection(&motorRearRight , MOTOR_DIRECTION_BACKWARD);
+  MOTOR_setDirection(&motorRearLeft  , MOTOR_DIRECTION_BACKWARD);
+
+  MOTOR_setSpeed(&motorFrontRight, speed);
+  MOTOR_setSpeed(&motorFrontLeft , speed);
+  MOTOR_setSpeed(&motorRearRight , speed);
+  MOTOR_setSpeed(&motorRearLeft  , speed);
+
+  return;
+}
+
+static void DRIVE_turnLeft(uint32_t speed)
+{
+  MOTOR_setDirection(&motorFrontRight, MOTOR_DIRECTION_FORWARD );
+  MOTOR_setDirection(&motorFrontLeft , MOTOR_DIRECTION_BACKWARD);
+  MOTOR_setDirection(&motorRearRight , MOTOR_DIRECTION_FORWARD );
+  MOTOR_setDirection(&motorRearLeft  , MOTOR_DIRECTION_BACKWARD);
+
+  MOTOR_setSpeed(&motorFrontRight, speed);
+  MOTOR_setSpeed(&motorFrontLeft , speed);
+  MOTOR_setSpeed(&motorRearRight , speed);
+  MOTOR_setSpeed(&motorRearLeft  , speed);
+
+  return;
+}
+
+static void DRIVE_turnRight(uint32_t speed)
+{
+  MOTOR_setDirection(&motorFrontRight, MOTOR_DIRECTION_BACKWARD);
+  MOTOR_setDirection(&motorFrontLeft , MOTOR_DIRECTION_FORWARD );
+  MOTOR_setDirection(&motorRearRight , MOTOR_DIRECTION_BACKWARD);
+  MOTOR_setDirection(&motorRearLeft  , MOTOR_DIRECTION_FORWARD );
+
+  MOTOR_setSpeed(&motorFrontRight, speed);
+  MOTOR_setSpeed(&motorFrontLeft , speed);
+  MOTOR_setSpeed(&motorRearRight , speed);
+  MOTOR_setSpeed(&motorRearLeft  , speed);
+
+  return;
+}
+
+static void DRIVE_translateLeft(uint32_t speed)
+{
+  LOG_info("Translating left @%u", speed);
+
+  MOTOR_setDirection(&motorFrontRight, MOTOR_DIRECTION_FORWARD );
+  MOTOR_setDirection(&motorFrontLeft , MOTOR_DIRECTION_BACKWARD);
+  MOTOR_setDirection(&motorRearRight , MOTOR_DIRECTION_BACKWARD);
+  MOTOR_setDirection(&motorRearLeft  , MOTOR_DIRECTION_FORWARD );
+
+  MOTOR_setSpeed(&motorFrontRight, speed);
+  MOTOR_setSpeed(&motorFrontLeft , speed);
+  MOTOR_setSpeed(&motorRearRight , speed);
+  MOTOR_setSpeed(&motorRearLeft  , speed);
+
+  return;
+}
+
+static void DRIVE_translateRight(uint32_t speed)
+{
+  LOG_info("Translating right @%u", speed);
+
+  MOTOR_setDirection(&motorFrontRight, MOTOR_DIRECTION_BACKWARD);
+  MOTOR_setDirection(&motorFrontLeft , MOTOR_DIRECTION_FORWARD );
+  MOTOR_setDirection(&motorRearRight , MOTOR_DIRECTION_FORWARD );
+  MOTOR_setDirection(&motorRearLeft  , MOTOR_DIRECTION_BACKWARD);
+
+  MOTOR_setSpeed(&motorFrontRight, speed);
+  MOTOR_setSpeed(&motorFrontLeft , speed);
+  MOTOR_setSpeed(&motorRearRight , speed);
+  MOTOR_setSpeed(&motorRearLeft  , speed);
 
   return;
 }

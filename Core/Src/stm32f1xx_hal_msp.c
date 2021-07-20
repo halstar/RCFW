@@ -209,7 +209,7 @@ void HAL_TIM_MspPostInit(TIM_HandleTypeDef* htim)
     PC8     ------> TIM8_CH3
     PC9     ------> TIM8_CH4
     */
-    GPIO_InitStruct.Pin = MOTOR_2_PWM_Pin|MOTOR_1_PWM_Pin|MOTOR_3_PWM_Pin|MOTOR_4_PWM_Pin;
+    GPIO_InitStruct.Pin = MOTOR_FRONT_LEFT_PWM_Pin|MOTOR_FRONT_RIGHT_PWM_Pin|MOTOR_REAR_LEFT_PWM_Pin|MOTOR_REAR_RIGHT_PWM_Pin;
     GPIO_InitStruct.Mode = GPIO_MODE_AF_PP;
     GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_HIGH;
     HAL_GPIO_Init(GPIOC, &GPIO_InitStruct);

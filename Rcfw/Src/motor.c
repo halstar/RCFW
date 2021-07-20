@@ -12,26 +12,25 @@ void MOTOR_init(MOTOR_Handle *handle, char *name)
 
   (void)strncpy((char *)handle->name, name, MOTOR_NAME_MAX_LENGTH);
 
-  MOTOR_setSpeed    (handle, 0);
-  MOTOR_setDirection(handle, MOTOR_DIRECTION_FORWARD);
-  MOTOR_stop        (handle);
+  MOTOR_setSpeed(handle, 0);
+  MOTOR_stop    (handle   );
 
   return;
 }
 
 void MOTOR_setDirection(MOTOR_Handle *handle, uint32_t direction)
 {
-  LOG_debug("Setting %s direction to %u", handle->name, direction);
+  LOG_debug("Setting %s motor direction to %u", handle->name, direction);
 
   if (direction == MOTOR_DIRECTION_FORWARD)
   {
-    HAL_GPIO_WritePin(handle->dirPin1Port, handle->dirPin1, GPIO_PIN_SET  );
-    HAL_GPIO_WritePin(handle->dirPin2Port, handle->dirPin2, GPIO_PIN_RESET);
+    HAL_GPIO_WritePin(handle->dirPin1Port, handle->dirPin1, GPIO_PIN_RESET);
+    HAL_GPIO_WritePin(handle->dirPin2Port, handle->dirPin2, GPIO_PIN_SET  );
   }
   else
   {
-    HAL_GPIO_WritePin(handle->dirPin1Port, handle->dirPin1, GPIO_PIN_RESET);
-    HAL_GPIO_WritePin(handle->dirPin2Port, handle->dirPin2, GPIO_PIN_SET  );
+    HAL_GPIO_WritePin(handle->dirPin1Port, handle->dirPin1, GPIO_PIN_SET  );
+    HAL_GPIO_WritePin(handle->dirPin2Port, handle->dirPin2, GPIO_PIN_RESET);
   }
 
   handle->direction = direction;
@@ -41,7 +40,7 @@ void MOTOR_setDirection(MOTOR_Handle *handle, uint32_t direction)
 
 void MOTOR_setSpeed(MOTOR_Handle *handle, uint32_t speed)
 {
-  LOG_debug("Setting %s speed to %u", handle->name, speed);
+  LOG_debug("Setting %s motor speed to %u", handle->name, speed);
 
   __HAL_TIM_SET_COMPARE(handle->pwmTimerHandle, handle->pwmChannel, speed);
 
@@ -52,7 +51,7 @@ void MOTOR_setSpeed(MOTOR_Handle *handle, uint32_t speed)
 
 void MOTOR_start(MOTOR_Handle *handle)
 {
-  LOG_info("Starting %s", handle->name);
+  LOG_info("Starting %s motor", handle->name);
 
   MOTOR_setDirection(handle, handle->direction);
 

@@ -72,6 +72,8 @@ static void MX_ADC1_Init(void);
 static void MX_TIM8_Init(void);
 /* USER CODE BEGIN PFP */
 
+static void MAIN_updateLedMode(BLUETOOTH_CONTROL_DATA *data);
+
 /* USER CODE END PFP */
 
 /* Private user code ---------------------------------------------------------*/
@@ -86,11 +88,13 @@ int main(void)
 {
   /* USER CODE BEGIN 1 */
 
-  /* TIM1 timer  is used to blink green LED               - PC13       */
-  /* TIM2 timer  is used to get a micro-second base                    */
-  /* TIM8 timer  is used to get motors' PWM    base                    */
+  /* TIM1 timer  is used to update green LED              - PC13       */
+  /* TIM2 timer  is used to produce a micro-second base                */
+  /* TIM8 timer  is used to produce motors' PWM    base                */
   /* USART1 UART is used for USB/serial console           - PA9 / PA10 */
   /* USART2 UART is used to get control from master board - PA2 / PA3  */
+
+  BLUETOOTH_CONTROL_DATA bluetoothData;
 
   /* USER CODE END 1 */
 
@@ -125,12 +129,13 @@ int main(void)
   LOG_setLevel    (LOG_DEBUG);
   LOG_info        ("Starting RCFW");
 
-  /* Initialize Timer 1 */
+  /* Initialize Timer 1 and green LED */
   HAL_TIM_Base_Start_IT(&htim1);
+  LED_setMode(LED_MODE_BLINK_SLOW);
 
   LOG_debug("Started TIMER 1");
 
-  /* Initialize Timer 2 */
+  /* Initialize Timer 2 and delay function in utilities */
   HAL_TIM_Base_Start_IT(&htim2);
   UTILS_delayUsInit    (&htim2);
 
@@ -162,7 +167,9 @@ int main(void)
   while (1)
   {
     CONSOLE_receiveData();
-    BLUETOOTH_CONTROL_receiveData();
+    BLUETOOTH_CONTROL_receiveData(&bluetoothData);
+    DRIVE_update      (&bluetoothData);
+    MAIN_updateLedMode(&bluetoothData);
     UTILS_delayUs(10000);
 
     /* USER CODE END WHILE */
@@ -280,7 +287,7 @@ static void MX_TIM1_Init(void)
   htim1.Instance = TIM1;
   htim1.Init.Prescaler = 7999;
   htim1.Init.CounterMode = TIM_COUNTERMODE_UP;
-  htim1.Init.Period = 999;
+  htim1.Init.Period = 249;
   htim1.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
   htim1.Init.RepetitionCounter = 0;
   htim1.Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_ENABLE;
@@ -397,7 +404,7 @@ static void MX_TIM8_Init(void)
     Error_Handler();
   }
   sConfigOC.OCMode = TIM_OCMODE_PWM1;
-  sConfigOC.Pulse = 20;
+  sConfigOC.Pulse = 0;
   sConfigOC.OCPolarity = TIM_OCPOLARITY_HIGH;
   sConfigOC.OCNPolarity = TIM_OCNPOLARITY_HIGH;
   sConfigOC.OCFastMode = TIM_OCFAST_DISABLE;
@@ -519,13 +526,13 @@ static void MX_GPIO_Init(void)
   __HAL_RCC_GPIOD_CLK_ENABLE();
 
   /*Configure GPIO pin Output Level */
-  HAL_GPIO_WritePin(GPIOC, BLUE_LED_Pin|MOTOR_1_IN_2_Pin|MOTOR_1_IN_1_Pin|MOTOR_4_IN_2_Pin, GPIO_PIN_RESET);
+  HAL_GPIO_WritePin(GPIOC, BLUE_LED_Pin|MOTOR_FRONT_RIGHT_IN_1_Pin|MOTOR_FRONT_RIGHT_IN_2_Pin|MOTOR_REAR_LEFT_IN_2_Pin, GPIO_PIN_RESET);
 
   /*Configure GPIO pin Output Level */
-  HAL_GPIO_WritePin(GPIOB, MOTOR_2_IN_1_Pin|MOTOR_2_IN_2_Pin|MOTOR_3_IN_1_Pin|MOTOR_3_IN_2_Pin, GPIO_PIN_RESET);
+  HAL_GPIO_WritePin(GPIOB, MOTOR_FRONT_LEFT_IN_1_Pin|MOTOR_FRONT_LEFT_IN_2_Pin|MOTOR_REAR_RIGHT_IN_2_Pin|MOTOR_REAR_RIGHT_IN_1_Pin, GPIO_PIN_RESET);
 
   /*Configure GPIO pin Output Level */
-  HAL_GPIO_WritePin(MOTOR_4_IN_1_GPIO_Port, MOTOR_4_IN_1_Pin, GPIO_PIN_RESET);
+  HAL_GPIO_WritePin(MOTOR_REAR_LEFT_IN_1_GPIO_Port, MOTOR_REAR_LEFT_IN_1_Pin, GPIO_PIN_RESET);
 
   /*Configure GPIO pin : BLUE_LED_Pin */
   GPIO_InitStruct.Pin = BLUE_LED_Pin;
@@ -534,37 +541,76 @@ static void MX_GPIO_Init(void)
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
   HAL_GPIO_Init(BLUE_LED_GPIO_Port, &GPIO_InitStruct);
 
-  /*Configure GPIO pins : MOTOR_1_IN_2_Pin MOTOR_1_IN_1_Pin MOTOR_4_IN_2_Pin */
-  GPIO_InitStruct.Pin = MOTOR_1_IN_2_Pin|MOTOR_1_IN_1_Pin|MOTOR_4_IN_2_Pin;
+  /*Configure GPIO pins : MOTOR_FRONT_RIGHT_IN_1_Pin MOTOR_FRONT_RIGHT_IN_2_Pin MOTOR_REAR_LEFT_IN_2_Pin */
+  GPIO_InitStruct.Pin = MOTOR_FRONT_RIGHT_IN_1_Pin|MOTOR_FRONT_RIGHT_IN_2_Pin|MOTOR_REAR_LEFT_IN_2_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_HIGH;
   HAL_GPIO_Init(GPIOC, &GPIO_InitStruct);
 
-  /*Configure GPIO pins : MOTOR_2_IN_1_Pin MOTOR_2_IN_2_Pin MOTOR_3_IN_1_Pin MOTOR_3_IN_2_Pin */
-  GPIO_InitStruct.Pin = MOTOR_2_IN_1_Pin|MOTOR_2_IN_2_Pin|MOTOR_3_IN_1_Pin|MOTOR_3_IN_2_Pin;
+  /*Configure GPIO pins : MOTOR_FRONT_LEFT_IN_1_Pin MOTOR_FRONT_LEFT_IN_2_Pin MOTOR_REAR_RIGHT_IN_2_Pin MOTOR_REAR_RIGHT_IN_1_Pin */
+  GPIO_InitStruct.Pin = MOTOR_FRONT_LEFT_IN_1_Pin|MOTOR_FRONT_LEFT_IN_2_Pin|MOTOR_REAR_RIGHT_IN_2_Pin|MOTOR_REAR_RIGHT_IN_1_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_HIGH;
   HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
 
-  /*Configure GPIO pin : MOTOR_4_IN_1_Pin */
-  GPIO_InitStruct.Pin = MOTOR_4_IN_1_Pin;
+  /*Configure GPIO pin : MOTOR_REAR_LEFT_IN_1_Pin */
+  GPIO_InitStruct.Pin = MOTOR_REAR_LEFT_IN_1_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_HIGH;
-  HAL_GPIO_Init(MOTOR_4_IN_1_GPIO_Port, &GPIO_InitStruct);
+  HAL_GPIO_Init(MOTOR_REAR_LEFT_IN_1_GPIO_Port, &GPIO_InitStruct);
 
 }
 
 /* USER CODE BEGIN 4 */
 
+static void MAIN_updateLedMode(BLUETOOTH_CONTROL_DATA *data)
+{
+  uint32_t ledMode;
+
+  switch (data->key)
+  {
+    case KEY_PAD_UP:
+      ledMode = LED_MODE_FORCED_ON;
+      break;
+
+    case KEY_PAD_DOWN:
+      ledMode = LED_MODE_FORCED_OFF;
+      break;
+
+    case KEY_PAD_LEFT:
+      ledMode = LED_MODE_BLINK_SLOW;
+      break;
+
+    case KEY_PAD_RIGHT:
+      ledMode = LED_MODE_BLINK_FAST;
+      break;
+
+    default:
+      ; /* Nothing to do */
+      break;
+  }
+
+  if (data->key != KEY_NONE)
+  {
+    LED_setMode(ledMode);
+  }
+  else
+  {
+    ; /* Nothing to do */
+  }
+
+  return;
+}
+
 void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
 {
-  /* Check the handle of the timer triggering this callback and toggle LED */
+  /* Check the handle of the timer triggering this callback and update LED */
   if (htim == &htim1)
   {
-    LED_toggle();
+    LED_update();
   }
   else
   {

@@ -6,17 +6,20 @@
 
 uint32_t LOG_level;
 
-static const char *levelStrings[] = {
+static const char *LOG_levelStrings[] =
+{
   "DEBUG", "INFO", "WARN", "ERROR"
 };
 
-void LOG_setLevel(int level) {
+void LOG_setLevel(int level)
+{
   LOG_level = level;
 
   return;
 }
 
-void LOG_log(int level, const char *file, int line, const char *format, ...) {
+void LOG_log(int level, const char *file, int line, const char *format, ...)
+{
 
   va_list argumentsList;
   char buffer[16];
@@ -28,12 +31,16 @@ void LOG_log(int level, const char *file, int line, const char *format, ...) {
     va_start(argumentsList, format);
 
     buffer[strftime(buffer, sizeof(buffer), "%H:%M:%S", localTime)] = '\0';
-    fprintf(stdout, "%s %-5s %s:%d: ", buffer, levelStrings[level], file, line);
+    fprintf(stdout, "%s %-5s %s:%d: ", buffer, LOG_levelStrings[level], file, line);
     vfprintf(stdout, format, argumentsList);
     fprintf(stdout, "\n");
     fflush(stdout);
 
     va_end(argumentsList);
+  }
+  else
+  {
+    ; /* Nothing to do */
   }
 
   return;

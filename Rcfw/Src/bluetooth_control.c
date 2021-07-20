@@ -27,36 +27,35 @@
 #define CLK_H PAout(4)=1
 #define CLK_L PAout(4)=0
 
-uint8_t BLUETOOTH_CONTROL_buffer[9]={0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00};
-uint16_t BLUETOOTH_CONTROL_mask[]={
-    PSB_SELECT,
-    PSB_L3,
-    PSB_R3 ,
-    PSB_START,
-    PSB_PAD_UP,
-    PSB_PAD_RIGHT,
-    PSB_PAD_DOWN,
-    PSB_PAD_LEFT,
-    PSB_L2,
-    PSB_R2,
-    PSB_L1,
-    PSB_R1 ,
-    PSB_GREEN_TRIANGLE,
-    PSB_RED_CIRCLE,
-    PSB_BLUE_CROSS,
-    PSB_PINK_SQUARE
+#define BLUETOOTH_CONTROL_RIGHT_X_OFFSET 5
+#define BLUETOOTH_CONTROL_RIGHT_Y_OFFSET 6
+#define BLUETOOTH_CONTROL_LEFT_X_OFFSET  7
+#define BLUETOOTH_CONTROL_LEFT_Y_OFFSET  8
+
+uint8_t  BLUETOOTH_CONTROL_buffer[9] = {0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
+uint16_t BLUETOOTH_CONTROL_mask   [] =
+{
+  KEY_SELECT,
+  KEY_L3,
+  KEY_R3 ,
+  KEY_START,
+  KEY_PAD_UP,
+  KEY_PAD_RIGHT,
+  KEY_PAD_DOWN,
+  KEY_PAD_LEFT,
+  KEY_L2,
+  KEY_R2,
+  KEY_L1,
+  KEY_R1 ,
+  KEY_GREEN_TRIANGLE,
+  KEY_RED_CIRCLE,
+  KEY_BLUE_CROSS,
+  KEY_PINK_SQUARE
 };
-
-#define BLUETOOTH_CONTROL_RIGHT_X 5
-#define BLUETOOTH_CONTROL_RIGHT_Y 6
-#define BLUETOOTH_CONTROL_LEFT_X  7
-#define BLUETOOTH_CONTROL_LEFT_Y  8
-
-uint8_t PS2_LX, PS2_LY, PS2_RX, PS2_RY, PS2_KEY;
 
 static void    BLUETOOTH_CONTROL_readData(void);
 static void    BLUETOOTH_CONTROL_sendCommand(uint8_t command);
-static uint8_t BLUETOOTH_CONTROL_getDataKey(void);
+static uint8_t BLUETOOTH_CONTROL_getKeyData(void);
 static void    BLUETOOTH_CONTROL_clearData(void);
 
 void BLUETOOTH_CONTROL_sendCommand(uint8_t command)
@@ -110,7 +109,7 @@ void BLUETOOTH_CONTROL_readData(void)
   return;
 }
 
-uint8_t BLUETOOTH_CONTROL_getDataKey()
+uint8_t BLUETOOTH_CONTROL_getKeyData()
 {
   uint8_t index;
   uint16_t handkey;
@@ -155,16 +154,16 @@ void BLUETOOTH_CONTROL_init(void)
   return;
 }
 
-void BLUETOOTH_CONTROL_receiveData(void)
+void BLUETOOTH_CONTROL_receiveData(BLUETOOTH_CONTROL_DATA *data)
 {
   LOG_info("Receiving Bluetooth data");
 
-  PS2_LX = BLUETOOTH_CONTROL_buffer[BLUETOOTH_CONTROL_LEFT_X];
-  PS2_LY = BLUETOOTH_CONTROL_buffer[BLUETOOTH_CONTROL_LEFT_Y];
-  PS2_RX = BLUETOOTH_CONTROL_buffer[BLUETOOTH_CONTROL_RIGHT_X];
-  PS2_RY = BLUETOOTH_CONTROL_buffer[BLUETOOTH_CONTROL_RIGHT_Y];
+  data->leftX  = BLUETOOTH_CONTROL_buffer[BLUETOOTH_CONTROL_LEFT_X_OFFSET ];
+  data->leftY  = BLUETOOTH_CONTROL_buffer[BLUETOOTH_CONTROL_LEFT_Y_OFFSET ];
+  data->rightX = BLUETOOTH_CONTROL_buffer[BLUETOOTH_CONTROL_RIGHT_X_OFFSET];
+  data->rightY = BLUETOOTH_CONTROL_buffer[BLUETOOTH_CONTROL_RIGHT_Y_OFFSET];
 
-  PS2_KEY = BLUETOOTH_CONTROL_getDataKey();
+  data->key = BLUETOOTH_CONTROL_getKeyData();
 
   return;
 }
