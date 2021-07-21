@@ -4,9 +4,9 @@
 #include "main.h"
 #include "log.h"
 
-static uint32_t LED_mode = LED_MODE_BLINK_SLOW;
+static LED_MODE LED_mode = LED_MODE_BLINK_SLOW;
 
-void LED_setMode(uint32_t mode)
+void LED_setMode(LED_MODE mode)
 {
   LOG_info("Setting LED mode to %u", mode);
 

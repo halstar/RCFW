@@ -2,7 +2,7 @@
 
 #include "stm32f1xx_hal.h"
 
-TIM_HandleTypeDef *UTILS_delayTimerHandle;
+static TIM_HandleTypeDef *UTILS_delayTimerHandle;
 
 void UTILS_delayUsInit(TIM_HandleTypeDef *htim)
 {

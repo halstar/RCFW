@@ -1,3 +1,5 @@
+#include <stdbool.h>
+
 #include "bluetooth_control.h"
 
 #include "stm32f1xx_hal.h"
@@ -32,33 +34,34 @@
 #define BLUETOOTH_CONTROL_LEFT_X_OFFSET  7
 #define BLUETOOTH_CONTROL_LEFT_Y_OFFSET  8
 
-uint8_t  BLUETOOTH_CONTROL_buffer[9] = {0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
-uint16_t BLUETOOTH_CONTROL_mask   [] =
+static uint8_t  BLUETOOTH_CONTROL_buffer[9] = {0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
+static uint16_t BLUETOOTH_CONTROL_mask   [] =
 {
-  KEY_SELECT,
-  KEY_L3,
-  KEY_R3 ,
-  KEY_START,
-  KEY_PAD_UP,
-  KEY_PAD_RIGHT,
-  KEY_PAD_DOWN,
-  KEY_PAD_LEFT,
-  KEY_L2,
-  KEY_R2,
-  KEY_L1,
-  KEY_R1 ,
-  KEY_GREEN_TRIANGLE,
-  KEY_RED_CIRCLE,
-  KEY_BLUE_CROSS,
-  KEY_PINK_SQUARE
+  BUTTON_SELECT,
+  BUTTON_L3,
+  BUTTON_R3 ,
+  BUTTON_START,
+  BUTTON_PAD_UP,
+  BUTTON_PAD_RIGHT,
+  BUTTON_PAD_DOWN,
+  BUTTON_PAD_LEFT,
+  BUTTON_L2,
+  BUTTON_R2,
+  BUTTON_L1,
+  BUTTON_R1 ,
+  BUTTON_GREEN_TRIANGLE,
+  BUTTON_RED_CIRCLE,
+  BUTTON_BLUE_CROSS,
+  BUTTON_PINK_SQUARE
 };
 
 static void    BLUETOOTH_CONTROL_readData(void);
 static void    BLUETOOTH_CONTROL_sendCommand(uint8_t command);
-static uint8_t BLUETOOTH_CONTROL_getKeyData(void);
+static uint8_t BLUETOOTH_CONTROL_getButtonData(void);
 static void    BLUETOOTH_CONTROL_clearData(void);
+static int32_t BLUETOOTH_CONTROL_normalizeData(uint32_t rawData, bool isInversionNeeded);
 
-void BLUETOOTH_CONTROL_sendCommand(uint8_t command)
+static void BLUETOOTH_CONTROL_sendCommand(uint8_t command)
 {
   volatile uint16_t ref=0x01;
   BLUETOOTH_CONTROL_buffer[1] = 0;
@@ -83,7 +86,7 @@ void BLUETOOTH_CONTROL_sendCommand(uint8_t command)
   return;
 }
 
-void BLUETOOTH_CONTROL_readData(void)
+static void BLUETOOTH_CONTROL_readData(void)
 {
   volatile uint8_t byte=0;
   volatile uint16_t ref=0x01;
@@ -109,24 +112,24 @@ void BLUETOOTH_CONTROL_readData(void)
   return;
 }
 
-uint8_t BLUETOOTH_CONTROL_getKeyData()
+static uint8_t BLUETOOTH_CONTROL_getButtonData()
 {
   uint8_t index;
-  uint16_t handkey;
+  uint16_t button;
 
   BLUETOOTH_CONTROL_clearData();
   BLUETOOTH_CONTROL_readData();
-  handkey=(BLUETOOTH_CONTROL_buffer[4]<<8)|BLUETOOTH_CONTROL_buffer[3];
+  button=(BLUETOOTH_CONTROL_buffer[4]<<8)|BLUETOOTH_CONTROL_buffer[3];
   for(index=0;index<16;index++)
   {
-    if((handkey&(1<<(BLUETOOTH_CONTROL_mask[index]-1)))==0)
+    if((button&(1<<(BLUETOOTH_CONTROL_mask[index]-1)))==0)
     return index+1;
   }
 
   return 0;
 }
 
-void BLUETOOTH_CONTROL_clearData()
+static void BLUETOOTH_CONTROL_clearData()
 {
   uint8_t a;
   for(a=0;a<9;a++)
@@ -134,6 +137,30 @@ void BLUETOOTH_CONTROL_clearData()
 
   return;
 }
+
+static int32_t BLUETOOTH_CONTROL_normalizeData(uint32_t rawData, bool isInversionNeeded)
+{
+  float normalizedData;
+
+  normalizedData = rawData - 128.0f;
+
+  if (normalizedData > 0.0f)
+  {
+    normalizedData *= 100.0f / 127.0f;
+  }
+  else
+  {
+    normalizedData *= 100.0f / 128.0f;
+  }
+
+  if (isInversionNeeded == true)
+  {
+    normalizedData *= -1.0f;
+  }
+
+  return (int32_t)normalizedData;
+}
+
 
 void BLUETOOTH_CONTROL_init(void)
 {
@@ -156,14 +183,38 @@ void BLUETOOTH_CONTROL_init(void)
 
 void BLUETOOTH_CONTROL_receiveData(BLUETOOTH_CONTROL_DATA *data)
 {
+  uint32_t leftX;
+  uint32_t leftY;
+  uint32_t rightX;
+  uint32_t rightY;
+  uint32_t button;
+
   LOG_info("Receiving Bluetooth data");
 
-  data->leftX  = BLUETOOTH_CONTROL_buffer[BLUETOOTH_CONTROL_LEFT_X_OFFSET ];
-  data->leftY  = BLUETOOTH_CONTROL_buffer[BLUETOOTH_CONTROL_LEFT_Y_OFFSET ];
-  data->rightX = BLUETOOTH_CONTROL_buffer[BLUETOOTH_CONTROL_RIGHT_X_OFFSET];
-  data->rightY = BLUETOOTH_CONTROL_buffer[BLUETOOTH_CONTROL_RIGHT_Y_OFFSET];
+  /* Read raw data */
+  leftX  = BLUETOOTH_CONTROL_buffer[BLUETOOTH_CONTROL_LEFT_X_OFFSET ];
+  leftY  = BLUETOOTH_CONTROL_buffer[BLUETOOTH_CONTROL_LEFT_Y_OFFSET ];
+  rightX = BLUETOOTH_CONTROL_buffer[BLUETOOTH_CONTROL_RIGHT_X_OFFSET];
+  rightY = BLUETOOTH_CONTROL_buffer[BLUETOOTH_CONTROL_RIGHT_Y_OFFSET];
+  button = BLUETOOTH_CONTROL_getButtonData();
 
-  data->key = BLUETOOTH_CONTROL_getKeyData();
+  /* Deal with startup condition, while read data is not valid yet */
+  if  ((leftX == 255 && leftY == 255 && rightX == 255 && rightY ==255)
+    || (leftX ==   0 && leftY ==   0 && rightX ==   0 && rightY ==  0))
+  {
+    leftX  = 128;
+    leftY  = 128;
+    rightX = 128;
+    rightY = 128;
+    button = BUTTON_NONE;
+  }
+
+  /* Normalize directions data in range [-100..100] */
+  data->leftX  = BLUETOOTH_CONTROL_normalizeData(leftX , false);
+  data->leftY  = BLUETOOTH_CONTROL_normalizeData(leftY , true );
+  data->rightX = BLUETOOTH_CONTROL_normalizeData(rightX, false);
+  data->rightY = BLUETOOTH_CONTROL_normalizeData(rightY, true );
+  data->button = button;
 
   return;
 }

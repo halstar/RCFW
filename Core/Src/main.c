@@ -18,6 +18,9 @@
   */
 /* USER CODE END Header */
 /* Includes ------------------------------------------------------------------*/
+#include <stdio.h>
+#include <string.h>
+
 #include "main.h"
 
 /* Private includes ----------------------------------------------------------*/
@@ -95,6 +98,8 @@ int main(void)
   /* USART2 UART is used to get control from master board - PA2 / PA3  */
 
   BLUETOOTH_CONTROL_DATA bluetoothData;
+  uint16_t               adcRawData;
+  char                   msg[10];
 
   /* USER CODE END 1 */
 
@@ -126,7 +131,7 @@ int main(void)
 
   /* Setup and start using console and logs */
   CONSOLE_uartInit(&huart1);
-  LOG_setLevel    (LOG_DEBUG);
+  LOG_setLevel    (LOG_LEVEL_DEBUG);
   LOG_info        ("Starting RCFW");
 
   /* Initialize Timer 1 and green LED */
@@ -166,10 +171,16 @@ int main(void)
   /* USER CODE BEGIN WHILE */
   while (1)
   {
+    HAL_ADC_Start(&hadc1);
+    HAL_ADC_PollForConversion(&hadc1, HAL_MAX_DELAY);
+    adcRawData = HAL_ADC_GetValue(&hadc1);
+    sprintf(msg, "%u\r\n", adcRawData);
+    HAL_UART_Transmit(&huart1, (uint8_t *)msg, strlen(msg), HAL_MAX_DELAY);
+
     CONSOLE_receiveData();
     BLUETOOTH_CONTROL_receiveData(&bluetoothData);
-    DRIVE_update      (&bluetoothData);
-    MAIN_updateLedMode(&bluetoothData);
+    DRIVE_update                 (&bluetoothData);
+    MAIN_updateLedMode           (&bluetoothData);
     UTILS_delayUs(10000);
 
     /* USER CODE END WHILE */
@@ -570,21 +581,21 @@ static void MAIN_updateLedMode(BLUETOOTH_CONTROL_DATA *data)
 {
   uint32_t ledMode;
 
-  switch (data->key)
+  switch (data->button)
   {
-    case KEY_PAD_UP:
+    case BUTTON_PAD_UP:
       ledMode = LED_MODE_FORCED_ON;
       break;
 
-    case KEY_PAD_DOWN:
+    case BUTTON_PAD_DOWN:
       ledMode = LED_MODE_FORCED_OFF;
       break;
 
-    case KEY_PAD_LEFT:
+    case BUTTON_PAD_LEFT:
       ledMode = LED_MODE_BLINK_SLOW;
       break;
 
-    case KEY_PAD_RIGHT:
+    case BUTTON_PAD_RIGHT:
       ledMode = LED_MODE_BLINK_FAST;
       break;
 
@@ -593,7 +604,7 @@ static void MAIN_updateLedMode(BLUETOOTH_CONTROL_DATA *data)
       break;
   }
 
-  if (data->key != KEY_NONE)
+  if (data->button != BUTTON_NONE)
   {
     LED_setMode(ledMode);
   }

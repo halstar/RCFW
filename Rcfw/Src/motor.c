@@ -1,9 +1,8 @@
-#include "motor.h"
-
 #include <string.h>
 
-#include "stm32f1xx_hal.h"
+#include "motor.h"
 
+#include "stm32f1xx_hal.h"
 #include "log.h"
 
 void MOTOR_init(MOTOR_Handle *handle, char *name)
