@@ -5,64 +5,64 @@
 #include "stm32f1xx_hal.h"
 #include "log.h"
 
-void MOTOR_init(MOTOR_Handle *handle, char *name)
+void MOTOR_init(T_MOTOR_Handle *p_handle, char *p_name)
 {
-  LOG_info("Initializing Motor module for %s", name);
+  LOG_info("Initializing Motor module for %s", p_name);
 
-  (void)strncpy((char *)handle->name, name, MOTOR_NAME_MAX_LENGTH);
+  (void)strncpy((char *)p_handle->name, p_name, MOTOR_NAME_MAX_LENGTH);
 
-  MOTOR_setSpeed(handle, 0);
-  MOTOR_stop    (handle   );
+  MOTOR_setSpeed(p_handle, 0);
+  MOTOR_stop    (p_handle   );
 
   return;
 }
 
-void MOTOR_setDirection(MOTOR_Handle *handle, uint32_t direction)
+void MOTOR_setDirection(T_MOTOR_Handle *p_handle, uint32_t p_direction)
 {
-  LOG_debug("Setting %s motor direction to %u", handle->name, direction);
+  LOG_debug("Setting %s motor direction to %u", p_handle->name, p_direction);
 
-  if (direction == MOTOR_DIRECTION_FORWARD)
+  if (p_direction == MOTOR_DIRECTION_FORWARD)
   {
-    HAL_GPIO_WritePin(handle->dirPin1Port, handle->dirPin1, GPIO_PIN_RESET);
-    HAL_GPIO_WritePin(handle->dirPin2Port, handle->dirPin2, GPIO_PIN_SET  );
+    HAL_GPIO_WritePin(p_handle->dirPin1Port, p_handle->dirPin1, GPIO_PIN_RESET);
+    HAL_GPIO_WritePin(p_handle->dirPin2Port, p_handle->dirPin2, GPIO_PIN_SET  );
   }
   else
   {
-    HAL_GPIO_WritePin(handle->dirPin1Port, handle->dirPin1, GPIO_PIN_SET  );
-    HAL_GPIO_WritePin(handle->dirPin2Port, handle->dirPin2, GPIO_PIN_RESET);
+    HAL_GPIO_WritePin(p_handle->dirPin1Port, p_handle->dirPin1, GPIO_PIN_SET  );
+    HAL_GPIO_WritePin(p_handle->dirPin2Port, p_handle->dirPin2, GPIO_PIN_RESET);
   }
 
-  handle->direction = direction;
+  p_handle->direction =p_direction;
 
   return;
 }
 
-void MOTOR_setSpeed(MOTOR_Handle *handle, uint32_t speed)
+void MOTOR_setSpeed(T_MOTOR_Handle *p_handle, uint32_t p_speed)
 {
-  LOG_debug("Setting %s motor speed to %u", handle->name, speed);
+  LOG_debug("Setting %s motor p_speed to %u", p_handle->name, p_speed);
 
-  __HAL_TIM_SET_COMPARE(handle->pwmTimerHandle, handle->pwmChannel, speed);
+  __HAL_TIM_SET_COMPARE(p_handle->pwmTimerHandle, p_handle->pwmChannel, p_speed);
 
-  handle->speed = speed;
+  p_handle->speed = p_speed;
 
   return;
 }
 
-void MOTOR_start(MOTOR_Handle *handle)
+void MOTOR_start(T_MOTOR_Handle *p_handle)
 {
-  LOG_info("Starting %s motor", handle->name);
+  LOG_info("Starting %s motor", p_handle->name);
 
-  MOTOR_setDirection(handle, handle->direction);
+  MOTOR_setDirection(p_handle, p_handle->direction);
 
   return;
 }
 
-void MOTOR_stop(MOTOR_Handle *handle)
+void MOTOR_stop(T_MOTOR_Handle *p_handle)
 {
-  LOG_info("Stopping %s", handle->name);
+  LOG_info("Stopping %s", p_handle->name);
 
-  HAL_GPIO_WritePin(handle->dirPin1Port, handle->dirPin1, GPIO_PIN_RESET);
-  HAL_GPIO_WritePin(handle->dirPin2Port, handle->dirPin2, GPIO_PIN_RESET);
+  HAL_GPIO_WritePin(p_handle->dirPin1Port, p_handle->dirPin1, GPIO_PIN_RESET);
+  HAL_GPIO_WritePin(p_handle->dirPin2Port, p_handle->dirPin2, GPIO_PIN_RESET);
 
   return;
 }

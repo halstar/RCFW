@@ -19,12 +19,12 @@ typedef struct
   uint32_t           speed;
   TIM_HandleTypeDef *pwmTimerHandle;
   uint32_t           pwmChannel;
-} MOTOR_Handle;
+} T_MOTOR_Handle;
 
-void MOTOR_init        (MOTOR_Handle *handle, char *name);
-void MOTOR_setDirection(MOTOR_Handle *handle, uint32_t direction);
-void MOTOR_setSpeed    (MOTOR_Handle *handle, uint32_t speed);
-void MOTOR_start       (MOTOR_Handle *handle);
-void MOTOR_stop        (MOTOR_Handle *handle);
+void MOTOR_init        (T_MOTOR_Handle *p_handle, char    *p_name     );
+void MOTOR_setDirection(T_MOTOR_Handle *p_handle, uint32_t p_direction);
+void MOTOR_setSpeed    (T_MOTOR_Handle *p_handle, uint32_t p_speed    );
+void MOTOR_start       (T_MOTOR_Handle *p_handle                      );
+void MOTOR_stop        (T_MOTOR_Handle *p_handle                      );
 
 #endif /* __MOTOR_H */

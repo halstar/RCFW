@@ -1,12 +1,15 @@
 #include "utils.h"
 
 #include "stm32f1xx_hal.h"
+#include "log.h"
 
 static TIM_HandleTypeDef *UTILS_delayTimerHandle;
 
-void UTILS_delayUsInit(TIM_HandleTypeDef *p_htim)
+void UTILS_init(TIM_HandleTypeDef *p_delayTimerHandle)
 {
-  UTILS_delayTimerHandle = p_htim;
+  LOG_info("Initializing utilities");
+
+  UTILS_delayTimerHandle = p_delayTimerHandle;
 
   return;
 }

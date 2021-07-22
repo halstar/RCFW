@@ -54,7 +54,7 @@ static uint16_t BLUETOOTH_CONTROL_mask   [] =
   BUTTON_BLUE_CROSS,
   BUTTON_PINK_SQUARE
 };
-BLUETOOTH_CONTROL_DATA BLUETOOTH_CONTROL_DATA_lastData = { .leftX = 128, .leftY = 128, .rightX = 128, .rightY = 128, .button = BUTTON_NONE};
+T_BLUETOOTH_ControlData BLUETOOTH_CONTROL_DATA_lastData = { .leftX = 128, .leftY = 128, .rightX = 128, .rightY = 128, .button = BUTTON_NONE};
 
 static void    BLUETOOTH_CONTROL_readData(void);
 static void    BLUETOOTH_CONTROL_sendCommand(uint8_t command);
@@ -162,7 +162,7 @@ static int32_t BLUETOOTH_CONTROL_normalizeData(uint32_t rawData, bool isInversio
   return (int32_t)normalizedData;
 }
 
-void BLUETOOTH_CONTROL_receiveData(BLUETOOTH_CONTROL_DATA *data)
+void BLUETOOTH_CONTROL_receiveData(T_BLUETOOTH_ControlData *data)
 {
   uint32_t leftX;
   uint32_t leftY;

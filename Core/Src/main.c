@@ -31,6 +31,7 @@
 #include "utils.h"
 #include "drive.h"
 #include "console.h"
+#include "battery_check.h"
 #include "master_control.h"
 #include "bluetooth_control.h"
 
@@ -78,7 +79,7 @@ static void MX_TIM8_Init(void);
 static void MX_RTC_Init(void);
 /* USER CODE BEGIN PFP */
 
-static void MAIN_updateLedMode(BLUETOOTH_CONTROL_DATA *data);
+static void MAIN_updateLedMode(T_BLUETOOTH_ControlData *data);
 
 /* USER CODE END PFP */
 
@@ -94,15 +95,15 @@ int main(void)
 {
   /* USER CODE BEGIN 1 */
 
+  /* RTC  clock  is used as a calendar base (e.g. for logs)            */
   /* TIM1 timer  is used to update green LED              - PC13       */
   /* TIM2 timer  is used to produce a micro-second base                */
   /* TIM8 timer  is used to produce motors' PWM    base                */
+  /* ADC1 ADC    is used to monitor battery level         - PA5        */
   /* USART1 UART is used for USB/serial console           - PA9 / PA10 */
   /* USART2 UART is used to get control from master board - PA2 / PA3  */
 
-  BLUETOOTH_CONTROL_DATA bluetoothData;
-  uint16_t               adcRawData;
-  char                   msg[10];
+  T_BLUETOOTH_ControlData bluetoothData;
 
   /* USER CODE END 1 */
 
@@ -134,9 +135,16 @@ int main(void)
   /* USER CODE BEGIN 2 */
 
   /* Setup and start using console and logs */
-  CONSOLE_uartInit(&huart1);
-  LOG_setLevel    (LOG_LEVEL_DEBUG);
-  LOG_info        ("Starting RCFW");
+  CONSOLE_init(&huart1        );
+  LOG_init    (&hrtc          );
+  LOG_setLevel(LOG_LEVEL_DEBUG);
+  LOG_info    ("Starting RCFW");
+
+  /* Initialize Timer 2 and delay function in utilities */
+  HAL_TIM_Base_Start_IT(&htim2);
+  UTILS_init    (&htim2);
+
+  LOG_debug("Started TIMER 2");
 
   /* Initialize Timer 1 and green LED */
   HAL_TIM_Base_Start_IT(&htim1);
@@ -144,16 +152,13 @@ int main(void)
 
   LOG_debug("Started TIMER 1");
 
-  /* Initialize Timer 2 and delay function in utilities */
-  HAL_TIM_Base_Start_IT(&htim2);
-  UTILS_delayUsInit    (&htim2);
-
-  LOG_debug("Started TIMER 2");
-
   /* Initialize Timer 8 */
   HAL_TIM_Base_Start(&htim8);
 
   LOG_debug("Started TIMER 8");
+
+  /* Initialize battery monitor */
+  BATTERY_CHECK_init(&hadc1, &hrtc);
 
   /* Initialize PWM channels */
   HAL_TIM_PWM_Start(&htim8, TIM_CHANNEL_1);
@@ -172,17 +177,12 @@ int main(void)
   /* USER CODE BEGIN WHILE */
   while (1)
   {
-    HAL_ADC_Start(&hadc1);
-    HAL_ADC_PollForConversion(&hadc1, HAL_MAX_DELAY);
-    adcRawData = HAL_ADC_GetValue(&hadc1);
-    sprintf(msg, "%u\r\n", adcRawData);
-    //HAL_UART_Transmit(&huart1, (uint8_t *)msg, strlen(msg), HAL_MAX_DELAY);
-
-    CONSOLE_receiveData();
+    BATTERY_CHECK_update         (              );
+    CONSOLE_receiveData          (              );
     BLUETOOTH_CONTROL_receiveData(&bluetoothData);
     DRIVE_update                 (&bluetoothData);
     MAIN_updateLedMode           (&bluetoothData);
-    UTILS_delayUs(10000);
+    UTILS_delayUs                (10000         );
 
     /* USER CODE END WHILE */
 
@@ -531,7 +531,7 @@ static void MX_USART1_UART_Init(void)
 
   /* USER CODE END USART1_Init 1 */
   huart1.Instance = USART1;
-  huart1.Init.BaudRate = 9600;
+  huart1.Init.BaudRate = 115200;
   huart1.Init.WordLength = UART_WORDLENGTH_8B;
   huart1.Init.StopBits = UART_STOPBITS_1;
   huart1.Init.Parity = UART_PARITY_NONE;
@@ -656,10 +656,10 @@ static void MX_GPIO_Init(void)
 
 /* USER CODE BEGIN 4 */
 
-static void MAIN_updateLedMode(BLUETOOTH_CONTROL_DATA *data)
+static void MAIN_updateLedMode(T_BLUETOOTH_ControlData *data)
 {
-  LED_MODE currentLedMode;
-  LED_MODE requestLedMode;
+  T_LED_MODE currentLedMode;
+  T_LED_MODE requestLedMode;
 
   currentLedMode = LED_getMode();
 
@@ -716,7 +716,7 @@ void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
   /* Check the handle of the UART triggering this callback and actually receive date */
   if (huart == &huart1)
   {
-    CONSOLE_receiveData(&huart1);
+    CONSOLE_receiveData();
   }
   else if (huart == &huart2)
   {

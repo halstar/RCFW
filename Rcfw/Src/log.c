@@ -3,41 +3,46 @@
 #include "stm32f1xx_hal.h"
 #include "log.h"
 
-static uint32_t LOG_level;
-
-extern RTC_HandleTypeDef hrtc;
+static uint32_t           LOG_level;
+static RTC_HandleTypeDef *LOG_rtcHandle;
 
 static const char *LOG_levelStrings[] =
 {
   "DEBUG", "INFO", "WARN", "ERROR"
 };
 
-void LOG_setLevel(LOG_LEVEL level)
+void LOG_init(RTC_HandleTypeDef *p_rctHandle)
 {
-  LOG_level = level;
+  LOG_rtcHandle = p_rctHandle;
 
   return;
 }
 
-void LOG_log(LOG_LEVEL level, const char *file, int line, const char *format, ...)
+void LOG_setLevel(T_LOG_LEVEL p_level)
 {
-  va_list         argumentsList;
-  RTC_TimeTypeDef time;
-  RTC_DateTypeDef date;
+  LOG_level = p_level;
 
-  if (level >= LOG_level)
+  return;
+}
+
+void LOG_log(T_LOG_LEVEL p_level, const char *p_format, ...)
+{
+  va_list         l_argumentsList;
+  RTC_TimeTypeDef l_time;
+  RTC_DateTypeDef l_date;
+
+  if (p_level >= LOG_level)
   {
-    HAL_RTC_GetTime(&hrtc, &time, RTC_FORMAT_BCD);
-    HAL_RTC_GetDate(&hrtc, &date, RTC_FORMAT_BCD);
+    HAL_RTC_GetTime(LOG_rtcHandle, &l_time, RTC_FORMAT_BCD);
+    HAL_RTC_GetDate(LOG_rtcHandle, &l_date, RTC_FORMAT_BCD);
 
-    va_start(argumentsList, format);
+    va_start(l_argumentsList, p_format);
 
-    printf("%02x:%02x:%02x %-5s %s:%d: ", time.Hours, time.Minutes, time.Seconds, LOG_levelStrings[level], file, line);
-    vprintf(format, argumentsList);
+    printf("%-5s - %02x:%02x:%02x - ", LOG_levelStrings[p_level], l_time.Hours, l_time.Minutes, l_time.Seconds);
+    vprintf(p_format, l_argumentsList);
     printf("\r\n");
-    fflush(stdout);
 
-    va_end(argumentsList);
+    va_end(l_argumentsList);
   }
   else
   {

@@ -4,25 +4,25 @@
 #include "main.h"
 #include "log.h"
 
-static LED_MODE LED_mode = LED_MODE_BLINK_SLOW;
+static T_LED_MODE LED_mode = LED_MODE_BLINK_SLOW;
 
-void LED_setMode(LED_MODE mode)
+void LED_setMode(T_LED_MODE p_mode)
 {
-  LOG_info("Setting LED mode to %u", mode);
+  LOG_info("Setting LED mode to %u", p_mode);
 
-  LED_mode = mode;
+  LED_mode = p_mode;
 
   return;
 }
 
-LED_MODE LED_getMode(void)
+T_LED_MODE LED_getMode(void)
 {
   return LED_mode;
 }
 
 void LED_update(void)
 {
-  static uint32_t slowBlinkCounter = 0;
+  static uint32_t l_slowBlinkCounter = 0;
 
   // LOG_debug("Updating LED");
 
@@ -37,8 +37,8 @@ void LED_update(void)
       break;
 
     case LED_MODE_BLINK_SLOW:
-      slowBlinkCounter++;
-      if (slowBlinkCounter % 4 == 0)
+      l_slowBlinkCounter++;
+      if (l_slowBlinkCounter % 4 == 0)
       {
         HAL_GPIO_TogglePin(BLUE_LED_GPIO_Port, BLUE_LED_Pin);
       }

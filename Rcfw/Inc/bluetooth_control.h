@@ -27,8 +27,8 @@ typedef struct {
   int32_t  rightX;
   int32_t  rightY;
   uint32_t button;
-} BLUETOOTH_CONTROL_DATA;
+} T_BLUETOOTH_ControlData;
 
-void BLUETOOTH_CONTROL_receiveData(BLUETOOTH_CONTROL_DATA *data);
+void BLUETOOTH_CONTROL_receiveData(T_BLUETOOTH_ControlData *data);
 
 #endif /* __BLUETOOTH_CONTROL_H */

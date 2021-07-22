@@ -5,7 +5,7 @@
 
 #include "bluetooth_control.h"
 
-void DRIVE_init  (TIM_HandleTypeDef      *htim);
-void DRIVE_update(BLUETOOTH_CONTROL_DATA *data);
+void DRIVE_init  (TIM_HandleTypeDef      *p_pwmTimerHandle);
+void DRIVE_update(T_BLUETOOTH_ControlData *p_bluetoothData );
 
 #endif /* __DRIVE_H */
