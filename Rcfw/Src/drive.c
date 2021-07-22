@@ -16,11 +16,12 @@ typedef enum
 } T_MODE;
 
 #define DRIVE_MAXIMUM_SPEED         50
-#define DRIVE_JOYSTICKS_THRESHOLD   5
+#define DRIVE_JOYSTICKS_THRESHOLD   10
 #define DRIVE_JOYSTICKS_FIXED_SPEED 25
 #define DRIVE_BUTTONS_FIXED_SPEED   DRIVE_JOYSTICKS_FIXED_SPEED
 
 static bool   DRIVE_isDebugOn;
+static bool   DRIVE_isStarted;
 static T_MODE DRIVE_Mode;
 static  MOTOR_Handle motorFrontRight, motorFrontLeft, motorRearLeft, motorRearRight;
 
@@ -83,6 +84,9 @@ void DRIVE_init(TIM_HandleTypeDef *htim)
   /* De-activate debug mode: motors will make the car move */
   DRIVE_isDebugOn = false;
 
+  /* Considered that drive is stopped we the code starts */
+  DRIVE_isStarted = false;
+
   /* Start with master board control mode */
   DRIVE_Mode = MASTER_BOARD_CONTROLLED_SPEED;
 
@@ -93,7 +97,7 @@ void DRIVE_update(BLUETOOTH_CONTROL_DATA *data)
 {
   uint32_t l_speed;
 
-  LOG_debug("Updating Drive module");
+  // LOG_debug("Updating Drive module");
 
   /* Check possible requested mode change */
   switch (data->button)
@@ -230,12 +234,23 @@ void DRIVE_update(BLUETOOTH_CONTROL_DATA *data)
 
 static void DRIVE_stop(void)
 {
-  LOG_info("Stopping drive");
+  if (DRIVE_isStarted == true)
+  {
+    LOG_info("Stopping drive");
 
-  MOTOR_setSpeed(&motorFrontRight, 0);
-  MOTOR_setSpeed(&motorFrontLeft , 0);
-  MOTOR_setSpeed(&motorRearRight , 0);
-  MOTOR_setSpeed(&motorRearLeft  , 0);
+    MOTOR_setSpeed(&motorFrontRight, 0);
+    MOTOR_setSpeed(&motorFrontLeft , 0);
+    MOTOR_setSpeed(&motorRearRight , 0);
+    MOTOR_setSpeed(&motorRearLeft  , 0);
+
+    DRIVE_isStarted = false;
+  }
+  else
+  {
+    ; /* Nothing to do */
+  }
+
+  return;
 }
 
 static void DRIVE_clampSpeed(uint32_t *p_speed)
@@ -257,6 +272,8 @@ static void DRIVE_moveForward(uint32_t p_speed)
   uint32_t l_speed = p_speed;
 
   LOG_info("Moving forward @%u", l_speed);
+
+  DRIVE_isStarted = true;
 
   DRIVE_clampSpeed(&l_speed);
 
@@ -286,6 +303,8 @@ static void DRIVE_moveBackward(uint32_t p_speed)
 
   LOG_info("Moving backward @%u", l_speed);
 
+  DRIVE_isStarted = true;
+
   DRIVE_clampSpeed(&l_speed);
 
   MOTOR_setDirection(&motorFrontRight, MOTOR_DIRECTION_BACKWARD);
@@ -314,6 +333,8 @@ static void DRIVE_moveForwardRight (uint32_t p_speed)
 
   LOG_info("Moving forward-right @%u", l_speed);
 
+  DRIVE_isStarted = true;
+
   DRIVE_clampSpeed(&l_speed);
 
   MOTOR_setDirection(&motorFrontLeft, MOTOR_DIRECTION_FORWARD);
@@ -339,6 +360,8 @@ static void DRIVE_moveForwardLeft  (uint32_t p_speed)
   uint32_t l_speed = p_speed;
 
   LOG_info("Moving forward-left @%u", l_speed);
+
+  DRIVE_isStarted = true;
 
   DRIVE_clampSpeed(&l_speed);
 
@@ -366,6 +389,8 @@ static void DRIVE_moveBackwardRight(uint32_t p_speed)
 
   LOG_info("Moving backward-right @%u", l_speed);
 
+  DRIVE_isStarted = true;
+
   DRIVE_clampSpeed(&l_speed);
 
   MOTOR_setDirection(&motorFrontRight, MOTOR_DIRECTION_BACKWARD);
@@ -392,6 +417,8 @@ static void DRIVE_moveBackwardLeft (uint32_t p_speed)
 
   LOG_info("Moving backward-left @%u", l_speed);
 
+  DRIVE_isStarted = true;
+
   DRIVE_clampSpeed(&l_speed);
 
   MOTOR_setDirection(&motorFrontLeft, MOTOR_DIRECTION_BACKWARD);
@@ -417,6 +444,8 @@ static void DRIVE_turnLeft(uint32_t p_speed)
   uint32_t l_speed = p_speed;
 
   LOG_info("Turning left @%u", l_speed);
+
+  DRIVE_isStarted = true;
 
   DRIVE_clampSpeed(&l_speed);
 
@@ -446,6 +475,8 @@ static void DRIVE_turnRight(uint32_t p_speed)
 
   LOG_info("Turning right @%u", l_speed);
 
+  DRIVE_isStarted = true;
+
   DRIVE_clampSpeed(&l_speed);
 
   MOTOR_setDirection(&motorFrontRight, MOTOR_DIRECTION_BACKWARD);
@@ -474,6 +505,8 @@ static void DRIVE_translateLeft(uint32_t p_speed)
 
   LOG_info("Translating left @%u", l_speed);
 
+  DRIVE_isStarted = true;
+
   DRIVE_clampSpeed(&l_speed);
 
   MOTOR_setDirection(&motorFrontRight, MOTOR_DIRECTION_FORWARD );
@@ -501,6 +534,8 @@ static void DRIVE_translateRight(uint32_t p_speed)
   uint32_t l_speed = p_speed;
 
   LOG_info("Translating right @%u", l_speed);
+
+  DRIVE_isStarted = true;
 
   DRIVE_clampSpeed(&l_speed);
 

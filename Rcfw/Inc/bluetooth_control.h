@@ -29,7 +29,6 @@ typedef struct {
   uint32_t button;
 } BLUETOOTH_CONTROL_DATA;
 
-void BLUETOOTH_CONTROL_init       (void);
 void BLUETOOTH_CONTROL_receiveData(BLUETOOTH_CONTROL_DATA *data);
 
 #endif /* __BLUETOOTH_CONTROL_H */

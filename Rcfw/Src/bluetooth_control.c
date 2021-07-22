@@ -54,6 +54,7 @@ static uint16_t BLUETOOTH_CONTROL_mask   [] =
   BUTTON_BLUE_CROSS,
   BUTTON_PINK_SQUARE
 };
+BLUETOOTH_CONTROL_DATA BLUETOOTH_CONTROL_DATA_lastData = { .leftX = 128, .leftY = 128, .rightX = 128, .rightY = 128, .button = BUTTON_NONE};
 
 static void    BLUETOOTH_CONTROL_readData(void);
 static void    BLUETOOTH_CONTROL_sendCommand(uint8_t command);
@@ -161,26 +162,6 @@ static int32_t BLUETOOTH_CONTROL_normalizeData(uint32_t rawData, bool isInversio
   return (int32_t)normalizedData;
 }
 
-
-void BLUETOOTH_CONTROL_init(void)
-{
-  LOG_info("Initializing Bluetooth control");
-
-  RCC->APB2ENR|=1<<2;     // PORTA
-  RCC->APB2ENR|=1<<4;     // PORTC
-  GPIOC->CRL&=0XFFFFF0FF;
-  GPIOC->CRL|=0X00000800;
-
-  RCC->APB2ENR|=1<<4;    // PORTC
-  GPIOC->CRL&=0XFFFF0F0F;
-  GPIOC->CRL|=0X00003030; // PC1 PC3
-
-  GPIOA->CRL&=0XFFF0FFFF;
-  GPIOA->CRL|=0X00030000; // PA4
-
-  return;
-}
-
 void BLUETOOTH_CONTROL_receiveData(BLUETOOTH_CONTROL_DATA *data)
 {
   uint32_t leftX;
@@ -189,7 +170,7 @@ void BLUETOOTH_CONTROL_receiveData(BLUETOOTH_CONTROL_DATA *data)
   uint32_t rightY;
   uint32_t button;
 
-  LOG_info("Receiving Bluetooth data");
+  // LOG_info("Receiving Bluetooth data");
 
   /* Read raw data */
   leftX  = BLUETOOTH_CONTROL_buffer[BLUETOOTH_CONTROL_LEFT_X_OFFSET ];
@@ -208,13 +189,31 @@ void BLUETOOTH_CONTROL_receiveData(BLUETOOTH_CONTROL_DATA *data)
     rightY = 128;
     button = BUTTON_NONE;
   }
+  /* Use a confirmation mechanism, on 2 cycles, as glitches are observed */
+  else if ((leftX  == BLUETOOTH_CONTROL_DATA_lastData.leftX) &&
+           (leftY  == BLUETOOTH_CONTROL_DATA_lastData.leftY) &&
+           (rightX == BLUETOOTH_CONTROL_DATA_lastData.rightX) &&
+           (rightY == BLUETOOTH_CONTROL_DATA_lastData.rightY) &&
+           (button == BLUETOOTH_CONTROL_DATA_lastData.button))
+  {
+    /* Normalize directions data in range [-100..100] */
+    data->leftX  = BLUETOOTH_CONTROL_normalizeData(leftX , false);
+    data->leftY  = BLUETOOTH_CONTROL_normalizeData(leftY , true );
+    data->rightX = BLUETOOTH_CONTROL_normalizeData(rightX, false);
+    data->rightY = BLUETOOTH_CONTROL_normalizeData(rightY, true );
+    data->button = button;
+  }
+  else
+  {
+    ; /* Nothing to do */
+  }
 
-  /* Normalize directions data in range [-100..100] */
-  data->leftX  = BLUETOOTH_CONTROL_normalizeData(leftX , false);
-  data->leftY  = BLUETOOTH_CONTROL_normalizeData(leftY , true );
-  data->rightX = BLUETOOTH_CONTROL_normalizeData(rightX, false);
-  data->rightY = BLUETOOTH_CONTROL_normalizeData(rightY, true );
-  data->button = button;
+  /* Saved received data for later use in confirmation mechanism */
+  BLUETOOTH_CONTROL_DATA_lastData.leftX  = leftX;
+  BLUETOOTH_CONTROL_DATA_lastData.leftY  = leftY;
+  BLUETOOTH_CONTROL_DATA_lastData.rightX = rightX;
+  BLUETOOTH_CONTROL_DATA_lastData.rightY = rightY;
+  BLUETOOTH_CONTROL_DATA_lastData.button = button;
 
   return;
 }

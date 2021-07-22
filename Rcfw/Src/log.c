@@ -1,9 +1,11 @@
 #include <stdio.h>
-#include <time.h>
 
+#include "stm32f1xx_hal.h"
 #include "log.h"
 
 static uint32_t LOG_level;
+
+extern RTC_HandleTypeDef hrtc;
 
 static const char *LOG_levelStrings[] =
 {
@@ -19,18 +21,18 @@ void LOG_setLevel(LOG_LEVEL level)
 
 void LOG_log(LOG_LEVEL level, const char *file, int line, const char *format, ...)
 {
-  va_list argumentsList;
-  char buffer[16];
-
-  time_t currentTime = time(NULL);
-  struct tm *localTime = localtime(&currentTime);
+  va_list         argumentsList;
+  RTC_TimeTypeDef time;
+  RTC_DateTypeDef date;
 
   if (level >= LOG_level)
   {
+    HAL_RTC_GetTime(&hrtc, &time, RTC_FORMAT_BCD);
+    HAL_RTC_GetDate(&hrtc, &date, RTC_FORMAT_BCD);
+
     va_start(argumentsList, format);
 
-    buffer[strftime(buffer, sizeof(buffer), "%H:%M:%S", localTime)] = '\0';
-    printf("%s %-5s %s:%d: ", buffer, LOG_levelStrings[level], file, line);
+    printf("%02x:%02x:%02x %-5s %s:%d: ", time.Hours, time.Minutes, time.Seconds, LOG_levelStrings[level], file, line);
     vprintf(format, argumentsList);
     printf("\r\n");
     fflush(stdout);

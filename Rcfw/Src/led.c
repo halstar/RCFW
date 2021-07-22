@@ -15,11 +15,16 @@ void LED_setMode(LED_MODE mode)
   return;
 }
 
+LED_MODE LED_getMode(void)
+{
+  return LED_mode;
+}
+
 void LED_update(void)
 {
   static uint32_t slowBlinkCounter = 0;
 
-  LOG_debug("Updating LED");
+  // LOG_debug("Updating LED");
 
   switch (LED_mode)
   {

@@ -26,7 +26,7 @@ void CONSOLE_receiveData()
 
 int fputc(int character, FILE *fileDescriptor)
 {
-  HAL_UART_Transmit(CONSOLE_uartHandle, (uint8_t *)&character, 1, 100);
+  HAL_UART_Transmit(CONSOLE_uartHandle, (uint8_t *)&character, 1, 1000);
 
   return character;
 }

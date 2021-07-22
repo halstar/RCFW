@@ -18,13 +18,13 @@
   */
 /* USER CODE END Header */
 /* Includes ------------------------------------------------------------------*/
-#include <stdio.h>
-#include <string.h>
-
 #include "main.h"
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
+
+#include <stdio.h>
+#include <string.h>
 
 #include "log.h"
 #include "led.h"
@@ -53,6 +53,8 @@
 /* Private variables ---------------------------------------------------------*/
 ADC_HandleTypeDef hadc1;
 
+RTC_HandleTypeDef hrtc;
+
 TIM_HandleTypeDef htim1;
 TIM_HandleTypeDef htim2;
 TIM_HandleTypeDef htim8;
@@ -73,6 +75,7 @@ static void MX_USART1_UART_Init(void);
 static void MX_USART2_UART_Init(void);
 static void MX_ADC1_Init(void);
 static void MX_TIM8_Init(void);
+static void MX_RTC_Init(void);
 /* USER CODE BEGIN PFP */
 
 static void MAIN_updateLedMode(BLUETOOTH_CONTROL_DATA *data);
@@ -127,6 +130,7 @@ int main(void)
   MX_USART2_UART_Init();
   MX_ADC1_Init();
   MX_TIM8_Init();
+  MX_RTC_Init();
   /* USER CODE BEGIN 2 */
 
   /* Setup and start using console and logs */
@@ -159,9 +163,6 @@ int main(void)
 
   LOG_debug("Started PWM channels");
 
-  /* Initialize bluetooth control module */
-  BLUETOOTH_CONTROL_init();
-
   /* Initialize driving module */
   DRIVE_init(&htim8);
 
@@ -175,7 +176,7 @@ int main(void)
     HAL_ADC_PollForConversion(&hadc1, HAL_MAX_DELAY);
     adcRawData = HAL_ADC_GetValue(&hadc1);
     sprintf(msg, "%u\r\n", adcRawData);
-    HAL_UART_Transmit(&huart1, (uint8_t *)msg, strlen(msg), HAL_MAX_DELAY);
+    //HAL_UART_Transmit(&huart1, (uint8_t *)msg, strlen(msg), HAL_MAX_DELAY);
 
     CONSOLE_receiveData();
     BLUETOOTH_CONTROL_receiveData(&bluetoothData);
@@ -203,9 +204,10 @@ void SystemClock_Config(void)
   /** Initializes the RCC Oscillators according to the specified parameters
   * in the RCC_OscInitTypeDef structure.
   */
-  RCC_OscInitStruct.OscillatorType = RCC_OSCILLATORTYPE_HSI;
+  RCC_OscInitStruct.OscillatorType = RCC_OSCILLATORTYPE_HSI|RCC_OSCILLATORTYPE_LSI;
   RCC_OscInitStruct.HSIState = RCC_HSI_ON;
   RCC_OscInitStruct.HSICalibrationValue = RCC_HSICALIBRATION_DEFAULT;
+  RCC_OscInitStruct.LSIState = RCC_LSI_ON;
   RCC_OscInitStruct.PLL.PLLState = RCC_PLL_NONE;
   if (HAL_RCC_OscConfig(&RCC_OscInitStruct) != HAL_OK)
   {
@@ -224,7 +226,8 @@ void SystemClock_Config(void)
   {
     Error_Handler();
   }
-  PeriphClkInit.PeriphClockSelection = RCC_PERIPHCLK_ADC;
+  PeriphClkInit.PeriphClockSelection = RCC_PERIPHCLK_RTC|RCC_PERIPHCLK_ADC;
+  PeriphClkInit.RTCClockSelection = RCC_RTCCLKSOURCE_LSI;
   PeriphClkInit.AdcClockSelection = RCC_ADCPCLK2_DIV2;
   if (HAL_RCCEx_PeriphCLKConfig(&PeriphClkInit) != HAL_OK)
   {
@@ -274,6 +277,63 @@ static void MX_ADC1_Init(void)
   /* USER CODE BEGIN ADC1_Init 2 */
 
   /* USER CODE END ADC1_Init 2 */
+
+}
+
+/**
+  * @brief RTC Initialization Function
+  * @param None
+  * @retval None
+  */
+static void MX_RTC_Init(void)
+{
+
+  /* USER CODE BEGIN RTC_Init 0 */
+
+  /* USER CODE END RTC_Init 0 */
+
+  RTC_TimeTypeDef sTime = {0};
+  RTC_DateTypeDef DateToUpdate = {0};
+
+  /* USER CODE BEGIN RTC_Init 1 */
+
+  /* USER CODE END RTC_Init 1 */
+  /** Initialize RTC Only
+  */
+  hrtc.Instance = RTC;
+  hrtc.Init.AsynchPrediv = RTC_AUTO_1_SECOND;
+  hrtc.Init.OutPut = RTC_OUTPUTSOURCE_NONE;
+  if (HAL_RTC_Init(&hrtc) != HAL_OK)
+  {
+    Error_Handler();
+  }
+
+  /* USER CODE BEGIN Check_RTC_BKUP */
+
+  /* USER CODE END Check_RTC_BKUP */
+
+  /** Initialize RTC and set the Time and Date
+  */
+  sTime.Hours = 0x0;
+  sTime.Minutes = 0x0;
+  sTime.Seconds = 0x0;
+
+  if (HAL_RTC_SetTime(&hrtc, &sTime, RTC_FORMAT_BCD) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  DateToUpdate.WeekDay = RTC_WEEKDAY_MONDAY;
+  DateToUpdate.Month = RTC_MONTH_JANUARY;
+  DateToUpdate.Date = 0x1;
+  DateToUpdate.Year = 0x0;
+
+  if (HAL_RTC_SetDate(&hrtc, &DateToUpdate, RTC_FORMAT_BCD) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  /* USER CODE BEGIN RTC_Init 2 */
+
+  /* USER CODE END RTC_Init 2 */
 
 }
 
@@ -537,7 +597,11 @@ static void MX_GPIO_Init(void)
   __HAL_RCC_GPIOD_CLK_ENABLE();
 
   /*Configure GPIO pin Output Level */
-  HAL_GPIO_WritePin(GPIOC, BLUE_LED_Pin|MOTOR_FRONT_RIGHT_IN_1_Pin|MOTOR_FRONT_RIGHT_IN_2_Pin|MOTOR_REAR_LEFT_IN_2_Pin, GPIO_PIN_RESET);
+  HAL_GPIO_WritePin(GPIOC, BLUE_LED_Pin|BLUETOOTH_SPI_CMD_Pin|BLUETOOTH_SPI_CS_Pin|MOTOR_FRONT_RIGHT_IN_1_Pin
+                          |MOTOR_FRONT_RIGHT_IN_2_Pin|MOTOR_REAR_LEFT_IN_2_Pin, GPIO_PIN_RESET);
+
+  /*Configure GPIO pin Output Level */
+  HAL_GPIO_WritePin(BLUETOOTH_SPI_CLK_GPIO_Port, BLUETOOTH_SPI_CLK_Pin, GPIO_PIN_RESET);
 
   /*Configure GPIO pin Output Level */
   HAL_GPIO_WritePin(GPIOB, MOTOR_FRONT_LEFT_IN_1_Pin|MOTOR_FRONT_LEFT_IN_2_Pin|MOTOR_REAR_RIGHT_IN_2_Pin|MOTOR_REAR_RIGHT_IN_1_Pin, GPIO_PIN_RESET);
@@ -552,12 +616,27 @@ static void MX_GPIO_Init(void)
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
   HAL_GPIO_Init(BLUE_LED_GPIO_Port, &GPIO_InitStruct);
 
-  /*Configure GPIO pins : MOTOR_FRONT_RIGHT_IN_1_Pin MOTOR_FRONT_RIGHT_IN_2_Pin MOTOR_REAR_LEFT_IN_2_Pin */
-  GPIO_InitStruct.Pin = MOTOR_FRONT_RIGHT_IN_1_Pin|MOTOR_FRONT_RIGHT_IN_2_Pin|MOTOR_REAR_LEFT_IN_2_Pin;
+  /*Configure GPIO pins : BLUETOOTH_SPI_CMD_Pin BLUETOOTH_SPI_CS_Pin MOTOR_FRONT_RIGHT_IN_1_Pin MOTOR_FRONT_RIGHT_IN_2_Pin
+                           MOTOR_REAR_LEFT_IN_2_Pin */
+  GPIO_InitStruct.Pin = BLUETOOTH_SPI_CMD_Pin|BLUETOOTH_SPI_CS_Pin|MOTOR_FRONT_RIGHT_IN_1_Pin|MOTOR_FRONT_RIGHT_IN_2_Pin
+                          |MOTOR_REAR_LEFT_IN_2_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_HIGH;
   HAL_GPIO_Init(GPIOC, &GPIO_InitStruct);
+
+  /*Configure GPIO pin : BLUETOOTH_SPI_DAT_Pin */
+  GPIO_InitStruct.Pin = BLUETOOTH_SPI_DAT_Pin;
+  GPIO_InitStruct.Mode = GPIO_MODE_INPUT;
+  GPIO_InitStruct.Pull = GPIO_NOPULL;
+  HAL_GPIO_Init(BLUETOOTH_SPI_DAT_GPIO_Port, &GPIO_InitStruct);
+
+  /*Configure GPIO pin : BLUETOOTH_SPI_CLK_Pin */
+  GPIO_InitStruct.Pin = BLUETOOTH_SPI_CLK_Pin;
+  GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
+  GPIO_InitStruct.Pull = GPIO_NOPULL;
+  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_HIGH;
+  HAL_GPIO_Init(BLUETOOTH_SPI_CLK_GPIO_Port, &GPIO_InitStruct);
 
   /*Configure GPIO pins : MOTOR_FRONT_LEFT_IN_1_Pin MOTOR_FRONT_LEFT_IN_2_Pin MOTOR_REAR_RIGHT_IN_2_Pin MOTOR_REAR_RIGHT_IN_1_Pin */
   GPIO_InitStruct.Pin = MOTOR_FRONT_LEFT_IN_1_Pin|MOTOR_FRONT_LEFT_IN_2_Pin|MOTOR_REAR_RIGHT_IN_2_Pin|MOTOR_REAR_RIGHT_IN_1_Pin;
@@ -579,34 +658,37 @@ static void MX_GPIO_Init(void)
 
 static void MAIN_updateLedMode(BLUETOOTH_CONTROL_DATA *data)
 {
-  uint32_t ledMode;
+  LED_MODE currentLedMode;
+  LED_MODE requestLedMode;
 
-  switch (data->button)
+  currentLedMode = LED_getMode();
+
+    switch (data->button)
   {
     case BUTTON_PAD_UP:
-      ledMode = LED_MODE_FORCED_ON;
+      requestLedMode = LED_MODE_FORCED_ON;
       break;
 
     case BUTTON_PAD_DOWN:
-      ledMode = LED_MODE_FORCED_OFF;
+      requestLedMode = LED_MODE_FORCED_OFF;
       break;
 
     case BUTTON_PAD_LEFT:
-      ledMode = LED_MODE_BLINK_SLOW;
+      requestLedMode = LED_MODE_BLINK_SLOW;
       break;
 
     case BUTTON_PAD_RIGHT:
-      ledMode = LED_MODE_BLINK_FAST;
+      requestLedMode = LED_MODE_BLINK_FAST;
       break;
 
     default:
-      ; /* Nothing to do */
+      requestLedMode = currentLedMode;
       break;
   }
 
-  if (data->button != BUTTON_NONE)
+  if (requestLedMode != currentLedMode)
   {
-    LED_setMode(ledMode);
+    LED_setMode(requestLedMode);
   }
   else
   {

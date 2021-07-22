@@ -30,11 +30,14 @@
 #include <time.h>
 #include <sys/time.h>
 #include <sys/times.h>
+#include <sys/unistd.h>
 
+#include "stm32f1xx_hal.h"
 
 /* Variables */
 extern int __io_putchar(int ch) __attribute__((weak));
 extern int __io_getchar(void) __attribute__((weak));
+extern UART_HandleTypeDef huart1;
 
 
 char *__env[1] = { 0 };
@@ -77,13 +80,15 @@ return len;
 
 __attribute__((weak)) int _write(int file, char *ptr, int len)
 {
-	int DataIdx;
+  if ((file != STDOUT_FILENO) && (file != STDERR_FILENO))
+  {
+    errno = EBADF;
+    return -1;
+  }
 
-	for (DataIdx = 0; DataIdx < len; DataIdx++)
-	{
-		__io_putchar(*ptr++);
-	}
-	return len;
+  HAL_StatusTypeDef status = HAL_UART_Transmit(&huart1, (uint8_t *)ptr, len, 1000);
+  return (status == HAL_OK ? len : 0);
+
 }
 
 int _close(int file)

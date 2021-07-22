@@ -12,7 +12,8 @@ typedef enum
   LED_MODE_BATTERY_LOW
 } LED_MODE;
 
-void LED_setMode(LED_MODE mode);
-void LED_update (void         );
+void     LED_setMode(LED_MODE mode);
+LED_MODE LED_getMode(void         );
+void     LED_update (void         );
 
 #endif /* __LED_H */
