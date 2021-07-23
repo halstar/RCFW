@@ -79,7 +79,8 @@ static void MX_TIM8_Init(void);
 static void MX_RTC_Init(void);
 /* USER CODE BEGIN PFP */
 
-static void MAIN_updateLedMode(T_BLUETOOTH_CONTROL_Data *data);
+static void MAIN_displayRcfwBanner(void);
+static void MAIN_updateLedMode    (T_BLUETOOTH_CONTROL_Data *data);
 
 /* USER CODE END PFP */
 
@@ -134,15 +135,20 @@ int main(void)
   MX_RTC_Init();
   /* USER CODE BEGIN 2 */
 
-  /* Setup and start using console and logs */
-  CONSOLE_init(&huart1        );
+  /* Setup console */
+  CONSOLE_init(&huart1);
+
+  /* Display RCFW banner */
+  MAIN_displayRcfwBanner();
+
+  /* Setup and start using logs */
   LOG_init    (&hrtc          );
   LOG_setLevel(LOG_LEVEL_DEBUG);
   LOG_info    ("Starting RCFW");
 
   /* Initialize Timer 2 and delay function in utilities */
   HAL_TIM_Base_Start_IT(&htim2);
-  UTILS_init    (&htim2);
+  UTILS_init           (&htim2);
 
   LOG_debug("Started TIMER 2");
 
@@ -655,6 +661,22 @@ static void MX_GPIO_Init(void)
 }
 
 /* USER CODE BEGIN 4 */
+
+static void MAIN_displayRcfwBanner(void)
+{
+  (void)printf("\n\r");
+  (void)printf("    8888888b.        .d8888b.       8888888888      888       888\n\r");
+  (void)printf("    888   Y88b      d88P  Y88b      888             888   o   888\n\r");
+  (void)printf("    888    888      888    888      888             888  d8b  888\n\r");
+  (void)printf("    888   d88P      888             8888888         888 d888b 888\n\r");
+  (void)printf("    8888888P\"       888             888             888d88888b888\n\r");
+  (void)printf("    888 T88b        888    888      888             88888P Y88888\n\r");
+  (void)printf("    888  T88b       Y88b  d88P      888             8888P   Y8888\n\r");
+  (void)printf("    888   T88b       \"Y8888P\"       888             888P     Y888\n\r");
+  (void)printf("\n\r");
+
+  return;
+}
 
 static void MAIN_updateLedMode(T_BLUETOOTH_CONTROL_Data *data)
 {

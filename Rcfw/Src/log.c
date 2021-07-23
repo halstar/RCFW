@@ -38,9 +38,9 @@ void LOG_log(T_LOG_LEVEL p_level, const char *p_format, ...)
 
     va_start(l_argumentsList, p_format);
 
-    printf("%-5s - %02x:%02x:%02x - ", LOG_levelStrings[p_level], l_time.Hours, l_time.Minutes, l_time.Seconds);
-    vprintf(p_format, l_argumentsList);
-    printf("\r\n");
+    (void)printf("%-5s - %02x:%02x:%02x - ", LOG_levelStrings[p_level], l_time.Hours, l_time.Minutes, l_time.Seconds);
+    (void)vprintf(p_format, l_argumentsList);
+    (void)printf("\r\n");
 
     va_end(l_argumentsList);
   }
