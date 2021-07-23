@@ -79,7 +79,7 @@ static void MX_TIM8_Init(void);
 static void MX_RTC_Init(void);
 /* USER CODE BEGIN PFP */
 
-static void MAIN_updateLedMode(T_BLUETOOTH_ControlData *data);
+static void MAIN_updateLedMode(T_BLUETOOTH_CONTROL_Data *data);
 
 /* USER CODE END PFP */
 
@@ -103,7 +103,7 @@ int main(void)
   /* USART1 UART is used for USB/serial console           - PA9 / PA10 */
   /* USART2 UART is used to get control from master board - PA2 / PA3  */
 
-  T_BLUETOOTH_ControlData bluetoothData;
+  T_BLUETOOTH_CONTROL_Data bluetoothData;
 
   /* USER CODE END 1 */
 
@@ -656,7 +656,7 @@ static void MX_GPIO_Init(void)
 
 /* USER CODE BEGIN 4 */
 
-static void MAIN_updateLedMode(T_BLUETOOTH_ControlData *data)
+static void MAIN_updateLedMode(T_BLUETOOTH_CONTROL_Data *data)
 {
   T_LED_MODE currentLedMode;
   T_LED_MODE requestLedMode;
@@ -665,19 +665,19 @@ static void MAIN_updateLedMode(T_BLUETOOTH_ControlData *data)
 
     switch (data->button)
   {
-    case BUTTON_PAD_UP:
+    case BLUETOOTH_CONTROL_BUTTON_PAD_UP:
       requestLedMode = LED_MODE_FORCED_ON;
       break;
 
-    case BUTTON_PAD_DOWN:
+    case BLUETOOTH_CONTROL_BUTTON_PAD_DOWN:
       requestLedMode = LED_MODE_FORCED_OFF;
       break;
 
-    case BUTTON_PAD_LEFT:
+    case BLUETOOTH_CONTROL_BUTTON_PAD_LEFT:
       requestLedMode = LED_MODE_BLINK_SLOW;
       break;
 
-    case BUTTON_PAD_RIGHT:
+    case BLUETOOTH_CONTROL_BUTTON_PAD_RIGHT:
       requestLedMode = LED_MODE_BLINK_FAST;
       break;
 

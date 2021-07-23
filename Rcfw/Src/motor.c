@@ -19,7 +19,7 @@ void MOTOR_init(T_MOTOR_Handle *p_handle, char *p_name)
 
 void MOTOR_setDirection(T_MOTOR_Handle *p_handle, uint32_t p_direction)
 {
-  LOG_debug("Setting %s motor direction to %u", p_handle->name, p_direction);
+  LOG_debug("Setting  %s motor direction to %u", p_handle->name, p_direction);
 
   if (p_direction == MOTOR_DIRECTION_FORWARD)
   {
@@ -39,7 +39,7 @@ void MOTOR_setDirection(T_MOTOR_Handle *p_handle, uint32_t p_direction)
 
 void MOTOR_setSpeed(T_MOTOR_Handle *p_handle, uint32_t p_speed)
 {
-  LOG_debug("Setting %s motor p_speed to %u", p_handle->name, p_speed);
+  LOG_debug("Setting  %s motor p_speed to %u", p_handle->name, p_speed);
 
   __HAL_TIM_SET_COMPARE(p_handle->pwmTimerHandle, p_handle->pwmChannel, p_speed);
 

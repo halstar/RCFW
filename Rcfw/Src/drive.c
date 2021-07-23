@@ -18,8 +18,8 @@ typedef enum
 #define DRIVE_MAXIMUM_SPEED         50
 #define DRIVE_JOYSTICKS_THRESHOLD   10
 #define DRIVE_JOYSTICKS_FIXED_SPEED 25
-/* Double buttons fixed speed at it concerns forward/backward + left/right movements,
-/* the latter actually using only 2 motors, while the other movements use 4 motors. */
+/* Double buttons fixed speed at it concerns forward/backward + left/right movements, */
+/* the latter actually using only 2 motors, while the other movements use 4 motors.   */
 #define DRIVE_BUTTONS_FIXED_SPEED   (DRIVE_JOYSTICKS_FIXED_SPEED * 2)
 
 static bool         DRIVE_isDebugOn;
@@ -73,9 +73,9 @@ void DRIVE_init(TIM_HandleTypeDef *p_pwmTimerHandle)
   DRIVE_motorRearRight.pwmChannel     = TIM_CHANNEL_3;
 
   MOTOR_init(&DRIVE_motorFrontRight, "FRONT_RIGHT");
-  MOTOR_init(&DRIVE_motorFrontLeft , " FRONT_LEFT");
-  MOTOR_init(&DRIVE_motorRearLeft  , "  REAR_LEFT");
-  MOTOR_init(&DRIVE_motorRearRight , " REAR_RIGHT");
+  MOTOR_init(&DRIVE_motorFrontLeft , "FRONT_LEFT ");
+  MOTOR_init(&DRIVE_motorRearLeft  , "REAR_LEFT  ");
+  MOTOR_init(&DRIVE_motorRearRight , "REAR_RIGHT ");
 
   /* Start motors (but with a 0 speed at this point) */
   MOTOR_start(&DRIVE_motorFrontRight);
@@ -95,7 +95,7 @@ void DRIVE_init(TIM_HandleTypeDef *p_pwmTimerHandle)
   return;
 }
 
-void DRIVE_update(T_BLUETOOTH_ControlData *p_bluetoothData)
+void DRIVE_update(T_BLUETOOTH_CONTROL_Data *p_bluetoothData)
 {
   uint32_t l_speed;
 
@@ -104,30 +104,30 @@ void DRIVE_update(T_BLUETOOTH_ControlData *p_bluetoothData)
   /* Check possible requested mode change */
   switch (p_bluetoothData->button)
   {
-    case BUTTON_PINK_SQUARE:
+    case BLUETOOTH_CONTROL_BUTTON_PINK_SQUARE:
       LOG_info("Drive mode now DRIVE_MODE_MANUAL_FIXED_SPEED");
       DRIVE_mode = DRIVE_MODE_MANUAL_FIXED_SPEED;
       break;
 
-    case BUTTON_BLUE_CROSS:
+    case BLUETOOTH_CONTROL_BUTTON_BLUE_CROSS:
       LOG_info("Drive mode now DRIVE_MODE_MANUAL_VARIABLE_SPEED");
       DRIVE_mode = DRIVE_MODE_MANUAL_VARIABLE_SPEED;
       break;
 
-    case BUTTON_RED_CIRCLE:
+    case BLUETOOTH_CONTROL_BUTTON_RED_CIRCLE:
       LOG_info("Drive mode now DRIVE_MODE_MANUAL_CONTROLLED_SPEED");
       DRIVE_mode = DRIVE_MODE_MANUAL_CONTROLLED_SPEED;
       break;
 
-    case BUTTON_GREEN_TRIANGLE:
+    case BLUETOOTH_CONTROL_BUTTON_GREEN_TRIANGLE:
       LOG_info("Drive mode now DRIVE_MODE_MASTER_BOARD_CONTROLLED_SPEED");
       DRIVE_mode = DRIVE_MODE_MASTER_BOARD_CONTROLLED_SPEED;
       break;
 
-    case BUTTON_SELECT:
+    case BLUETOOTH_CONTROL_BUTTON_SELECT:
       if (DRIVE_isDebugOn == false)
       {
-        LOG_info("Drive debug mode turned ON - Motors now OFF");
+        LOG_info("Drive debug mode turned ON  - Motors now OFF");
         DRIVE_isDebugOn = true;
       }
       else
@@ -136,7 +136,7 @@ void DRIVE_update(T_BLUETOOTH_ControlData *p_bluetoothData)
       }
       break;
 
-    case BUTTON_START:
+    case BLUETOOTH_CONTROL_BUTTON_START:
       if (DRIVE_isDebugOn == true)
       {
         LOG_info("Drive debug mode turned OFF - Motors now ON");
@@ -209,19 +209,19 @@ void DRIVE_update(T_BLUETOOTH_ControlData *p_bluetoothData)
 
       DRIVE_translateRight(l_speed);
     }
-    else if (p_bluetoothData->button == BUTTON_L1)
+    else if (p_bluetoothData->button == BLUETOOTH_CONTROL_BUTTON_L1)
     {
       DRIVE_moveForwardLeft(DRIVE_BUTTONS_FIXED_SPEED);
     }
-    else if (p_bluetoothData->button == BUTTON_L2)
+    else if (p_bluetoothData->button == BLUETOOTH_CONTROL_BUTTON_L2)
     {
       DRIVE_moveBackwardRight(DRIVE_BUTTONS_FIXED_SPEED);
     }
-    else if (p_bluetoothData->button == BUTTON_R1)
+    else if (p_bluetoothData->button == BLUETOOTH_CONTROL_BUTTON_R1)
     {
       DRIVE_moveForwardRight(DRIVE_BUTTONS_FIXED_SPEED);
     }
-    else if (p_bluetoothData->button == BUTTON_R2)
+    else if (p_bluetoothData->button == BLUETOOTH_CONTROL_BUTTON_R2)
     {
       DRIVE_moveBackwardLeft(DRIVE_BUTTONS_FIXED_SPEED);
     }
