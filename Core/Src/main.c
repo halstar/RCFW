@@ -174,6 +174,9 @@ int main(void)
 
   LOG_debug("Started PWM channels");
 
+  /* Initialize bluetooth control */
+  BLUETOOTH_CONTROL_init(DRIVE_MAXIMUM_SPEED);
+
   /* Initialize driving module */
   DRIVE_init(&htim8);
 

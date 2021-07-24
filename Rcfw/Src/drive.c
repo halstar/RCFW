@@ -15,20 +15,18 @@ typedef enum
   DRIVE_MODE_MASTER_BOARD_CONTROLLED_SPEED
 } T_DRIVE_MODE;
 
-#define DRIVE_MAXIMUM_SPEED         50
 #define DRIVE_JOYSTICKS_THRESHOLD   10
 #define DRIVE_JOYSTICKS_FIXED_SPEED 25
 /* Double buttons fixed speed at it concerns forward/backward + left/right movements, */
 /* the latter actually using only 2 motors, while the other movements use 4 motors.   */
 #define DRIVE_BUTTONS_FIXED_SPEED   (DRIVE_JOYSTICKS_FIXED_SPEED * 2)
 
-static bool         DRIVE_isDebugOn;
-static bool         DRIVE_isStarted;
-static T_DRIVE_MODE DRIVE_mode;
+static bool           DRIVE_isDebugOn;
+static bool           DRIVE_isActive;
+static T_DRIVE_MODE   DRIVE_mode;
 static T_MOTOR_Handle DRIVE_motorFrontRight, DRIVE_motorFrontLeft, DRIVE_motorRearLeft, DRIVE_motorRearRight;
 
-static void DRIVE_stop             (void             );
-static void DRIVE_clampSpeed       (uint32_t *p_speed);
+static void DRIVE_sleep            (void             );
 static void DRIVE_moveForward      (uint32_t  p_speed);
 static void DRIVE_moveBackward     (uint32_t  p_speed);
 static void DRIVE_moveForwardRight (uint32_t  p_speed);
@@ -86,8 +84,8 @@ void DRIVE_init(TIM_HandleTypeDef *p_pwmTimerHandle)
   /* De-activate debug mode: motors will make the car move */
   DRIVE_isDebugOn = false;
 
-  /* Considered that drive is stopped we the code starts */
-  DRIVE_isStarted = false;
+  /* Considered that drive is inactive when the code starts */
+  DRIVE_isActive = false;
 
   /* Start with master board control mode */
   DRIVE_mode = DRIVE_MODE_MASTER_BOARD_CONTROLLED_SPEED;
@@ -105,23 +103,51 @@ void DRIVE_update(T_BLUETOOTH_CONTROL_Data *p_bluetoothData)
   switch (p_bluetoothData->button)
   {
     case BLUETOOTH_CONTROL_BUTTON_PINK_SQUARE:
-      LOG_info("Drive mode now DRIVE_MODE_MANUAL_FIXED_SPEED");
-      DRIVE_mode = DRIVE_MODE_MANUAL_FIXED_SPEED;
+      if (DRIVE_mode != DRIVE_MODE_MANUAL_FIXED_SPEED)
+      {
+        LOG_info("Drive mode now DRIVE_MODE_MANUAL_FIXED_SPEED");
+        DRIVE_mode = DRIVE_MODE_MANUAL_FIXED_SPEED;
+      }
+      else
+      {
+        ; /* Nothing to do */
+      }
       break;
 
     case BLUETOOTH_CONTROL_BUTTON_BLUE_CROSS:
-      LOG_info("Drive mode now DRIVE_MODE_MANUAL_VARIABLE_SPEED");
-      DRIVE_mode = DRIVE_MODE_MANUAL_VARIABLE_SPEED;
+      if (DRIVE_mode != DRIVE_MODE_MANUAL_VARIABLE_SPEED)
+      {
+        LOG_info("Drive mode now DRIVE_MODE_MANUAL_VARIABLE_SPEED");
+        DRIVE_mode = DRIVE_MODE_MANUAL_VARIABLE_SPEED;
+      }
+      else
+      {
+        ; /* Nothing to do */
+      }
       break;
 
     case BLUETOOTH_CONTROL_BUTTON_RED_CIRCLE:
-      LOG_info("Drive mode now DRIVE_MODE_MANUAL_CONTROLLED_SPEED");
-      DRIVE_mode = DRIVE_MODE_MANUAL_CONTROLLED_SPEED;
+      if (DRIVE_mode != DRIVE_MODE_MANUAL_CONTROLLED_SPEED)
+      {
+        LOG_info("Drive mode now DRIVE_MODE_MANUAL_CONTROLLED_SPEED");
+        DRIVE_mode = DRIVE_MODE_MANUAL_CONTROLLED_SPEED;
+      }
+      else
+      {
+        ; /* Nothing to do */
+      }
       break;
 
     case BLUETOOTH_CONTROL_BUTTON_GREEN_TRIANGLE:
-      LOG_info("Drive mode now DRIVE_MODE_MASTER_BOARD_CONTROLLED_SPEED");
-      DRIVE_mode = DRIVE_MODE_MASTER_BOARD_CONTROLLED_SPEED;
+      if (DRIVE_mode != DRIVE_MODE_MASTER_BOARD_CONTROLLED_SPEED)
+      {
+        LOG_info("Drive mode now DRIVE_MODE_MASTER_BOARD_CONTROLLED_SPEED");
+        DRIVE_mode = DRIVE_MODE_MASTER_BOARD_CONTROLLED_SPEED;
+      }
+      else
+      {
+        ; /* Nothing to do */
+      }
       break;
 
     case BLUETOOTH_CONTROL_BUTTON_SELECT:
@@ -153,7 +179,8 @@ void DRIVE_update(T_BLUETOOTH_CONTROL_Data *p_bluetoothData)
       break;
   }
 
-  /* Automated mode, ignoring directions received by bluetooth */
+  /* Master board control mode is an automated mode, so that we will */
+  /* ignore any direction/button press received via bluetooth.       */
   if (DRIVE_mode == DRIVE_MODE_MASTER_BOARD_CONTROLLED_SPEED)
   {
     ; /* Nothing to do */
@@ -227,39 +254,25 @@ void DRIVE_update(T_BLUETOOTH_CONTROL_Data *p_bluetoothData)
     }
     else
     {
-      DRIVE_stop();
+      DRIVE_sleep();
     }
   }
 
   return;
 }
 
-static void DRIVE_stop(void)
+static void DRIVE_sleep(void)
 {
-  if (DRIVE_isStarted == true)
+  if (DRIVE_isActive == true)
   {
-    LOG_info("Stopping drive");
+    LOG_info("Drive going to sleep");
 
     MOTOR_setSpeed(&DRIVE_motorFrontRight, 0);
     MOTOR_setSpeed(&DRIVE_motorFrontLeft , 0);
     MOTOR_setSpeed(&DRIVE_motorRearRight , 0);
     MOTOR_setSpeed(&DRIVE_motorRearLeft  , 0);
 
-    DRIVE_isStarted = false;
-  }
-  else
-  {
-    ; /* Nothing to do */
-  }
-
-  return;
-}
-
-static void DRIVE_clampSpeed(uint32_t *p_speed)
-{
-  if (*p_speed > DRIVE_MAXIMUM_SPEED)
-  {
-    *p_speed = DRIVE_MAXIMUM_SPEED;
+    DRIVE_isActive = false;
   }
   else
   {
@@ -275,9 +288,7 @@ static void DRIVE_moveForward(uint32_t p_speed)
 
   LOG_info("Moving forward @%u", l_speed);
 
-  DRIVE_isStarted = true;
-
-  DRIVE_clampSpeed(&l_speed);
+  DRIVE_isActive = true;
 
   MOTOR_setDirection(&DRIVE_motorFrontRight, MOTOR_DIRECTION_FORWARD);
   MOTOR_setDirection(&DRIVE_motorFrontLeft , MOTOR_DIRECTION_FORWARD);
@@ -305,9 +316,7 @@ static void DRIVE_moveBackward(uint32_t p_speed)
 
   LOG_info("Moving backward @%u", l_speed);
 
-  DRIVE_isStarted = true;
-
-  DRIVE_clampSpeed(&l_speed);
+  DRIVE_isActive = true;
 
   MOTOR_setDirection(&DRIVE_motorFrontRight, MOTOR_DIRECTION_BACKWARD);
   MOTOR_setDirection(&DRIVE_motorFrontLeft , MOTOR_DIRECTION_BACKWARD);
@@ -335,9 +344,7 @@ static void DRIVE_moveForwardRight (uint32_t p_speed)
 
   LOG_info("Moving forward-right @%u", l_speed);
 
-  DRIVE_isStarted = true;
-
-  DRIVE_clampSpeed(&l_speed);
+  DRIVE_isActive = true;
 
   MOTOR_setDirection(&DRIVE_motorFrontLeft, MOTOR_DIRECTION_FORWARD);
   MOTOR_setDirection(&DRIVE_motorRearRight, MOTOR_DIRECTION_FORWARD);
@@ -363,9 +370,7 @@ static void DRIVE_moveForwardLeft  (uint32_t p_speed)
 
   LOG_info("Moving forward-left @%u", l_speed);
 
-  DRIVE_isStarted = true;
-
-  DRIVE_clampSpeed(&l_speed);
+  DRIVE_isActive = true;
 
   MOTOR_setDirection(&DRIVE_motorFrontRight, MOTOR_DIRECTION_FORWARD);
   MOTOR_setDirection(&DRIVE_motorRearLeft  , MOTOR_DIRECTION_FORWARD);
@@ -391,9 +396,7 @@ static void DRIVE_moveBackwardRight(uint32_t p_speed)
 
   LOG_info("Moving backward-right @%u", l_speed);
 
-  DRIVE_isStarted = true;
-
-  DRIVE_clampSpeed(&l_speed);
+  DRIVE_isActive = true;
 
   MOTOR_setDirection(&DRIVE_motorFrontRight, MOTOR_DIRECTION_BACKWARD);
   MOTOR_setDirection(&DRIVE_motorRearLeft  , MOTOR_DIRECTION_BACKWARD);
@@ -419,9 +422,7 @@ static void DRIVE_moveBackwardLeft (uint32_t p_speed)
 
   LOG_info("Moving backward-left @%u", l_speed);
 
-  DRIVE_isStarted = true;
-
-  DRIVE_clampSpeed(&l_speed);
+  DRIVE_isActive = true;
 
   MOTOR_setDirection(&DRIVE_motorFrontLeft, MOTOR_DIRECTION_BACKWARD);
   MOTOR_setDirection(&DRIVE_motorRearRight, MOTOR_DIRECTION_BACKWARD);
@@ -447,9 +448,7 @@ static void DRIVE_turnLeft(uint32_t p_speed)
 
   LOG_info("Turning left @%u", l_speed);
 
-  DRIVE_isStarted = true;
-
-  DRIVE_clampSpeed(&l_speed);
+  DRIVE_isActive = true;
 
   MOTOR_setDirection(&DRIVE_motorFrontRight, MOTOR_DIRECTION_FORWARD );
   MOTOR_setDirection(&DRIVE_motorFrontLeft , MOTOR_DIRECTION_BACKWARD);
@@ -477,9 +476,7 @@ static void DRIVE_turnRight(uint32_t p_speed)
 
   LOG_info("Turning right @%u", l_speed);
 
-  DRIVE_isStarted = true;
-
-  DRIVE_clampSpeed(&l_speed);
+  DRIVE_isActive = true;
 
   MOTOR_setDirection(&DRIVE_motorFrontRight, MOTOR_DIRECTION_BACKWARD);
   MOTOR_setDirection(&DRIVE_motorFrontLeft , MOTOR_DIRECTION_FORWARD );
@@ -507,9 +504,7 @@ static void DRIVE_translateLeft(uint32_t p_speed)
 
   LOG_info("Translating left @%u", l_speed);
 
-  DRIVE_isStarted = true;
-
-  DRIVE_clampSpeed(&l_speed);
+  DRIVE_isActive = true;
 
   MOTOR_setDirection(&DRIVE_motorFrontRight, MOTOR_DIRECTION_FORWARD );
   MOTOR_setDirection(&DRIVE_motorFrontLeft , MOTOR_DIRECTION_BACKWARD);
@@ -537,9 +532,7 @@ static void DRIVE_translateRight(uint32_t p_speed)
 
   LOG_info("Translating right @%u", l_speed);
 
-  DRIVE_isStarted = true;
-
-  DRIVE_clampSpeed(&l_speed);
+  DRIVE_isActive = true;
 
   MOTOR_setDirection(&DRIVE_motorFrontRight, MOTOR_DIRECTION_BACKWARD);
   MOTOR_setDirection(&DRIVE_motorFrontLeft , MOTOR_DIRECTION_FORWARD );

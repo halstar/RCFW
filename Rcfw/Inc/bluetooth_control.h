@@ -33,6 +33,7 @@ typedef struct {
   T_BLUETOOTH_CONTROL_BUTTON button;
 } T_BLUETOOTH_CONTROL_Data;
 
-void BLUETOOTH_CONTROL_receiveData(T_BLUETOOTH_CONTROL_Data *data);
+void BLUETOOTH_CONTROL_init       (uint32_t                  p_maxDataValue);
+void BLUETOOTH_CONTROL_receiveData(T_BLUETOOTH_CONTROL_Data *p_data        );
 
 #endif /* __BLUETOOTH_CONTROL_H */

@@ -17,12 +17,14 @@
 #define BLUETOOTH_CONTROL_LEFT_X_OFFSET      5
 #define BLUETOOTH_CONTROL_LEFT_Y_OFFSET      6
 
+static uint32_t BLUETOOTH_CONTROL_maxDataValue;
+
 static T_BLUETOOTH_CONTROL_Data BLUETOOTH_CONTROL_DATA_lastData = { .leftX = 128, .leftY = 128, .rightX = 128, .rightY = 128, .button = BLUETOOTH_CONTROL_BUTTON_NONE};
 
-static void                       BLUETOOTH_CONTROL_sendCommand  (uint8_t  p_command                          );
-static void                       BLUETOOTH_CONTROL_readData     (uint8_t *l_buffer                           );
-static T_BLUETOOTH_CONTROL_BUTTON BLUETOOTH_CONTROL_getButton    (uint8_t *l_buffer                           );
-static int32_t                    BLUETOOTH_CONTROL_normalizeData(uint32_t p_rawData, bool p_isInversionNeeded);
+static void                       BLUETOOTH_CONTROL_sendCommand  (uint8_t  p_command                                               );
+static void                       BLUETOOTH_CONTROL_readData     (uint8_t *l_buffer                                                );
+static T_BLUETOOTH_CONTROL_BUTTON BLUETOOTH_CONTROL_getButton    (uint8_t *l_buffer                                                );
+static int32_t                    BLUETOOTH_CONTROL_normalizeData(uint32_t p_rawData, uint32_t p_maxValue, bool p_isInversionNeeded);
 
 static void BLUETOOTH_CONTROL_sendCommand(uint8_t p_command)
 {
@@ -117,7 +119,7 @@ static T_BLUETOOTH_CONTROL_BUTTON BLUETOOTH_CONTROL_getButton(uint8_t *l_buffer)
   return BLUETOOTH_CONTROL_BUTTON_NONE;
 }
 
-static int32_t BLUETOOTH_CONTROL_normalizeData(uint32_t p_rawData, bool p_isInversionNeeded)
+static int32_t BLUETOOTH_CONTROL_normalizeData(uint32_t p_rawData, uint32_t p_maxValue, bool p_isInversionNeeded)
 {
   float l_normalizedData;
 
@@ -125,11 +127,11 @@ static int32_t BLUETOOTH_CONTROL_normalizeData(uint32_t p_rawData, bool p_isInve
 
   if (l_normalizedData > 0.0f)
   {
-    l_normalizedData *= 100.0f / 127.0f;
+    l_normalizedData *= (float)p_maxValue / 127.0f;
   }
   else
   {
-    l_normalizedData *= 100.0f / 128.0f;
+    l_normalizedData *= (float)p_maxValue / 128.0f;
   }
 
   if (p_isInversionNeeded == true)
@@ -143,6 +145,16 @@ static int32_t BLUETOOTH_CONTROL_normalizeData(uint32_t p_rawData, bool p_isInve
 
   return (int32_t)l_normalizedData;
 }
+
+void BLUETOOTH_CONTROL_init(uint32_t p_maxDataValue)
+{
+  LOG_info("Initializing bluetooth control");
+
+  BLUETOOTH_CONTROL_maxDataValue = p_maxDataValue;
+
+  return;
+}
+
 
 void BLUETOOTH_CONTROL_receiveData(T_BLUETOOTH_CONTROL_Data *p_data)
 {
@@ -183,10 +195,10 @@ void BLUETOOTH_CONTROL_receiveData(T_BLUETOOTH_CONTROL_Data *p_data)
            (l_button == BLUETOOTH_CONTROL_DATA_lastData.button))
   {
     /* Normalize directions data in range [-100..100] */
-    p_data->leftX  = BLUETOOTH_CONTROL_normalizeData(l_leftX , false);
-    p_data->leftY  = BLUETOOTH_CONTROL_normalizeData(l_leftY , true );
-    p_data->rightX = BLUETOOTH_CONTROL_normalizeData(l_rightX, false);
-    p_data->rightY = BLUETOOTH_CONTROL_normalizeData(l_rightY, true );
+    p_data->leftX  = BLUETOOTH_CONTROL_normalizeData(l_leftX , BLUETOOTH_CONTROL_maxDataValue, false);
+    p_data->leftY  = BLUETOOTH_CONTROL_normalizeData(l_leftY , BLUETOOTH_CONTROL_maxDataValue, true );
+    p_data->rightX = BLUETOOTH_CONTROL_normalizeData(l_rightX, BLUETOOTH_CONTROL_maxDataValue, false);
+    p_data->rightY = BLUETOOTH_CONTROL_normalizeData(l_rightY, BLUETOOTH_CONTROL_maxDataValue, true );
     p_data->button = l_button;
   }
   else
