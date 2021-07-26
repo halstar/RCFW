@@ -1,39 +1,39 @@
-#ifndef __BLUETOOTH_CONTROL_H
-#define __BLUETOOTH_CONTROL_H
+#ifndef __BLUTOOTH_CONTROL_H
+#define __BLUTOOTH_CONTROL_H
 
 #include "stm32f1xx_hal.h"
 
 typedef enum
 {
-  BLUETOOTH_CONTROL_BUTTON_NONE       = 0,
-  BLUETOOTH_CONTROL_BUTTON_SELECT        ,
-  BLUETOOTH_CONTROL_BUTTON_L3            ,
-  BLUETOOTH_CONTROL_BUTTON_R3            ,
-  BLUETOOTH_CONTROL_BUTTON_START         ,
-  BLUETOOTH_CONTROL_BUTTON_PAD_UP        ,
-  BLUETOOTH_CONTROL_BUTTON_PAD_RIGHT     ,
-  BLUETOOTH_CONTROL_BUTTON_PAD_DOWN      ,
-  BLUETOOTH_CONTROL_BUTTON_PAD_LEFT      ,
-  BLUETOOTH_CONTROL_BUTTON_L2            ,
-  BLUETOOTH_CONTROL_BUTTON_R2            ,
-  BLUETOOTH_CONTROL_BUTTON_L1            ,
-  BLUETOOTH_CONTROL_BUTTON_R1            ,
-  BLUETOOTH_CONTROL_BUTTON_GREEN_TRIANGLE,
-  BLUETOOTH_CONTROL_BUTTON_RED_CIRCLE    ,
-  BLUETOOTH_CONTROL_BUTTON_BLUE_CROSS    ,
-  BLUETOOTH_CONTROL_BUTTON_PINK_SQUARE   ,
-  BLUETOOTH_CONTROL_BUTTON_COUNT_VALUE   ,
-} T_BLUETOOTH_CONTROL_BUTTON;
+  BLU_BUTTON_NONE       = 0,
+  BLU_BUTTON_SELECT        ,
+  BLU_BUTTON_L3            ,
+  BLU_BUTTON_R3            ,
+  BLU_BUTTON_START         ,
+  BLU_BUTTON_PAD_UP        ,
+  BLU_BUTTON_PAD_RIGHT     ,
+  BLU_BUTTON_PAD_DOWN      ,
+  BLU_BUTTON_PAD_LEFT      ,
+  BLU_BUTTON_L2            ,
+  BLU_BUTTON_R2            ,
+  BLU_BUTTON_L1            ,
+  BLU_BUTTON_R1            ,
+  BLU_BUTTON_GREEN_TRIANGLE,
+  BLU_BUTTON_RED_CIRCLE    ,
+  BLU_BUTTON_BLUE_CROSS    ,
+  BLU_BUTTON_PINK_SQUARE   ,
+  BLU_BUTTON_COUNT_VALUE   ,
+} T_BLU_BUTTON;
 
 typedef struct {
   int32_t                    leftX;
   int32_t                    leftY;
   int32_t                    rightX;
   int32_t                    rightY;
-  T_BLUETOOTH_CONTROL_BUTTON button;
-} T_BLUETOOTH_CONTROL_Data;
+  T_BLU_BUTTON button;
+} T_BLU_Data;
 
-void BLUETOOTH_CONTROL_init       (uint32_t                  p_maxDataValue);
-void BLUETOOTH_CONTROL_receiveData(T_BLUETOOTH_CONTROL_Data *p_data        );
+void BLU_init       (uint32_t    p_maxDataValue);
+void BLU_receiveData(T_BLU_Data *p_data        );
 
-#endif /* __BLUETOOTH_CONTROL_H */
+#endif /* __BLUTOOTH_CONTROL_H */

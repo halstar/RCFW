@@ -5,31 +5,31 @@
 #include "stm32f1xx_hal.h"
 #include "log.h"
 
-static UART_HandleTypeDef *CONSOLE_uartHandle;
-static uint8_t             CONSOLE_rxBuffer[12] = {0};
+static UART_HandleTypeDef *CON_uartHandle;
+static uint8_t             CON_rxBuffer[12] = {0};
 
-void CONSOLE_init(UART_HandleTypeDef *p_uartHandle)
+void CON_init(UART_HandleTypeDef *p_uartHandle)
 {
   LOG_info("Initializing console");
 
-  CONSOLE_uartHandle = p_uartHandle;
+  CON_uartHandle = p_uartHandle;
 
   return;
 }
 
-void CONSOLE_receiveData(void)
+void CON_receiveData(void)
 {
-  HAL_UART_Receive_IT(CONSOLE_uartHandle, CONSOLE_rxBuffer, 12);
+  HAL_UART_Receive_IT(CON_uartHandle, CON_rxBuffer, 12);
 
   /* Resend received data (echo) */
-//  HAL_UART_Transmit(CONSOLE_uartHandle, CONSOLE_rxBuffer, 12, 100);
+//  HAL_UART_Transmit(CON_uartHandle, CON_rxBuffer, 12, 100);
 
   return;
 }
 
 int fputc(int p_character, FILE *p_fileDescriptor)
 {
-  HAL_UART_Transmit(CONSOLE_uartHandle, (uint8_t *)&p_character, 1, 1000);
+  HAL_UART_Transmit(CON_uartHandle, (uint8_t *)&p_character, 1, 1000);
 
   return p_character;
 }

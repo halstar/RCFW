@@ -24,8 +24,6 @@ void LED_update(void)
 {
   static uint32_t l_slowBlinkCounter = 0;
 
-  // LOG_debug("Updating LED");
-
   switch (LED_mode)
   {
     case LED_MODE_FORCED_OFF:

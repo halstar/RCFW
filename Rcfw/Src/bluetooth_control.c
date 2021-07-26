@@ -7,26 +7,26 @@
 #include "main.h"
 #include "log.h"
 
-#define BLUETOOTH_CONTROL_DATA_BUFFER_LENGTH 7
+#define BLU_DATA_BUFFER_LENGTH 7
 
-#define BLUETOOTH_CONTROL_UNUSED_DATA_OFFSET 0
-#define BLUETOOTH_CONTROL_BUTTON_LOW_OFFSET  1
-#define BLUETOOTH_CONTROL_BUTTON_HIGH_OFFSET 2
-#define BLUETOOTH_CONTROL_RIGHT_X_OFFSET     3
-#define BLUETOOTH_CONTROL_RIGHT_Y_OFFSET     4
-#define BLUETOOTH_CONTROL_LEFT_X_OFFSET      5
-#define BLUETOOTH_CONTROL_LEFT_Y_OFFSET      6
+#define BLU_UNUSED_DATA_OFFSET 0
+#define BLU_BUTTON_LOW_OFFSET  1
+#define BLU_BUTTON_HIGH_OFFSET 2
+#define BLU_RIGHT_X_OFFSET     3
+#define BLU_RIGHT_Y_OFFSET     4
+#define BLU_LEFT_X_OFFSET      5
+#define BLU_LEFT_Y_OFFSET      6
 
-static uint32_t BLUETOOTH_CONTROL_maxDataValue;
+static uint32_t BLU_maxDataValue;
 
-static T_BLUETOOTH_CONTROL_Data BLUETOOTH_CONTROL_DATA_lastData = { .leftX = 128, .leftY = 128, .rightX = 128, .rightY = 128, .button = BLUETOOTH_CONTROL_BUTTON_NONE};
+static T_BLU_Data BLU_DATA_lastData = { .leftX = 128, .leftY = 128, .rightX = 128, .rightY = 128, .button = BLU_BUTTON_NONE};
 
-static void                       BLUETOOTH_CONTROL_sendCommand  (uint8_t  p_command                                               );
-static void                       BLUETOOTH_CONTROL_readData     (uint8_t *l_buffer                                                );
-static T_BLUETOOTH_CONTROL_BUTTON BLUETOOTH_CONTROL_getButton    (uint8_t *l_buffer                                                );
-static int32_t                    BLUETOOTH_CONTROL_normalizeData(uint32_t p_rawData, uint32_t p_maxValue, bool p_isInversionNeeded);
+static void         BLU_sendCommand  (uint8_t  p_command                                               );
+static void         BLU_readData     (uint8_t *l_buffer                                                );
+static T_BLU_BUTTON BLU_getButton    (uint8_t *l_buffer                                                );
+static int32_t      BLU_normalizeData(uint32_t p_rawData, uint32_t p_maxValue, bool p_isInversionNeeded);
 
-static void BLUETOOTH_CONTROL_sendCommand(uint8_t p_command)
+static void BLU_sendCommand(uint8_t p_command)
 {
   volatile uint16_t l_bitValue;
 
@@ -42,40 +42,40 @@ static void BLUETOOTH_CONTROL_sendCommand(uint8_t p_command)
     }
 
     SET_BIT(GPIOA->ODR  , BLUETOOTH_SPI_CLK_Pin);
-    UTILS_delayUs(5);
+    UTI_delayUs(5);
     CLEAR_BIT(GPIOA->ODR, BLUETOOTH_SPI_CLK_Pin);
-    UTILS_delayUs(5);
+    UTI_delayUs(5);
     SET_BIT(GPIOA->ODR  , BLUETOOTH_SPI_CLK_Pin);
   }
-  UTILS_delayUs(16);
+  UTI_delayUs(16);
 
   return;
 }
 
-static void BLUETOOTH_CONTROL_readData(uint8_t *l_buffer)
+static void BLU_readData(uint8_t *l_buffer)
 {
   volatile uint8_t  l_index;
   volatile uint16_t l_bitValue;
 
   /* Reset buffer */
-  for (l_index = 0; l_index < BLUETOOTH_CONTROL_DATA_BUFFER_LENGTH; l_index++)
+  for (l_index = 0; l_index < BLU_DATA_BUFFER_LENGTH; l_index++)
   {
     l_buffer[l_index] = 0x00;
   }
 
   CLEAR_BIT(GPIOC->ODR, BLUETOOTH_SPI_CS_Pin);
 
-  BLUETOOTH_CONTROL_sendCommand(0x01);
-  BLUETOOTH_CONTROL_sendCommand(0x42);
+  BLU_sendCommand(0x01);
+  BLU_sendCommand(0x42);
 
-  for (l_index = 0; l_index < BLUETOOTH_CONTROL_DATA_BUFFER_LENGTH; l_index++)
+  for (l_index = 0; l_index < BLU_DATA_BUFFER_LENGTH; l_index++)
   {
     for (l_bitValue = 0x01; l_bitValue < 0x100; l_bitValue <<= 1)
     {
       SET_BIT(GPIOA->ODR  , BLUETOOTH_SPI_CLK_Pin);
-      UTILS_delayUs(5);
+      UTI_delayUs(5);
       CLEAR_BIT(GPIOA->ODR, BLUETOOTH_SPI_CLK_Pin);
-      UTILS_delayUs(5);
+      UTI_delayUs(5);
       SET_BIT(GPIOA->ODR  , BLUETOOTH_SPI_CLK_Pin);
 
       if (READ_BIT(GPIOC->IDR, BLUETOOTH_SPI_DAT_Pin) != GPIO_PIN_RESET)
@@ -87,7 +87,7 @@ static void BLUETOOTH_CONTROL_readData(uint8_t *l_buffer)
         ; /* Nothing to do */
       }
     }
-      UTILS_delayUs(16);
+      UTI_delayUs(16);
   }
 
   SET_BIT(GPIOC->ODR, BLUETOOTH_SPI_CS_Pin);
@@ -95,15 +95,15 @@ static void BLUETOOTH_CONTROL_readData(uint8_t *l_buffer)
   return;
 }
 
-static T_BLUETOOTH_CONTROL_BUTTON BLUETOOTH_CONTROL_getButton(uint8_t *l_buffer)
+static T_BLU_BUTTON BLU_getButton(uint8_t *l_buffer)
 {
   uint16_t l_buttonRawValue;
   uint8_t  l_index;
 
-  l_buttonRawValue = (l_buffer[BLUETOOTH_CONTROL_BUTTON_HIGH_OFFSET] << 8) | l_buffer[BLUETOOTH_CONTROL_BUTTON_LOW_OFFSET];
+  l_buttonRawValue = (l_buffer[BLU_BUTTON_HIGH_OFFSET] << 8) | l_buffer[BLU_BUTTON_LOW_OFFSET];
 
-  /* Ignore BLUETOOTH_CONTROL_BUTTON_NONE value as it is not directly coded in raw data */
-  for (l_index = BLUETOOTH_CONTROL_BUTTON_SELECT; l_index < BLUETOOTH_CONTROL_BUTTON_COUNT_VALUE; l_index++)
+  /* Ignore BLU_BUTTON_NONE value as it is not directly coded in raw data */
+  for (l_index = BLU_BUTTON_SELECT; l_index < BLU_BUTTON_COUNT_VALUE; l_index++)
   {
     /* Stop decoding button data on 1st match (do not deal with multiple presses case) */
     if ((l_buttonRawValue & (1 << (l_index - 1))) == 0)
@@ -116,10 +116,10 @@ static T_BLUETOOTH_CONTROL_BUTTON BLUETOOTH_CONTROL_getButton(uint8_t *l_buffer)
     }
   }
 
-  return BLUETOOTH_CONTROL_BUTTON_NONE;
+  return BLU_BUTTON_NONE;
 }
 
-static int32_t BLUETOOTH_CONTROL_normalizeData(uint32_t p_rawData, uint32_t p_maxValue, bool p_isInversionNeeded)
+static int32_t BLU_normalizeData(uint32_t p_rawData, uint32_t p_maxValue, bool p_isInversionNeeded)
 {
   float l_normalizedData;
 
@@ -146,36 +146,36 @@ static int32_t BLUETOOTH_CONTROL_normalizeData(uint32_t p_rawData, uint32_t p_ma
   return (int32_t)l_normalizedData;
 }
 
-void BLUETOOTH_CONTROL_init(uint32_t p_maxDataValue)
+void BLU_init(uint32_t p_maxDataValue)
 {
   LOG_info("Initializing bluetooth control");
 
-  BLUETOOTH_CONTROL_maxDataValue = p_maxDataValue;
+  BLU_maxDataValue = p_maxDataValue;
 
   return;
 }
 
 
-void BLUETOOTH_CONTROL_receiveData(T_BLUETOOTH_CONTROL_Data *p_data)
+void BLU_receiveData(T_BLU_Data *p_data)
 {
-  uint8_t                    l_buffer[BLUETOOTH_CONTROL_DATA_BUFFER_LENGTH];
+  uint8_t                    l_buffer[BLU_DATA_BUFFER_LENGTH];
   uint32_t                   l_leftX;
   uint32_t                   l_leftY;
   uint32_t                   l_rightX;
   uint32_t                   l_rightY;
-  T_BLUETOOTH_CONTROL_BUTTON l_button;
+  T_BLU_BUTTON l_button;
 
   // LOG_info("Receiving Bluetooth data");
 
   /* Read raw data */
-  BLUETOOTH_CONTROL_readData(l_buffer);
+  BLU_readData(l_buffer);
 
   /* Start and decode raw data */
-  l_leftX  = l_buffer[BLUETOOTH_CONTROL_LEFT_X_OFFSET ];
-  l_leftY  = l_buffer[BLUETOOTH_CONTROL_LEFT_Y_OFFSET ];
-  l_rightX = l_buffer[BLUETOOTH_CONTROL_RIGHT_X_OFFSET];
-  l_rightY = l_buffer[BLUETOOTH_CONTROL_RIGHT_Y_OFFSET];
-  l_button = BLUETOOTH_CONTROL_getButton(l_buffer);
+  l_leftX  = l_buffer[BLU_LEFT_X_OFFSET ];
+  l_leftY  = l_buffer[BLU_LEFT_Y_OFFSET ];
+  l_rightX = l_buffer[BLU_RIGHT_X_OFFSET];
+  l_rightY = l_buffer[BLU_RIGHT_Y_OFFSET];
+  l_button = BLU_getButton(l_buffer);
 
   /* Deal with startup condition, while read data is not valid yet */
   if  ((l_leftX == 255 && l_leftY == 255 && l_rightX == 255 && l_rightY ==255)
@@ -185,20 +185,20 @@ void BLUETOOTH_CONTROL_receiveData(T_BLUETOOTH_CONTROL_Data *p_data)
     l_leftY  = 128;
     l_rightX = 128;
     l_rightY = 128;
-    l_button = BLUETOOTH_CONTROL_BUTTON_NONE;
+    l_button = BLU_BUTTON_NONE;
   }
   /* Use a confirmation mechanism, on 2 cycles, as glitches are observed */
-  else if ((l_leftX  == BLUETOOTH_CONTROL_DATA_lastData.leftX) &&
-           (l_leftY  == BLUETOOTH_CONTROL_DATA_lastData.leftY) &&
-           (l_rightX == BLUETOOTH_CONTROL_DATA_lastData.rightX) &&
-           (l_rightY == BLUETOOTH_CONTROL_DATA_lastData.rightY) &&
-           (l_button == BLUETOOTH_CONTROL_DATA_lastData.button))
+  else if ((l_leftX  == BLU_DATA_lastData.leftX) &&
+           (l_leftY  == BLU_DATA_lastData.leftY) &&
+           (l_rightX == BLU_DATA_lastData.rightX) &&
+           (l_rightY == BLU_DATA_lastData.rightY) &&
+           (l_button == BLU_DATA_lastData.button))
   {
     /* Normalize directions data in range [-100..100] */
-    p_data->leftX  = BLUETOOTH_CONTROL_normalizeData(l_leftX , BLUETOOTH_CONTROL_maxDataValue, false);
-    p_data->leftY  = BLUETOOTH_CONTROL_normalizeData(l_leftY , BLUETOOTH_CONTROL_maxDataValue, true );
-    p_data->rightX = BLUETOOTH_CONTROL_normalizeData(l_rightX, BLUETOOTH_CONTROL_maxDataValue, false);
-    p_data->rightY = BLUETOOTH_CONTROL_normalizeData(l_rightY, BLUETOOTH_CONTROL_maxDataValue, true );
+    p_data->leftX  = BLU_normalizeData(l_leftX , BLU_maxDataValue, false);
+    p_data->leftY  = BLU_normalizeData(l_leftY , BLU_maxDataValue, true );
+    p_data->rightX = BLU_normalizeData(l_rightX, BLU_maxDataValue, false);
+    p_data->rightY = BLU_normalizeData(l_rightY, BLU_maxDataValue, true );
     p_data->button = l_button;
   }
   else
@@ -207,11 +207,11 @@ void BLUETOOTH_CONTROL_receiveData(T_BLUETOOTH_CONTROL_Data *p_data)
   }
 
   /* Saved received data for later use in confirmation mechanism */
-  BLUETOOTH_CONTROL_DATA_lastData.leftX  = l_leftX;
-  BLUETOOTH_CONTROL_DATA_lastData.leftY  = l_leftY;
-  BLUETOOTH_CONTROL_DATA_lastData.rightX = l_rightX;
-  BLUETOOTH_CONTROL_DATA_lastData.rightY = l_rightY;
-  BLUETOOTH_CONTROL_DATA_lastData.button = l_button;
+  BLU_DATA_lastData.leftX  = l_leftX;
+  BLU_DATA_lastData.leftY  = l_leftY;
+  BLU_DATA_lastData.rightX = l_rightX;
+  BLU_DATA_lastData.rightY = l_rightY;
+  BLU_DATA_lastData.button = l_button;
 
   return;
 }

@@ -3,7 +3,7 @@
 
 #include "stm32f1xx_hal.h"
 
-void BATTERY_CHECK_init  (ADC_HandleTypeDef *p_adcHandle, RTC_HandleTypeDef *p_rtcHandle);
-void BATTERY_CHECK_update(void                                                          );
+void BAT_init  (ADC_HandleTypeDef *p_adcHandle, RTC_HandleTypeDef *p_rtcHandle);
+void BAT_update(void                                                          );
 
 #endif /* __BATTERY_CHECK_H */

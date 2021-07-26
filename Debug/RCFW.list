@@ -7,23 +7,23 @@ Idx Name          Size      VMA       LMA       File off  Algn
                   CONTENTS, ALLOC, LOAD, READONLY, DATA
   1 .text         000084b0  080001e4  080001e4  000101e4  2**2
                   CONTENTS, ALLOC, LOAD, READONLY, CODE
-  2 .rodata       00000770  08008694  08008694  00018694  2**2
+  2 .rodata       00000768  08008694  08008694  00018694  2**2
                   CONTENTS, ALLOC, LOAD, READONLY, DATA
-  3 .ARM.extab    00000000  08008e04  08008e04  00020098  2**0
+  3 .ARM.extab    00000000  08008dfc  08008dfc  00020098  2**0
                   CONTENTS
-  4 .ARM          00000000  08008e04  08008e04  00020098  2**0
+  4 .ARM          00000000  08008dfc  08008dfc  00020098  2**0
                   CONTENTS
-  5 .preinit_array 00000000  08008e04  08008e04  00020098  2**0
+  5 .preinit_array 00000000  08008dfc  08008dfc  00020098  2**0
                   CONTENTS, ALLOC, LOAD, DATA
-  6 .init_array   00000004  08008e04  08008e04  00018e04  2**2
+  6 .init_array   00000004  08008dfc  08008dfc  00018dfc  2**2
                   CONTENTS, ALLOC, LOAD, DATA
-  7 .fini_array   00000004  08008e08  08008e08  00018e08  2**2
+  7 .fini_array   00000004  08008e00  08008e00  00018e00  2**2
                   CONTENTS, ALLOC, LOAD, DATA
-  8 .data         00000098  20000000  08008e0c  00020000  2**2
+  8 .data         00000098  20000000  08008e04  00020000  2**2
                   CONTENTS, ALLOC, LOAD, DATA
-  9 .bss          00000744  20000098  08008ea4  00020098  2**2
+  9 .bss          00000744  20000098  08008e9c  00020098  2**2
                   ALLOC
- 10 ._user_heap_stack 00000604  200007dc  08008ea4  000207dc  2**0
+ 10 ._user_heap_stack 00000604  200007dc  08008e9c  000207dc  2**0
                   ALLOC
  11 .ARM.attributes 00000029  00000000  00000000  00020098  2**0
                   CONTENTS, READONLY
@@ -39,11 +39,11 @@ Idx Name          Size      VMA       LMA       File off  Algn
                   CONTENTS, READONLY, DEBUGGING, OCTETS
  17 .debug_line   00016852  00000000  00000000  0005b91a  2**0
                   CONTENTS, READONLY, DEBUGGING, OCTETS
- 18 .debug_str    000a521c  00000000  00000000  0007216c  2**0
+ 18 .debug_str    000a4f77  00000000  00000000  0007216c  2**0
                   CONTENTS, READONLY, DEBUGGING, OCTETS
- 19 .comment      00000053  00000000  00000000  00117388  2**0
+ 19 .comment      00000053  00000000  00000000  001170e3  2**0
                   CONTENTS, READONLY
- 20 .debug_frame  000053b4  00000000  00000000  001173dc  2**2
+ 20 .debug_frame  000053b4  00000000  00000000  00117138  2**2
                   CONTENTS, READONLY, DEBUGGING, OCTETS
 
 Disassembly of section .text:
@@ -679,9 +679,9 @@ int main(void)
   /* USER CODE BEGIN 2 */
 
   /* Setup console */
-  CONSOLE_init(&huart1);
+  CON_init(&huart1);
  8000856:	4838      	ldr	r0, [pc, #224]	; (8000938 <main+0x120>)
- 8000858:	f006 f830 	bl	80068bc <CONSOLE_init>
+ 8000858:	f006 f830 	bl	80068bc <CON_init>
 
   /* Display RCFW banner */
   MAIN_displayRcfwBanner();
@@ -703,9 +703,9 @@ int main(void)
   HAL_TIM_Base_Start_IT(&htim7);
  8000874:	4833      	ldr	r0, [pc, #204]	; (8000944 <main+0x12c>)
  8000876:	f003 fe2d 	bl	80044d4 <HAL_TIM_Base_Start_IT>
-  UTILS_init           (&htim7);
+  UTI_init             (&htim7);
  800087a:	4832      	ldr	r0, [pc, #200]	; (8000944 <main+0x12c>)
- 800087c:	f006 fe9e 	bl	80075bc <UTILS_init>
+ 800087c:	f006 fe9e 	bl	80075bc <UTI_init>
 
   LOG_debug("Started TIMER 7 (utilities)");
  8000880:	4931      	ldr	r1, [pc, #196]	; (8000948 <main+0x130>)
@@ -759,10 +759,10 @@ int main(void)
  80008ce:	f006 fd49 	bl	8007364 <LOG_log>
 
   /* Initialize battery monitor */
-  BATTERY_CHECK_init(&hadc1, &hrtc);
+  BAT_init(&hadc1, &hrtc);
  80008d2:	491a      	ldr	r1, [pc, #104]	; (800093c <main+0x124>)
  80008d4:	4826      	ldr	r0, [pc, #152]	; (8000970 <main+0x158>)
- 80008d6:	f005 fd79 	bl	80063cc <BATTERY_CHECK_init>
+ 80008d6:	f005 fd79 	bl	80063cc <BAT_init>
 
   /* Initialize PWM channels */
   HAL_TIM_PWM_Start(&htim8, TIM_CHANNEL_1);
@@ -788,39 +788,39 @@ int main(void)
  80008fe:	f006 fd31 	bl	8007364 <LOG_log>
 
   /* Initialize bluetooth control */
-  BLUETOOTH_CONTROL_init(DRIVE_MAXIMUM_SPEED);
+  BLU_init(DRV_MAXIMUM_SPEED);
  8000902:	203c      	movs	r0, #60	; 0x3c
- 8000904:	f005 ff30 	bl	8006768 <BLUETOOTH_CONTROL_init>
+ 8000904:	f005 ff30 	bl	8006768 <BLU_init>
 
   /* Initialize driving module */
-  DRIVE_init(&htim8);
+  DRV_init(&htim8);
  8000908:	4817      	ldr	r0, [pc, #92]	; (8000968 <main+0x150>)
- 800090a:	f005 fffb 	bl	8006904 <DRIVE_init>
+ 800090a:	f005 fffb 	bl	8006904 <DRV_init>
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
   while (1)
   {
-    BATTERY_CHECK_update         (              );
- 800090e:	f005 fd91 	bl	8006434 <BATTERY_CHECK_update>
-    CONSOLE_receiveData          (              );
- 8000912:	f005 ffe7 	bl	80068e4 <CONSOLE_receiveData>
-    BLUETOOTH_CONTROL_receiveData(&bluetoothData);
+    BAT_update        (                );
+ 800090e:	f005 fd91 	bl	8006434 <BAT_update>
+    CON_receiveData   (                );
+ 8000912:	f005 ffe7 	bl	80068e4 <CON_receiveData>
+    BLU_receiveData   (&l_bluetoothData);
  8000916:	1d3b      	adds	r3, r7, #4
  8000918:	4618      	mov	r0, r3
- 800091a:	f005 ff39 	bl	8006790 <BLUETOOTH_CONTROL_receiveData>
-    DRIVE_update                 (&bluetoothData);
+ 800091a:	f005 ff39 	bl	8006790 <BLU_receiveData>
+    DRV_update        (&l_bluetoothData);
  800091e:	1d3b      	adds	r3, r7, #4
  8000920:	4618      	mov	r0, r3
- 8000922:	f006 f887 	bl	8006a34 <DRIVE_update>
-    MAIN_updateLedMode           (&bluetoothData);
+ 8000922:	f006 f887 	bl	8006a34 <DRV_update>
+    MAIN_updateLedMode(&l_bluetoothData);
  8000926:	1d3b      	adds	r3, r7, #4
  8000928:	4618      	mov	r0, r3
  800092a:	f000 fcd9 	bl	80012e0 <MAIN_updateLedMode>
-    UTILS_delayUs                (10000         );
+    UTI_delayUs       (10000           );
  800092e:	f242 7010 	movw	r0, #10000	; 0x2710
- 8000932:	f006 fe57 	bl	80075e4 <UTILS_delayUs>
-    BATTERY_CHECK_update         (              );
+ 8000932:	f006 fe57 	bl	80075e4 <UTI_delayUs>
+    BAT_update        (                );
  8000936:	e7ea      	b.n	800090e <main+0xf6>
  8000938:	200004b0 	.word	0x200004b0
  800093c:	20000524 	.word	0x20000524
@@ -2525,7 +2525,7 @@ static void MAIN_displayRcfwBanner(void)
 
 080012e0 <MAIN_updateLedMode>:
 
-static void MAIN_updateLedMode(T_BLUETOOTH_CONTROL_Data *data)
+static void MAIN_updateLedMode(T_BLU_Data *data)
 {
  80012e0:	b580      	push	{r7, lr}
  80012e2:	b084      	sub	sp, #16
@@ -2552,28 +2552,28 @@ static void MAIN_updateLedMode(T_BLUETOOTH_CONTROL_Data *data)
  8001308:	08001317 	.word	0x08001317
  800130c:	0800131d 	.word	0x0800131d
   {
-    case BLUETOOTH_CONTROL_BUTTON_PAD_UP:
+    case BLU_BUTTON_PAD_UP:
       requestLedMode = LED_MODE_FORCED_ON;
  8001310:	2301      	movs	r3, #1
  8001312:	73fb      	strb	r3, [r7, #15]
       break;
  8001314:	e00b      	b.n	800132e <MAIN_updateLedMode+0x4e>
 
-    case BLUETOOTH_CONTROL_BUTTON_PAD_DOWN:
+    case BLU_BUTTON_PAD_DOWN:
       requestLedMode = LED_MODE_FORCED_OFF;
  8001316:	2300      	movs	r3, #0
  8001318:	73fb      	strb	r3, [r7, #15]
       break;
  800131a:	e008      	b.n	800132e <MAIN_updateLedMode+0x4e>
 
-    case BLUETOOTH_CONTROL_BUTTON_PAD_LEFT:
+    case BLU_BUTTON_PAD_LEFT:
       requestLedMode = LED_MODE_BLINK_SLOW;
  800131c:	2302      	movs	r3, #2
  800131e:	73fb      	strb	r3, [r7, #15]
       break;
  8001320:	e005      	b.n	800132e <MAIN_updateLedMode+0x4e>
 
-    case BLUETOOTH_CONTROL_BUTTON_PAD_RIGHT:
+    case BLU_BUTTON_PAD_RIGHT:
       requestLedMode = LED_MODE_BLINK_FAST;
  8001322:	2303      	movs	r3, #3
  8001324:	73fb      	strb	r3, [r7, #15]
@@ -2655,8 +2655,8 @@ void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
  8001374:	4293      	cmp	r3, r2
  8001376:	d102      	bne.n	800137e <HAL_UART_RxCpltCallback+0x16>
   {
-    CONSOLE_receiveData();
- 8001378:	f005 fab4 	bl	80068e4 <CONSOLE_receiveData>
+    CON_receiveData();
+ 8001378:	f005 fab4 	bl	80068e4 <CON_receiveData>
   }
   else
   {
@@ -2669,9 +2669,9 @@ void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
  8001380:	4a05      	ldr	r2, [pc, #20]	; (8001398 <HAL_UART_RxCpltCallback+0x30>)
  8001382:	4293      	cmp	r3, r2
  8001384:	d102      	bne.n	800138c <HAL_UART_RxCpltCallback+0x24>
-    MASTER_CONTROL_receiveData(&huart2);
+    MAS_receiveData(&huart2);
  8001386:	4804      	ldr	r0, [pc, #16]	; (8001398 <HAL_UART_RxCpltCallback+0x30>)
- 8001388:	f006 f832 	bl	80073f0 <MASTER_CONTROL_receiveData>
+ 8001388:	f006 f832 	bl	80073f0 <MAS_receiveData>
 }
  800138c:	bf00      	nop
  800138e:	3708      	adds	r7, #8
@@ -4097,7 +4097,7 @@ LoopFillZerobss:
   ldr r1, =_edata
  8001b04:	20000098 	.word	0x20000098
   ldr r2, =_sidata
- 8001b08:	08008e0c 	.word	0x08008e0c
+ 8001b08:	08008e04 	.word	0x08008e04
   ldr r2, =_sbss
  8001b0c:	20000098 	.word	0x20000098
   ldr r4, =_ebss
@@ -8405,7 +8405,7 @@ if (((RCC_ClkInitStruct->ClockType) & RCC_CLOCKTYPE_PCLK1) == RCC_CLOCKTYPE_PCLK
  800335a:	bf00      	nop
  800335c:	40022000 	.word	0x40022000
  8003360:	40021000 	.word	0x40021000
- 8003364:	08008d54 	.word	0x08008d54
+ 8003364:	08008d4c 	.word	0x08008d4c
  8003368:	20000000 	.word	0x20000000
  800336c:	20000004 	.word	0x20000004
 
@@ -8601,7 +8601,7 @@ uint32_t HAL_RCC_GetPCLK1Freq(void)
  8003460:	4618      	mov	r0, r3
  8003462:	bd80      	pop	{r7, pc}
  8003464:	40021000 	.word	0x40021000
- 8003468:	08008d64 	.word	0x08008d64
+ 8003468:	08008d5c 	.word	0x08008d5c
 
 0800346c <HAL_RCC_GetPCLK2Freq>:
   * @note   Each time PCLK2 changes, this function must be called to update the
@@ -8627,7 +8627,7 @@ uint32_t HAL_RCC_GetPCLK2Freq(void)
  8003488:	4618      	mov	r0, r3
  800348a:	bd80      	pop	{r7, pc}
  800348c:	40021000 	.word	0x40021000
- 8003490:	08008d64 	.word	0x08008d64
+ 8003490:	08008d5c 	.word	0x08008d5c
 
 08003494 <RCC_Delay>:
   * @brief  This function provides delay (in milliseconds) based on CPU cycles method.
@@ -17375,12 +17375,12 @@ static void UART_SetConfig(UART_HandleTypeDef *huart)
  80063c4:	40013800 	.word	0x40013800
  80063c8:	51eb851f 	.word	0x51eb851f
 
-080063cc <BATTERY_CHECK_init>:
-static ADC_HandleTypeDef *BATTERY_CHECK_adcHandle;
-static RTC_HandleTypeDef *BATTERY_CHECK_rtcHandle;
-static RTC_TimeTypeDef    BATTERY_CHECK_lastReadTime;
+080063cc <BAT_init>:
+static ADC_HandleTypeDef *BAT_adcHandle;
+static RTC_HandleTypeDef *BAT_rtcHandle;
+static RTC_TimeTypeDef    BAT_lastReadTime;
 
-void BATTERY_CHECK_init(ADC_HandleTypeDef *p_adcHandle, RTC_HandleTypeDef *p_rtcHandle)
+void BAT_init(ADC_HandleTypeDef *p_adcHandle, RTC_HandleTypeDef *p_rtcHandle)
 {
  80063cc:	b580      	push	{r7, lr}
  80063ce:	b084      	sub	sp, #16
@@ -17391,36 +17391,36 @@ void BATTERY_CHECK_init(ADC_HandleTypeDef *p_adcHandle, RTC_HandleTypeDef *p_rtc
   RTC_DateTypeDef l_date;
 
   LOG_info("Initializing battery check");
- 80063d6:	4913      	ldr	r1, [pc, #76]	; (8006424 <BATTERY_CHECK_init+0x58>)
+ 80063d6:	4913      	ldr	r1, [pc, #76]	; (8006424 <BAT_init+0x58>)
  80063d8:	2001      	movs	r0, #1
  80063da:	f000 ffc3 	bl	8007364 <LOG_log>
 
-  BATTERY_CHECK_adcHandle = p_adcHandle;
- 80063de:	4a12      	ldr	r2, [pc, #72]	; (8006428 <BATTERY_CHECK_init+0x5c>)
+  BAT_adcHandle = p_adcHandle;
+ 80063de:	4a12      	ldr	r2, [pc, #72]	; (8006428 <BAT_init+0x5c>)
  80063e0:	687b      	ldr	r3, [r7, #4]
  80063e2:	6013      	str	r3, [r2, #0]
-  BATTERY_CHECK_rtcHandle = p_rtcHandle;
- 80063e4:	4a11      	ldr	r2, [pc, #68]	; (800642c <BATTERY_CHECK_init+0x60>)
+  BAT_rtcHandle = p_rtcHandle;
+ 80063e4:	4a11      	ldr	r2, [pc, #68]	; (800642c <BAT_init+0x60>)
  80063e6:	683b      	ldr	r3, [r7, #0]
  80063e8:	6013      	str	r3, [r2, #0]
 
-  HAL_RTC_GetTime(BATTERY_CHECK_rtcHandle, &l_time, RTC_FORMAT_BCD);
- 80063ea:	4b10      	ldr	r3, [pc, #64]	; (800642c <BATTERY_CHECK_init+0x60>)
+  HAL_RTC_GetTime(BAT_rtcHandle, &l_time, RTC_FORMAT_BCD);
+ 80063ea:	4b10      	ldr	r3, [pc, #64]	; (800642c <BAT_init+0x60>)
  80063ec:	681b      	ldr	r3, [r3, #0]
  80063ee:	f107 010c 	add.w	r1, r7, #12
  80063f2:	2201      	movs	r2, #1
  80063f4:	4618      	mov	r0, r3
  80063f6:	f7fd fb35 	bl	8003a64 <HAL_RTC_GetTime>
-  HAL_RTC_GetDate(BATTERY_CHECK_rtcHandle, &l_date, RTC_FORMAT_BCD);
- 80063fa:	4b0c      	ldr	r3, [pc, #48]	; (800642c <BATTERY_CHECK_init+0x60>)
+  HAL_RTC_GetDate(BAT_rtcHandle, &l_date, RTC_FORMAT_BCD);
+ 80063fa:	4b0c      	ldr	r3, [pc, #48]	; (800642c <BAT_init+0x60>)
  80063fc:	681b      	ldr	r3, [r3, #0]
  80063fe:	f107 0108 	add.w	r1, r7, #8
  8006402:	2201      	movs	r2, #1
  8006404:	4618      	mov	r0, r3
  8006406:	f7fd fcbb 	bl	8003d80 <HAL_RTC_GetDate>
 
-  BATTERY_CHECK_lastReadTime = l_time;
- 800640a:	4b09      	ldr	r3, [pc, #36]	; (8006430 <BATTERY_CHECK_init+0x64>)
+  BAT_lastReadTime = l_time;
+ 800640a:	4b09      	ldr	r3, [pc, #36]	; (8006430 <BAT_init+0x64>)
  800640c:	f107 020c 	add.w	r2, r7, #12
  8006410:	6812      	ldr	r2, [r2, #0]
  8006412:	4611      	mov	r1, r2
@@ -17440,9 +17440,9 @@ void BATTERY_CHECK_init(ADC_HandleTypeDef *p_adcHandle, RTC_HandleTypeDef *p_rtc
  800642c:	200000bc 	.word	0x200000bc
  8006430:	200000c0 	.word	0x200000c0
 
-08006434 <BATTERY_CHECK_update>:
+08006434 <BAT_update>:
 
-void BATTERY_CHECK_update(void)
+void BAT_update(void)
 {
  8006434:	b580      	push	{r7, lr}
  8006436:	b084      	sub	sp, #16
@@ -17451,15 +17451,15 @@ void BATTERY_CHECK_update(void)
   RTC_DateTypeDef l_date;
   uint32_t        l_adcRawData;
 
-  HAL_RTC_GetTime(BATTERY_CHECK_rtcHandle, &l_time, RTC_FORMAT_BCD);
- 800643a:	4b2c      	ldr	r3, [pc, #176]	; (80064ec <BATTERY_CHECK_update+0xb8>)
+  HAL_RTC_GetTime(BAT_rtcHandle, &l_time, RTC_FORMAT_BCD);
+ 800643a:	4b2c      	ldr	r3, [pc, #176]	; (80064ec <BAT_update+0xb8>)
  800643c:	681b      	ldr	r3, [r3, #0]
  800643e:	f107 0108 	add.w	r1, r7, #8
  8006442:	2201      	movs	r2, #1
  8006444:	4618      	mov	r0, r3
  8006446:	f7fd fb0d 	bl	8003a64 <HAL_RTC_GetTime>
-  HAL_RTC_GetDate(BATTERY_CHECK_rtcHandle, &l_date, RTC_FORMAT_BCD);
- 800644a:	4b28      	ldr	r3, [pc, #160]	; (80064ec <BATTERY_CHECK_update+0xb8>)
+  HAL_RTC_GetDate(BAT_rtcHandle, &l_date, RTC_FORMAT_BCD);
+ 800644a:	4b28      	ldr	r3, [pc, #160]	; (80064ec <BAT_update+0xb8>)
  800644c:	681b      	ldr	r3, [r3, #0]
  800644e:	1d39      	adds	r1, r7, #4
  8006450:	2201      	movs	r2, #1
@@ -17480,13 +17480,13 @@ void BATTERY_CHECK_update(void)
  8006470:	4413      	add	r3, r2
  8006472:	7aba      	ldrb	r2, [r7, #10]
  8006474:	441a      	add	r2, r3
-      (BATTERY_CHECK_lastReadTime.Hours * 3600 + BATTERY_CHECK_lastReadTime.Minutes * 60 + BATTERY_CHECK_lastReadTime.Seconds) >= BATTERY_CHECK_POLLING_PERIOD_IN_S)
- 8006476:	4b1e      	ldr	r3, [pc, #120]	; (80064f0 <BATTERY_CHECK_update+0xbc>)
+      (BAT_lastReadTime.Hours * 3600 + BAT_lastReadTime.Minutes * 60 + BAT_lastReadTime.Seconds) >= BAT_POLLING_PERIOD_IN_S)
+ 8006476:	4b1e      	ldr	r3, [pc, #120]	; (80064f0 <BAT_update+0xbc>)
  8006478:	781b      	ldrb	r3, [r3, #0]
  800647a:	4619      	mov	r1, r3
  800647c:	f44f 6361 	mov.w	r3, #3600	; 0xe10
  8006480:	fb03 f101 	mul.w	r1, r3, r1
- 8006484:	4b1a      	ldr	r3, [pc, #104]	; (80064f0 <BATTERY_CHECK_update+0xbc>)
+ 8006484:	4b1a      	ldr	r3, [pc, #104]	; (80064f0 <BAT_update+0xbc>)
  8006486:	785b      	ldrb	r3, [r3, #1]
  8006488:	4618      	mov	r0, r3
  800648a:	4603      	mov	r3, r0
@@ -17494,27 +17494,27 @@ void BATTERY_CHECK_update(void)
  800648e:	1a1b      	subs	r3, r3, r0
  8006490:	009b      	lsls	r3, r3, #2
  8006492:	440b      	add	r3, r1
- 8006494:	4916      	ldr	r1, [pc, #88]	; (80064f0 <BATTERY_CHECK_update+0xbc>)
+ 8006494:	4916      	ldr	r1, [pc, #88]	; (80064f0 <BAT_update+0xbc>)
  8006496:	7889      	ldrb	r1, [r1, #2]
  8006498:	440b      	add	r3, r1
   if ((l_time.Hours * 3600 + l_time.Minutes * 60 + l_time.Seconds) -
  800649a:	1ad3      	subs	r3, r2, r3
  800649c:	2b09      	cmp	r3, #9
- 800649e:	dd20      	ble.n	80064e2 <BATTERY_CHECK_update+0xae>
+ 800649e:	dd20      	ble.n	80064e2 <BAT_update+0xae>
   {
-    HAL_ADC_Start                (BATTERY_CHECK_adcHandle);
- 80064a0:	4b14      	ldr	r3, [pc, #80]	; (80064f4 <BATTERY_CHECK_update+0xc0>)
+    HAL_ADC_Start                (BAT_adcHandle);
+ 80064a0:	4b14      	ldr	r3, [pc, #80]	; (80064f4 <BAT_update+0xc0>)
  80064a2:	681b      	ldr	r3, [r3, #0]
  80064a4:	4618      	mov	r0, r3
  80064a6:	f7fb fc83 	bl	8001db0 <HAL_ADC_Start>
-    HAL_ADC_PollForConversion    (BATTERY_CHECK_adcHandle, HAL_MAX_DELAY);
- 80064aa:	4b12      	ldr	r3, [pc, #72]	; (80064f4 <BATTERY_CHECK_update+0xc0>)
+    HAL_ADC_PollForConversion    (BAT_adcHandle, HAL_MAX_DELAY);
+ 80064aa:	4b12      	ldr	r3, [pc, #72]	; (80064f4 <BAT_update+0xc0>)
  80064ac:	681b      	ldr	r3, [r3, #0]
  80064ae:	f04f 31ff 	mov.w	r1, #4294967295
  80064b2:	4618      	mov	r0, r3
  80064b4:	f7fb fd2a 	bl	8001f0c <HAL_ADC_PollForConversion>
-    l_adcRawData = HAL_ADC_GetValue(BATTERY_CHECK_adcHandle);
- 80064b8:	4b0e      	ldr	r3, [pc, #56]	; (80064f4 <BATTERY_CHECK_update+0xc0>)
+    l_adcRawData = HAL_ADC_GetValue(BAT_adcHandle);
+ 80064b8:	4b0e      	ldr	r3, [pc, #56]	; (80064f4 <BAT_update+0xc0>)
  80064ba:	681b      	ldr	r3, [r3, #0]
  80064bc:	4618      	mov	r0, r3
  80064be:	f7fb fe2b 	bl	8002118 <HAL_ADC_GetValue>
@@ -17522,12 +17522,12 @@ void BATTERY_CHECK_update(void)
 
     LOG_debug("Battery level: %u", l_adcRawData);
  80064c4:	68fa      	ldr	r2, [r7, #12]
- 80064c6:	490c      	ldr	r1, [pc, #48]	; (80064f8 <BATTERY_CHECK_update+0xc4>)
+ 80064c6:	490c      	ldr	r1, [pc, #48]	; (80064f8 <BAT_update+0xc4>)
  80064c8:	2000      	movs	r0, #0
  80064ca:	f000 ff4b 	bl	8007364 <LOG_log>
 
-    BATTERY_CHECK_lastReadTime = l_time;
- 80064ce:	4b08      	ldr	r3, [pc, #32]	; (80064f0 <BATTERY_CHECK_update+0xbc>)
+    BAT_lastReadTime = l_time;
+ 80064ce:	4b08      	ldr	r3, [pc, #32]	; (80064f0 <BAT_update+0xbc>)
  80064d0:	f107 0208 	add.w	r2, r7, #8
  80064d4:	6812      	ldr	r2, [r2, #0]
  80064d6:	4611      	mov	r1, r2
@@ -17553,12 +17553,12 @@ void BATTERY_CHECK_update(void)
  80064f4:	200000b8 	.word	0x200000b8
  80064f8:	08008998 	.word	0x08008998
 
-080064fc <BLUETOOTH_CONTROL_sendCommand>:
-static void                       BLUETOOTH_CONTROL_readData     (uint8_t *l_buffer                                                );
-static T_BLUETOOTH_CONTROL_BUTTON BLUETOOTH_CONTROL_getButton    (uint8_t *l_buffer                                                );
-static int32_t                    BLUETOOTH_CONTROL_normalizeData(uint32_t p_rawData, uint32_t p_maxValue, bool p_isInversionNeeded);
+080064fc <BLU_sendCommand>:
+static void         BLU_readData     (uint8_t *l_buffer                                                );
+static T_BLU_BUTTON BLU_getButton    (uint8_t *l_buffer                                                );
+static int32_t      BLU_normalizeData(uint32_t p_rawData, uint32_t p_maxValue, bool p_isInversionNeeded);
 
-static void BLUETOOTH_CONTROL_sendCommand(uint8_t p_command)
+static void BLU_sendCommand(uint8_t p_command)
 {
  80064fc:	b580      	push	{r7, lr}
  80064fe:	b084      	sub	sp, #16
@@ -17570,7 +17570,7 @@ static void BLUETOOTH_CONTROL_sendCommand(uint8_t p_command)
   for (l_bitValue = 0x01; l_bitValue < 0x0100; l_bitValue <<= 1)
  8006506:	2301      	movs	r3, #1
  8006508:	81fb      	strh	r3, [r7, #14]
- 800650a:	e030      	b.n	800656e <BLUETOOTH_CONTROL_sendCommand+0x72>
+ 800650a:	e030      	b.n	800656e <BLU_sendCommand+0x72>
   {
     if ((l_bitValue & p_command) != 0)
  800650c:	89fb      	ldrh	r3, [r7, #14]
@@ -17579,48 +17579,48 @@ static void BLUETOOTH_CONTROL_sendCommand(uint8_t p_command)
  8006512:	79fb      	ldrb	r3, [r7, #7]
  8006514:	4013      	ands	r3, r2
  8006516:	2b00      	cmp	r3, #0
- 8006518:	d006      	beq.n	8006528 <BLUETOOTH_CONTROL_sendCommand+0x2c>
+ 8006518:	d006      	beq.n	8006528 <BLU_sendCommand+0x2c>
     {
       SET_BIT(GPIOC->ODR, BLUETOOTH_SPI_CMD_Pin);
- 800651a:	4b1a      	ldr	r3, [pc, #104]	; (8006584 <BLUETOOTH_CONTROL_sendCommand+0x88>)
+ 800651a:	4b1a      	ldr	r3, [pc, #104]	; (8006584 <BLU_sendCommand+0x88>)
  800651c:	68db      	ldr	r3, [r3, #12]
- 800651e:	4a19      	ldr	r2, [pc, #100]	; (8006584 <BLUETOOTH_CONTROL_sendCommand+0x88>)
+ 800651e:	4a19      	ldr	r2, [pc, #100]	; (8006584 <BLU_sendCommand+0x88>)
  8006520:	f043 0302 	orr.w	r3, r3, #2
  8006524:	60d3      	str	r3, [r2, #12]
- 8006526:	e005      	b.n	8006534 <BLUETOOTH_CONTROL_sendCommand+0x38>
+ 8006526:	e005      	b.n	8006534 <BLU_sendCommand+0x38>
     }
     else
     {
       CLEAR_BIT(GPIOC->ODR, BLUETOOTH_SPI_CMD_Pin);
- 8006528:	4b16      	ldr	r3, [pc, #88]	; (8006584 <BLUETOOTH_CONTROL_sendCommand+0x88>)
+ 8006528:	4b16      	ldr	r3, [pc, #88]	; (8006584 <BLU_sendCommand+0x88>)
  800652a:	68db      	ldr	r3, [r3, #12]
- 800652c:	4a15      	ldr	r2, [pc, #84]	; (8006584 <BLUETOOTH_CONTROL_sendCommand+0x88>)
+ 800652c:	4a15      	ldr	r2, [pc, #84]	; (8006584 <BLU_sendCommand+0x88>)
  800652e:	f023 0302 	bic.w	r3, r3, #2
  8006532:	60d3      	str	r3, [r2, #12]
     }
 
     SET_BIT(GPIOA->ODR  , BLUETOOTH_SPI_CLK_Pin);
- 8006534:	4b14      	ldr	r3, [pc, #80]	; (8006588 <BLUETOOTH_CONTROL_sendCommand+0x8c>)
+ 8006534:	4b14      	ldr	r3, [pc, #80]	; (8006588 <BLU_sendCommand+0x8c>)
  8006536:	68db      	ldr	r3, [r3, #12]
- 8006538:	4a13      	ldr	r2, [pc, #76]	; (8006588 <BLUETOOTH_CONTROL_sendCommand+0x8c>)
+ 8006538:	4a13      	ldr	r2, [pc, #76]	; (8006588 <BLU_sendCommand+0x8c>)
  800653a:	f043 0310 	orr.w	r3, r3, #16
  800653e:	60d3      	str	r3, [r2, #12]
-    UTILS_delayUs(5);
+    UTI_delayUs(5);
  8006540:	2005      	movs	r0, #5
- 8006542:	f001 f84f 	bl	80075e4 <UTILS_delayUs>
+ 8006542:	f001 f84f 	bl	80075e4 <UTI_delayUs>
     CLEAR_BIT(GPIOA->ODR, BLUETOOTH_SPI_CLK_Pin);
- 8006546:	4b10      	ldr	r3, [pc, #64]	; (8006588 <BLUETOOTH_CONTROL_sendCommand+0x8c>)
+ 8006546:	4b10      	ldr	r3, [pc, #64]	; (8006588 <BLU_sendCommand+0x8c>)
  8006548:	68db      	ldr	r3, [r3, #12]
- 800654a:	4a0f      	ldr	r2, [pc, #60]	; (8006588 <BLUETOOTH_CONTROL_sendCommand+0x8c>)
+ 800654a:	4a0f      	ldr	r2, [pc, #60]	; (8006588 <BLU_sendCommand+0x8c>)
  800654c:	f023 0310 	bic.w	r3, r3, #16
  8006550:	60d3      	str	r3, [r2, #12]
-    UTILS_delayUs(5);
+    UTI_delayUs(5);
  8006552:	2005      	movs	r0, #5
- 8006554:	f001 f846 	bl	80075e4 <UTILS_delayUs>
+ 8006554:	f001 f846 	bl	80075e4 <UTI_delayUs>
     SET_BIT(GPIOA->ODR  , BLUETOOTH_SPI_CLK_Pin);
- 8006558:	4b0b      	ldr	r3, [pc, #44]	; (8006588 <BLUETOOTH_CONTROL_sendCommand+0x8c>)
+ 8006558:	4b0b      	ldr	r3, [pc, #44]	; (8006588 <BLU_sendCommand+0x8c>)
  800655a:	68db      	ldr	r3, [r3, #12]
- 800655c:	4a0a      	ldr	r2, [pc, #40]	; (8006588 <BLUETOOTH_CONTROL_sendCommand+0x8c>)
+ 800655c:	4a0a      	ldr	r2, [pc, #40]	; (8006588 <BLU_sendCommand+0x8c>)
  800655e:	f043 0310 	orr.w	r3, r3, #16
  8006562:	60d3      	str	r3, [r2, #12]
   for (l_bitValue = 0x01; l_bitValue < 0x0100; l_bitValue <<= 1)
@@ -17632,11 +17632,11 @@ static void BLUETOOTH_CONTROL_sendCommand(uint8_t p_command)
  800656e:	89fb      	ldrh	r3, [r7, #14]
  8006570:	b29b      	uxth	r3, r3
  8006572:	2bff      	cmp	r3, #255	; 0xff
- 8006574:	d9ca      	bls.n	800650c <BLUETOOTH_CONTROL_sendCommand+0x10>
+ 8006574:	d9ca      	bls.n	800650c <BLU_sendCommand+0x10>
   }
-  UTILS_delayUs(16);
+  UTI_delayUs(16);
  8006576:	2010      	movs	r0, #16
- 8006578:	f001 f834 	bl	80075e4 <UTILS_delayUs>
+ 8006578:	f001 f834 	bl	80075e4 <UTI_delayUs>
 
   return;
  800657c:	bf00      	nop
@@ -17647,9 +17647,9 @@ static void BLUETOOTH_CONTROL_sendCommand(uint8_t p_command)
  8006584:	40011000 	.word	0x40011000
  8006588:	40010800 	.word	0x40010800
 
-0800658c <BLUETOOTH_CONTROL_readData>:
+0800658c <BLU_readData>:
 
-static void BLUETOOTH_CONTROL_readData(uint8_t *l_buffer)
+static void BLU_readData(uint8_t *l_buffer)
 {
  800658c:	b580      	push	{r7, lr}
  800658e:	b084      	sub	sp, #16
@@ -17659,10 +17659,10 @@ static void BLUETOOTH_CONTROL_readData(uint8_t *l_buffer)
   volatile uint16_t l_bitValue;
 
   /* Reset buffer */
-  for (l_index = 0; l_index < BLUETOOTH_CONTROL_DATA_BUFFER_LENGTH; l_index++)
+  for (l_index = 0; l_index < BLU_DATA_BUFFER_LENGTH; l_index++)
  8006594:	2300      	movs	r3, #0
  8006596:	73fb      	strb	r3, [r7, #15]
- 8006598:	e00b      	b.n	80065b2 <BLUETOOTH_CONTROL_readData+0x26>
+ 8006598:	e00b      	b.n	80065b2 <BLU_readData+0x26>
   {
     l_buffer[l_index] = 0x00;
  800659a:	7bfb      	ldrb	r3, [r7, #15]
@@ -17672,7 +17672,7 @@ static void BLUETOOTH_CONTROL_readData(uint8_t *l_buffer)
  80065a2:	4413      	add	r3, r2
  80065a4:	2200      	movs	r2, #0
  80065a6:	701a      	strb	r2, [r3, #0]
-  for (l_index = 0; l_index < BLUETOOTH_CONTROL_DATA_BUFFER_LENGTH; l_index++)
+  for (l_index = 0; l_index < BLU_DATA_BUFFER_LENGTH; l_index++)
  80065a8:	7bfb      	ldrb	r3, [r7, #15]
  80065aa:	b2db      	uxtb	r3, r3
  80065ac:	3301      	adds	r3, #1
@@ -17681,64 +17681,64 @@ static void BLUETOOTH_CONTROL_readData(uint8_t *l_buffer)
  80065b2:	7bfb      	ldrb	r3, [r7, #15]
  80065b4:	b2db      	uxtb	r3, r3
  80065b6:	2b06      	cmp	r3, #6
- 80065b8:	d9ef      	bls.n	800659a <BLUETOOTH_CONTROL_readData+0xe>
+ 80065b8:	d9ef      	bls.n	800659a <BLU_readData+0xe>
   }
 
   CLEAR_BIT(GPIOC->ODR, BLUETOOTH_SPI_CS_Pin);
- 80065ba:	4b2e      	ldr	r3, [pc, #184]	; (8006674 <BLUETOOTH_CONTROL_readData+0xe8>)
+ 80065ba:	4b2e      	ldr	r3, [pc, #184]	; (8006674 <BLU_readData+0xe8>)
  80065bc:	68db      	ldr	r3, [r3, #12]
- 80065be:	4a2d      	ldr	r2, [pc, #180]	; (8006674 <BLUETOOTH_CONTROL_readData+0xe8>)
+ 80065be:	4a2d      	ldr	r2, [pc, #180]	; (8006674 <BLU_readData+0xe8>)
  80065c0:	f023 0308 	bic.w	r3, r3, #8
  80065c4:	60d3      	str	r3, [r2, #12]
 
-  BLUETOOTH_CONTROL_sendCommand(0x01);
+  BLU_sendCommand(0x01);
  80065c6:	2001      	movs	r0, #1
- 80065c8:	f7ff ff98 	bl	80064fc <BLUETOOTH_CONTROL_sendCommand>
-  BLUETOOTH_CONTROL_sendCommand(0x42);
+ 80065c8:	f7ff ff98 	bl	80064fc <BLU_sendCommand>
+  BLU_sendCommand(0x42);
  80065cc:	2042      	movs	r0, #66	; 0x42
- 80065ce:	f7ff ff95 	bl	80064fc <BLUETOOTH_CONTROL_sendCommand>
+ 80065ce:	f7ff ff95 	bl	80064fc <BLU_sendCommand>
 
-  for (l_index = 0; l_index < BLUETOOTH_CONTROL_DATA_BUFFER_LENGTH; l_index++)
+  for (l_index = 0; l_index < BLU_DATA_BUFFER_LENGTH; l_index++)
  80065d2:	2300      	movs	r3, #0
  80065d4:	73fb      	strb	r3, [r7, #15]
- 80065d6:	e03f      	b.n	8006658 <BLUETOOTH_CONTROL_readData+0xcc>
+ 80065d6:	e03f      	b.n	8006658 <BLU_readData+0xcc>
   {
     for (l_bitValue = 0x01; l_bitValue < 0x100; l_bitValue <<= 1)
  80065d8:	2301      	movs	r3, #1
  80065da:	81bb      	strh	r3, [r7, #12]
- 80065dc:	e030      	b.n	8006640 <BLUETOOTH_CONTROL_readData+0xb4>
+ 80065dc:	e030      	b.n	8006640 <BLU_readData+0xb4>
     {
       SET_BIT(GPIOA->ODR  , BLUETOOTH_SPI_CLK_Pin);
- 80065de:	4b26      	ldr	r3, [pc, #152]	; (8006678 <BLUETOOTH_CONTROL_readData+0xec>)
+ 80065de:	4b26      	ldr	r3, [pc, #152]	; (8006678 <BLU_readData+0xec>)
  80065e0:	68db      	ldr	r3, [r3, #12]
- 80065e2:	4a25      	ldr	r2, [pc, #148]	; (8006678 <BLUETOOTH_CONTROL_readData+0xec>)
+ 80065e2:	4a25      	ldr	r2, [pc, #148]	; (8006678 <BLU_readData+0xec>)
  80065e4:	f043 0310 	orr.w	r3, r3, #16
  80065e8:	60d3      	str	r3, [r2, #12]
-      UTILS_delayUs(5);
+      UTI_delayUs(5);
  80065ea:	2005      	movs	r0, #5
- 80065ec:	f000 fffa 	bl	80075e4 <UTILS_delayUs>
+ 80065ec:	f000 fffa 	bl	80075e4 <UTI_delayUs>
       CLEAR_BIT(GPIOA->ODR, BLUETOOTH_SPI_CLK_Pin);
- 80065f0:	4b21      	ldr	r3, [pc, #132]	; (8006678 <BLUETOOTH_CONTROL_readData+0xec>)
+ 80065f0:	4b21      	ldr	r3, [pc, #132]	; (8006678 <BLU_readData+0xec>)
  80065f2:	68db      	ldr	r3, [r3, #12]
- 80065f4:	4a20      	ldr	r2, [pc, #128]	; (8006678 <BLUETOOTH_CONTROL_readData+0xec>)
+ 80065f4:	4a20      	ldr	r2, [pc, #128]	; (8006678 <BLU_readData+0xec>)
  80065f6:	f023 0310 	bic.w	r3, r3, #16
  80065fa:	60d3      	str	r3, [r2, #12]
-      UTILS_delayUs(5);
+      UTI_delayUs(5);
  80065fc:	2005      	movs	r0, #5
- 80065fe:	f000 fff1 	bl	80075e4 <UTILS_delayUs>
+ 80065fe:	f000 fff1 	bl	80075e4 <UTI_delayUs>
       SET_BIT(GPIOA->ODR  , BLUETOOTH_SPI_CLK_Pin);
- 8006602:	4b1d      	ldr	r3, [pc, #116]	; (8006678 <BLUETOOTH_CONTROL_readData+0xec>)
+ 8006602:	4b1d      	ldr	r3, [pc, #116]	; (8006678 <BLU_readData+0xec>)
  8006604:	68db      	ldr	r3, [r3, #12]
- 8006606:	4a1c      	ldr	r2, [pc, #112]	; (8006678 <BLUETOOTH_CONTROL_readData+0xec>)
+ 8006606:	4a1c      	ldr	r2, [pc, #112]	; (8006678 <BLU_readData+0xec>)
  8006608:	f043 0310 	orr.w	r3, r3, #16
  800660c:	60d3      	str	r3, [r2, #12]
 
       if (READ_BIT(GPIOC->IDR, BLUETOOTH_SPI_DAT_Pin) != GPIO_PIN_RESET)
- 800660e:	4b19      	ldr	r3, [pc, #100]	; (8006674 <BLUETOOTH_CONTROL_readData+0xe8>)
+ 800660e:	4b19      	ldr	r3, [pc, #100]	; (8006674 <BLU_readData+0xe8>)
  8006610:	689b      	ldr	r3, [r3, #8]
  8006612:	f003 0304 	and.w	r3, r3, #4
  8006616:	2b00      	cmp	r3, #0
- 8006618:	d00d      	beq.n	8006636 <BLUETOOTH_CONTROL_readData+0xaa>
+ 8006618:	d00d      	beq.n	8006636 <BLU_readData+0xaa>
       {
         l_buffer[l_index] |= l_bitValue;
  800661a:	89bb      	ldrh	r3, [r7, #12]
@@ -17764,16 +17764,16 @@ static void BLUETOOTH_CONTROL_readData(uint8_t *l_buffer)
  8006640:	89bb      	ldrh	r3, [r7, #12]
  8006642:	b29b      	uxth	r3, r3
  8006644:	2bff      	cmp	r3, #255	; 0xff
- 8006646:	d9ca      	bls.n	80065de <BLUETOOTH_CONTROL_readData+0x52>
+ 8006646:	d9ca      	bls.n	80065de <BLU_readData+0x52>
       else
       {
         ; /* Nothing to do */
       }
     }
-      UTILS_delayUs(16);
+      UTI_delayUs(16);
  8006648:	2010      	movs	r0, #16
- 800664a:	f000 ffcb 	bl	80075e4 <UTILS_delayUs>
-  for (l_index = 0; l_index < BLUETOOTH_CONTROL_DATA_BUFFER_LENGTH; l_index++)
+ 800664a:	f000 ffcb 	bl	80075e4 <UTI_delayUs>
+  for (l_index = 0; l_index < BLU_DATA_BUFFER_LENGTH; l_index++)
  800664e:	7bfb      	ldrb	r3, [r7, #15]
  8006650:	b2db      	uxtb	r3, r3
  8006652:	3301      	adds	r3, #1
@@ -17782,13 +17782,13 @@ static void BLUETOOTH_CONTROL_readData(uint8_t *l_buffer)
  8006658:	7bfb      	ldrb	r3, [r7, #15]
  800665a:	b2db      	uxtb	r3, r3
  800665c:	2b06      	cmp	r3, #6
- 800665e:	d9bb      	bls.n	80065d8 <BLUETOOTH_CONTROL_readData+0x4c>
+ 800665e:	d9bb      	bls.n	80065d8 <BLU_readData+0x4c>
   }
 
   SET_BIT(GPIOC->ODR, BLUETOOTH_SPI_CS_Pin);
- 8006660:	4b04      	ldr	r3, [pc, #16]	; (8006674 <BLUETOOTH_CONTROL_readData+0xe8>)
+ 8006660:	4b04      	ldr	r3, [pc, #16]	; (8006674 <BLU_readData+0xe8>)
  8006662:	68db      	ldr	r3, [r3, #12]
- 8006664:	4a03      	ldr	r2, [pc, #12]	; (8006674 <BLUETOOTH_CONTROL_readData+0xe8>)
+ 8006664:	4a03      	ldr	r2, [pc, #12]	; (8006674 <BLU_readData+0xe8>)
  8006666:	f043 0308 	orr.w	r3, r3, #8
  800666a:	60d3      	str	r3, [r2, #12]
 
@@ -17801,9 +17801,9 @@ static void BLUETOOTH_CONTROL_readData(uint8_t *l_buffer)
  8006674:	40011000 	.word	0x40011000
  8006678:	40010800 	.word	0x40010800
 
-0800667c <BLUETOOTH_CONTROL_getButton>:
+0800667c <BLU_getButton>:
 
-static T_BLUETOOTH_CONTROL_BUTTON BLUETOOTH_CONTROL_getButton(uint8_t *l_buffer)
+static T_BLU_BUTTON BLU_getButton(uint8_t *l_buffer)
 {
  800667c:	b480      	push	{r7}
  800667e:	b085      	sub	sp, #20
@@ -17812,7 +17812,7 @@ static T_BLUETOOTH_CONTROL_BUTTON BLUETOOTH_CONTROL_getButton(uint8_t *l_buffer)
   uint16_t l_buttonRawValue;
   uint8_t  l_index;
 
-  l_buttonRawValue = (l_buffer[BLUETOOTH_CONTROL_BUTTON_HIGH_OFFSET] << 8) | l_buffer[BLUETOOTH_CONTROL_BUTTON_LOW_OFFSET];
+  l_buttonRawValue = (l_buffer[BLU_BUTTON_HIGH_OFFSET] << 8) | l_buffer[BLU_BUTTON_LOW_OFFSET];
  8006684:	687b      	ldr	r3, [r7, #4]
  8006686:	3302      	adds	r3, #2
  8006688:	781b      	ldrb	r3, [r3, #0]
@@ -17826,11 +17826,11 @@ static T_BLUETOOTH_CONTROL_BUTTON BLUETOOTH_CONTROL_getButton(uint8_t *l_buffer)
  8006698:	b21b      	sxth	r3, r3
  800669a:	81bb      	strh	r3, [r7, #12]
 
-  /* Ignore BLUETOOTH_CONTROL_BUTTON_NONE value as it is not directly coded in raw data */
-  for (l_index = BLUETOOTH_CONTROL_BUTTON_SELECT; l_index < BLUETOOTH_CONTROL_BUTTON_COUNT_VALUE; l_index++)
+  /* Ignore BLU_BUTTON_NONE value as it is not directly coded in raw data */
+  for (l_index = BLU_BUTTON_SELECT; l_index < BLU_BUTTON_COUNT_VALUE; l_index++)
  800669c:	2301      	movs	r3, #1
  800669e:	73fb      	strb	r3, [r7, #15]
- 80066a0:	e00d      	b.n	80066be <BLUETOOTH_CONTROL_getButton+0x42>
+ 80066a0:	e00d      	b.n	80066be <BLU_getButton+0x42>
   {
     /* Stop decoding button data on 1st match (do not deal with multiple presses case) */
     if ((l_buttonRawValue & (1 << (l_index - 1))) == 0)
@@ -17840,24 +17840,24 @@ static T_BLUETOOTH_CONTROL_BUTTON BLUETOOTH_CONTROL_getButton(uint8_t *l_buffer)
  80066a8:	fa42 f303 	asr.w	r3, r2, r3
  80066ac:	f003 0301 	and.w	r3, r3, #1
  80066b0:	2b00      	cmp	r3, #0
- 80066b2:	d101      	bne.n	80066b8 <BLUETOOTH_CONTROL_getButton+0x3c>
+ 80066b2:	d101      	bne.n	80066b8 <BLU_getButton+0x3c>
     {
       return l_index;
  80066b4:	7bfb      	ldrb	r3, [r7, #15]
- 80066b6:	e006      	b.n	80066c6 <BLUETOOTH_CONTROL_getButton+0x4a>
-  for (l_index = BLUETOOTH_CONTROL_BUTTON_SELECT; l_index < BLUETOOTH_CONTROL_BUTTON_COUNT_VALUE; l_index++)
+ 80066b6:	e006      	b.n	80066c6 <BLU_getButton+0x4a>
+  for (l_index = BLU_BUTTON_SELECT; l_index < BLU_BUTTON_COUNT_VALUE; l_index++)
  80066b8:	7bfb      	ldrb	r3, [r7, #15]
  80066ba:	3301      	adds	r3, #1
  80066bc:	73fb      	strb	r3, [r7, #15]
  80066be:	7bfb      	ldrb	r3, [r7, #15]
  80066c0:	2b10      	cmp	r3, #16
- 80066c2:	d9ee      	bls.n	80066a2 <BLUETOOTH_CONTROL_getButton+0x26>
+ 80066c2:	d9ee      	bls.n	80066a2 <BLU_getButton+0x26>
     {
       ; /* Nothing to do */
     }
   }
 
-  return BLUETOOTH_CONTROL_BUTTON_NONE;
+  return BLU_BUTTON_NONE;
  80066c4:	2300      	movs	r3, #0
 }
  80066c6:	4618      	mov	r0, r3
@@ -17866,9 +17866,9 @@ static T_BLUETOOTH_CONTROL_BUTTON BLUETOOTH_CONTROL_getButton(uint8_t *l_buffer)
  80066cc:	bc80      	pop	{r7}
  80066ce:	4770      	bx	lr
 
-080066d0 <BLUETOOTH_CONTROL_normalizeData>:
+080066d0 <BLU_normalizeData>:
 
-static int32_t BLUETOOTH_CONTROL_normalizeData(uint32_t p_rawData, uint32_t p_maxValue, bool p_isInversionNeeded)
+static int32_t BLU_normalizeData(uint32_t p_rawData, uint32_t p_maxValue, bool p_isInversionNeeded)
 {
  80066d0:	b580      	push	{r7, lr}
  80066d2:	b086      	sub	sp, #24
@@ -17895,13 +17895,13 @@ static int32_t BLUETOOTH_CONTROL_normalizeData(uint32_t p_rawData, uint32_t p_ma
  80066fa:	f7fa f85d 	bl	80007b8 <__aeabi_fcmpgt>
  80066fe:	4603      	mov	r3, r0
  8006700:	2b00      	cmp	r3, #0
- 8006702:	d00f      	beq.n	8006724 <BLUETOOTH_CONTROL_normalizeData+0x54>
+ 8006702:	d00f      	beq.n	8006724 <BLU_normalizeData+0x54>
   {
     l_normalizedData *= (float)p_maxValue / 127.0f;
  8006704:	68b8      	ldr	r0, [r7, #8]
  8006706:	f7f9 fe43 	bl	8000390 <__aeabi_ui2f>
  800670a:	4603      	mov	r3, r0
- 800670c:	4915      	ldr	r1, [pc, #84]	; (8006764 <BLUETOOTH_CONTROL_normalizeData+0x94>)
+ 800670c:	4915      	ldr	r1, [pc, #84]	; (8006764 <BLU_normalizeData+0x94>)
  800670e:	4618      	mov	r0, r3
  8006710:	f7f9 ff4a 	bl	80005a8 <__aeabi_fdiv>
  8006714:	4603      	mov	r3, r0
@@ -17910,7 +17910,7 @@ static int32_t BLUETOOTH_CONTROL_normalizeData(uint32_t p_rawData, uint32_t p_ma
  800671a:	f7f9 fe91 	bl	8000440 <__aeabi_fmul>
  800671e:	4603      	mov	r3, r0
  8006720:	617b      	str	r3, [r7, #20]
- 8006722:	e00f      	b.n	8006744 <BLUETOOTH_CONTROL_normalizeData+0x74>
+ 8006722:	e00f      	b.n	8006744 <BLU_normalizeData+0x74>
   }
   else
   {
@@ -17932,7 +17932,7 @@ static int32_t BLUETOOTH_CONTROL_normalizeData(uint32_t p_rawData, uint32_t p_ma
   if (p_isInversionNeeded == true)
  8006744:	79fb      	ldrb	r3, [r7, #7]
  8006746:	2b00      	cmp	r3, #0
- 8006748:	d003      	beq.n	8006752 <BLUETOOTH_CONTROL_normalizeData+0x82>
+ 8006748:	d003      	beq.n	8006752 <BLU_normalizeData+0x82>
   {
     l_normalizedData *= -1.0f;
  800674a:	697b      	ldr	r3, [r7, #20]
@@ -17955,21 +17955,21 @@ static int32_t BLUETOOTH_CONTROL_normalizeData(uint32_t p_rawData, uint32_t p_ma
  8006762:	bf00      	nop
  8006764:	42fe0000 	.word	0x42fe0000
 
-08006768 <BLUETOOTH_CONTROL_init>:
+08006768 <BLU_init>:
 
-void BLUETOOTH_CONTROL_init(uint32_t p_maxDataValue)
+void BLU_init(uint32_t p_maxDataValue)
 {
  8006768:	b580      	push	{r7, lr}
  800676a:	b082      	sub	sp, #8
  800676c:	af00      	add	r7, sp, #0
  800676e:	6078      	str	r0, [r7, #4]
   LOG_info("Initializing bluetooth control");
- 8006770:	4905      	ldr	r1, [pc, #20]	; (8006788 <BLUETOOTH_CONTROL_init+0x20>)
+ 8006770:	4905      	ldr	r1, [pc, #20]	; (8006788 <BLU_init+0x20>)
  8006772:	2001      	movs	r0, #1
  8006774:	f000 fdf6 	bl	8007364 <LOG_log>
 
-  BLUETOOTH_CONTROL_maxDataValue = p_maxDataValue;
- 8006778:	4a04      	ldr	r2, [pc, #16]	; (800678c <BLUETOOTH_CONTROL_init+0x24>)
+  BLU_maxDataValue = p_maxDataValue;
+ 8006778:	4a04      	ldr	r2, [pc, #16]	; (800678c <BLU_init+0x24>)
  800677a:	687b      	ldr	r3, [r7, #4]
  800677c:	6013      	str	r3, [r2, #0]
 
@@ -17983,42 +17983,42 @@ void BLUETOOTH_CONTROL_init(uint32_t p_maxDataValue)
  8006788:	080089ac 	.word	0x080089ac
  800678c:	200000c4 	.word	0x200000c4
 
-08006790 <BLUETOOTH_CONTROL_receiveData>:
+08006790 <BLU_receiveData>:
 
 
-void BLUETOOTH_CONTROL_receiveData(T_BLUETOOTH_CONTROL_Data *p_data)
+void BLU_receiveData(T_BLU_Data *p_data)
 {
  8006790:	b580      	push	{r7, lr}
  8006792:	b088      	sub	sp, #32
  8006794:	af00      	add	r7, sp, #0
  8006796:	6078      	str	r0, [r7, #4]
-  T_BLUETOOTH_CONTROL_BUTTON l_button;
+  T_BLU_BUTTON l_button;
 
   // LOG_info("Receiving Bluetooth data");
 
   /* Read raw data */
-  BLUETOOTH_CONTROL_readData(l_buffer);
+  BLU_readData(l_buffer);
  8006798:	f107 0308 	add.w	r3, r7, #8
  800679c:	4618      	mov	r0, r3
- 800679e:	f7ff fef5 	bl	800658c <BLUETOOTH_CONTROL_readData>
+ 800679e:	f7ff fef5 	bl	800658c <BLU_readData>
 
   /* Start and decode raw data */
-  l_leftX  = l_buffer[BLUETOOTH_CONTROL_LEFT_X_OFFSET ];
+  l_leftX  = l_buffer[BLU_LEFT_X_OFFSET ];
  80067a2:	7b7b      	ldrb	r3, [r7, #13]
  80067a4:	61fb      	str	r3, [r7, #28]
-  l_leftY  = l_buffer[BLUETOOTH_CONTROL_LEFT_Y_OFFSET ];
+  l_leftY  = l_buffer[BLU_LEFT_Y_OFFSET ];
  80067a6:	7bbb      	ldrb	r3, [r7, #14]
  80067a8:	61bb      	str	r3, [r7, #24]
-  l_rightX = l_buffer[BLUETOOTH_CONTROL_RIGHT_X_OFFSET];
+  l_rightX = l_buffer[BLU_RIGHT_X_OFFSET];
  80067aa:	7afb      	ldrb	r3, [r7, #11]
  80067ac:	617b      	str	r3, [r7, #20]
-  l_rightY = l_buffer[BLUETOOTH_CONTROL_RIGHT_Y_OFFSET];
+  l_rightY = l_buffer[BLU_RIGHT_Y_OFFSET];
  80067ae:	7b3b      	ldrb	r3, [r7, #12]
  80067b0:	613b      	str	r3, [r7, #16]
-  l_button = BLUETOOTH_CONTROL_getButton(l_buffer);
+  l_button = BLU_getButton(l_buffer);
  80067b2:	f107 0308 	add.w	r3, r7, #8
  80067b6:	4618      	mov	r0, r3
- 80067b8:	f7ff ff60 	bl	800667c <BLUETOOTH_CONTROL_getButton>
+ 80067b8:	f7ff ff60 	bl	800667c <BLU_getButton>
  80067bc:	4603      	mov	r3, r0
  80067be:	73fb      	strb	r3, [r7, #15]
 
@@ -18026,29 +18026,29 @@ void BLUETOOTH_CONTROL_receiveData(T_BLUETOOTH_CONTROL_Data *p_data)
   if  ((l_leftX == 255 && l_leftY == 255 && l_rightX == 255 && l_rightY ==255)
  80067c0:	69fb      	ldr	r3, [r7, #28]
  80067c2:	2bff      	cmp	r3, #255	; 0xff
- 80067c4:	d108      	bne.n	80067d8 <BLUETOOTH_CONTROL_receiveData+0x48>
+ 80067c4:	d108      	bne.n	80067d8 <BLU_receiveData+0x48>
  80067c6:	69bb      	ldr	r3, [r7, #24]
  80067c8:	2bff      	cmp	r3, #255	; 0xff
- 80067ca:	d105      	bne.n	80067d8 <BLUETOOTH_CONTROL_receiveData+0x48>
+ 80067ca:	d105      	bne.n	80067d8 <BLU_receiveData+0x48>
  80067cc:	697b      	ldr	r3, [r7, #20]
  80067ce:	2bff      	cmp	r3, #255	; 0xff
- 80067d0:	d102      	bne.n	80067d8 <BLUETOOTH_CONTROL_receiveData+0x48>
+ 80067d0:	d102      	bne.n	80067d8 <BLU_receiveData+0x48>
  80067d2:	693b      	ldr	r3, [r7, #16]
  80067d4:	2bff      	cmp	r3, #255	; 0xff
- 80067d6:	d00b      	beq.n	80067f0 <BLUETOOTH_CONTROL_receiveData+0x60>
+ 80067d6:	d00b      	beq.n	80067f0 <BLU_receiveData+0x60>
     || (l_leftX ==   0 && l_leftY ==   0 && l_rightX ==   0 && l_rightY ==  0))
  80067d8:	69fb      	ldr	r3, [r7, #28]
  80067da:	2b00      	cmp	r3, #0
- 80067dc:	d113      	bne.n	8006806 <BLUETOOTH_CONTROL_receiveData+0x76>
+ 80067dc:	d113      	bne.n	8006806 <BLU_receiveData+0x76>
  80067de:	69bb      	ldr	r3, [r7, #24]
  80067e0:	2b00      	cmp	r3, #0
- 80067e2:	d110      	bne.n	8006806 <BLUETOOTH_CONTROL_receiveData+0x76>
+ 80067e2:	d110      	bne.n	8006806 <BLU_receiveData+0x76>
  80067e4:	697b      	ldr	r3, [r7, #20]
  80067e6:	2b00      	cmp	r3, #0
- 80067e8:	d10d      	bne.n	8006806 <BLUETOOTH_CONTROL_receiveData+0x76>
+ 80067e8:	d10d      	bne.n	8006806 <BLU_receiveData+0x76>
  80067ea:	693b      	ldr	r3, [r7, #16]
  80067ec:	2b00      	cmp	r3, #0
- 80067ee:	d10a      	bne.n	8006806 <BLUETOOTH_CONTROL_receiveData+0x76>
+ 80067ee:	d10a      	bne.n	8006806 <BLU_receiveData+0x76>
   {
     l_leftX  = 128;
  80067f0:	2380      	movs	r3, #128	; 0x80
@@ -18062,85 +18062,85 @@ void BLUETOOTH_CONTROL_receiveData(T_BLUETOOTH_CONTROL_Data *p_data)
     l_rightY = 128;
  80067fc:	2380      	movs	r3, #128	; 0x80
  80067fe:	613b      	str	r3, [r7, #16]
-    l_button = BLUETOOTH_CONTROL_BUTTON_NONE;
+    l_button = BLU_BUTTON_NONE;
  8006800:	2300      	movs	r3, #0
  8006802:	73fb      	strb	r3, [r7, #15]
- 8006804:	e043      	b.n	800688e <BLUETOOTH_CONTROL_receiveData+0xfe>
+ 8006804:	e043      	b.n	800688e <BLU_receiveData+0xfe>
   }
   /* Use a confirmation mechanism, on 2 cycles, as glitches are observed */
-  else if ((l_leftX  == BLUETOOTH_CONTROL_DATA_lastData.leftX) &&
- 8006806:	4b2b      	ldr	r3, [pc, #172]	; (80068b4 <BLUETOOTH_CONTROL_receiveData+0x124>)
+  else if ((l_leftX  == BLU_DATA_lastData.leftX) &&
+ 8006806:	4b2b      	ldr	r3, [pc, #172]	; (80068b4 <BLU_receiveData+0x124>)
  8006808:	681a      	ldr	r2, [r3, #0]
  800680a:	69fb      	ldr	r3, [r7, #28]
  800680c:	429a      	cmp	r2, r3
- 800680e:	d13e      	bne.n	800688e <BLUETOOTH_CONTROL_receiveData+0xfe>
-           (l_leftY  == BLUETOOTH_CONTROL_DATA_lastData.leftY) &&
- 8006810:	4b28      	ldr	r3, [pc, #160]	; (80068b4 <BLUETOOTH_CONTROL_receiveData+0x124>)
+ 800680e:	d13e      	bne.n	800688e <BLU_receiveData+0xfe>
+           (l_leftY  == BLU_DATA_lastData.leftY) &&
+ 8006810:	4b28      	ldr	r3, [pc, #160]	; (80068b4 <BLU_receiveData+0x124>)
  8006812:	685a      	ldr	r2, [r3, #4]
  8006814:	69bb      	ldr	r3, [r7, #24]
-  else if ((l_leftX  == BLUETOOTH_CONTROL_DATA_lastData.leftX) &&
+  else if ((l_leftX  == BLU_DATA_lastData.leftX) &&
  8006816:	429a      	cmp	r2, r3
- 8006818:	d139      	bne.n	800688e <BLUETOOTH_CONTROL_receiveData+0xfe>
-           (l_rightX == BLUETOOTH_CONTROL_DATA_lastData.rightX) &&
- 800681a:	4b26      	ldr	r3, [pc, #152]	; (80068b4 <BLUETOOTH_CONTROL_receiveData+0x124>)
+ 8006818:	d139      	bne.n	800688e <BLU_receiveData+0xfe>
+           (l_rightX == BLU_DATA_lastData.rightX) &&
+ 800681a:	4b26      	ldr	r3, [pc, #152]	; (80068b4 <BLU_receiveData+0x124>)
  800681c:	689a      	ldr	r2, [r3, #8]
  800681e:	697b      	ldr	r3, [r7, #20]
-           (l_leftY  == BLUETOOTH_CONTROL_DATA_lastData.leftY) &&
+           (l_leftY  == BLU_DATA_lastData.leftY) &&
  8006820:	429a      	cmp	r2, r3
- 8006822:	d134      	bne.n	800688e <BLUETOOTH_CONTROL_receiveData+0xfe>
-           (l_rightY == BLUETOOTH_CONTROL_DATA_lastData.rightY) &&
- 8006824:	4b23      	ldr	r3, [pc, #140]	; (80068b4 <BLUETOOTH_CONTROL_receiveData+0x124>)
+ 8006822:	d134      	bne.n	800688e <BLU_receiveData+0xfe>
+           (l_rightY == BLU_DATA_lastData.rightY) &&
+ 8006824:	4b23      	ldr	r3, [pc, #140]	; (80068b4 <BLU_receiveData+0x124>)
  8006826:	68da      	ldr	r2, [r3, #12]
  8006828:	693b      	ldr	r3, [r7, #16]
-           (l_rightX == BLUETOOTH_CONTROL_DATA_lastData.rightX) &&
+           (l_rightX == BLU_DATA_lastData.rightX) &&
  800682a:	429a      	cmp	r2, r3
- 800682c:	d12f      	bne.n	800688e <BLUETOOTH_CONTROL_receiveData+0xfe>
-           (l_button == BLUETOOTH_CONTROL_DATA_lastData.button))
- 800682e:	4b21      	ldr	r3, [pc, #132]	; (80068b4 <BLUETOOTH_CONTROL_receiveData+0x124>)
+ 800682c:	d12f      	bne.n	800688e <BLU_receiveData+0xfe>
+           (l_button == BLU_DATA_lastData.button))
+ 800682e:	4b21      	ldr	r3, [pc, #132]	; (80068b4 <BLU_receiveData+0x124>)
  8006830:	7c1b      	ldrb	r3, [r3, #16]
-           (l_rightY == BLUETOOTH_CONTROL_DATA_lastData.rightY) &&
+           (l_rightY == BLU_DATA_lastData.rightY) &&
  8006832:	7bfa      	ldrb	r2, [r7, #15]
  8006834:	429a      	cmp	r2, r3
- 8006836:	d12a      	bne.n	800688e <BLUETOOTH_CONTROL_receiveData+0xfe>
+ 8006836:	d12a      	bne.n	800688e <BLU_receiveData+0xfe>
   {
     /* Normalize directions data in range [-100..100] */
-    p_data->leftX  = BLUETOOTH_CONTROL_normalizeData(l_leftX , BLUETOOTH_CONTROL_maxDataValue, false);
- 8006838:	4b1f      	ldr	r3, [pc, #124]	; (80068b8 <BLUETOOTH_CONTROL_receiveData+0x128>)
+    p_data->leftX  = BLU_normalizeData(l_leftX , BLU_maxDataValue, false);
+ 8006838:	4b1f      	ldr	r3, [pc, #124]	; (80068b8 <BLU_receiveData+0x128>)
  800683a:	681b      	ldr	r3, [r3, #0]
  800683c:	2200      	movs	r2, #0
  800683e:	4619      	mov	r1, r3
  8006840:	69f8      	ldr	r0, [r7, #28]
- 8006842:	f7ff ff45 	bl	80066d0 <BLUETOOTH_CONTROL_normalizeData>
+ 8006842:	f7ff ff45 	bl	80066d0 <BLU_normalizeData>
  8006846:	4602      	mov	r2, r0
  8006848:	687b      	ldr	r3, [r7, #4]
  800684a:	601a      	str	r2, [r3, #0]
-    p_data->leftY  = BLUETOOTH_CONTROL_normalizeData(l_leftY , BLUETOOTH_CONTROL_maxDataValue, true );
- 800684c:	4b1a      	ldr	r3, [pc, #104]	; (80068b8 <BLUETOOTH_CONTROL_receiveData+0x128>)
+    p_data->leftY  = BLU_normalizeData(l_leftY , BLU_maxDataValue, true );
+ 800684c:	4b1a      	ldr	r3, [pc, #104]	; (80068b8 <BLU_receiveData+0x128>)
  800684e:	681b      	ldr	r3, [r3, #0]
  8006850:	2201      	movs	r2, #1
  8006852:	4619      	mov	r1, r3
  8006854:	69b8      	ldr	r0, [r7, #24]
- 8006856:	f7ff ff3b 	bl	80066d0 <BLUETOOTH_CONTROL_normalizeData>
+ 8006856:	f7ff ff3b 	bl	80066d0 <BLU_normalizeData>
  800685a:	4602      	mov	r2, r0
  800685c:	687b      	ldr	r3, [r7, #4]
  800685e:	605a      	str	r2, [r3, #4]
-    p_data->rightX = BLUETOOTH_CONTROL_normalizeData(l_rightX, BLUETOOTH_CONTROL_maxDataValue, false);
- 8006860:	4b15      	ldr	r3, [pc, #84]	; (80068b8 <BLUETOOTH_CONTROL_receiveData+0x128>)
+    p_data->rightX = BLU_normalizeData(l_rightX, BLU_maxDataValue, false);
+ 8006860:	4b15      	ldr	r3, [pc, #84]	; (80068b8 <BLU_receiveData+0x128>)
  8006862:	681b      	ldr	r3, [r3, #0]
  8006864:	2200      	movs	r2, #0
  8006866:	4619      	mov	r1, r3
  8006868:	6978      	ldr	r0, [r7, #20]
- 800686a:	f7ff ff31 	bl	80066d0 <BLUETOOTH_CONTROL_normalizeData>
+ 800686a:	f7ff ff31 	bl	80066d0 <BLU_normalizeData>
  800686e:	4602      	mov	r2, r0
  8006870:	687b      	ldr	r3, [r7, #4]
  8006872:	609a      	str	r2, [r3, #8]
-    p_data->rightY = BLUETOOTH_CONTROL_normalizeData(l_rightY, BLUETOOTH_CONTROL_maxDataValue, true );
- 8006874:	4b10      	ldr	r3, [pc, #64]	; (80068b8 <BLUETOOTH_CONTROL_receiveData+0x128>)
+    p_data->rightY = BLU_normalizeData(l_rightY, BLU_maxDataValue, true );
+ 8006874:	4b10      	ldr	r3, [pc, #64]	; (80068b8 <BLU_receiveData+0x128>)
  8006876:	681b      	ldr	r3, [r3, #0]
  8006878:	2201      	movs	r2, #1
  800687a:	4619      	mov	r1, r3
  800687c:	6938      	ldr	r0, [r7, #16]
- 800687e:	f7ff ff27 	bl	80066d0 <BLUETOOTH_CONTROL_normalizeData>
+ 800687e:	f7ff ff27 	bl	80066d0 <BLU_normalizeData>
  8006882:	4602      	mov	r2, r0
  8006884:	687b      	ldr	r3, [r7, #4]
  8006886:	60da      	str	r2, [r3, #12]
@@ -18153,24 +18153,24 @@ void BLUETOOTH_CONTROL_receiveData(T_BLUETOOTH_CONTROL_Data *p_data)
   }
 
   /* Saved received data for later use in confirmation mechanism */
-  BLUETOOTH_CONTROL_DATA_lastData.leftX  = l_leftX;
+  BLU_DATA_lastData.leftX  = l_leftX;
  800688e:	69fb      	ldr	r3, [r7, #28]
- 8006890:	4a08      	ldr	r2, [pc, #32]	; (80068b4 <BLUETOOTH_CONTROL_receiveData+0x124>)
+ 8006890:	4a08      	ldr	r2, [pc, #32]	; (80068b4 <BLU_receiveData+0x124>)
  8006892:	6013      	str	r3, [r2, #0]
-  BLUETOOTH_CONTROL_DATA_lastData.leftY  = l_leftY;
+  BLU_DATA_lastData.leftY  = l_leftY;
  8006894:	69bb      	ldr	r3, [r7, #24]
- 8006896:	4a07      	ldr	r2, [pc, #28]	; (80068b4 <BLUETOOTH_CONTROL_receiveData+0x124>)
+ 8006896:	4a07      	ldr	r2, [pc, #28]	; (80068b4 <BLU_receiveData+0x124>)
  8006898:	6053      	str	r3, [r2, #4]
-  BLUETOOTH_CONTROL_DATA_lastData.rightX = l_rightX;
+  BLU_DATA_lastData.rightX = l_rightX;
  800689a:	697b      	ldr	r3, [r7, #20]
- 800689c:	4a05      	ldr	r2, [pc, #20]	; (80068b4 <BLUETOOTH_CONTROL_receiveData+0x124>)
+ 800689c:	4a05      	ldr	r2, [pc, #20]	; (80068b4 <BLU_receiveData+0x124>)
  800689e:	6093      	str	r3, [r2, #8]
-  BLUETOOTH_CONTROL_DATA_lastData.rightY = l_rightY;
+  BLU_DATA_lastData.rightY = l_rightY;
  80068a0:	693b      	ldr	r3, [r7, #16]
- 80068a2:	4a04      	ldr	r2, [pc, #16]	; (80068b4 <BLUETOOTH_CONTROL_receiveData+0x124>)
+ 80068a2:	4a04      	ldr	r2, [pc, #16]	; (80068b4 <BLU_receiveData+0x124>)
  80068a4:	60d3      	str	r3, [r2, #12]
-  BLUETOOTH_CONTROL_DATA_lastData.button = l_button;
- 80068a6:	4a03      	ldr	r2, [pc, #12]	; (80068b4 <BLUETOOTH_CONTROL_receiveData+0x124>)
+  BLU_DATA_lastData.button = l_button;
+ 80068a6:	4a03      	ldr	r2, [pc, #12]	; (80068b4 <BLU_receiveData+0x124>)
  80068a8:	7bfb      	ldrb	r3, [r7, #15]
  80068aa:	7413      	strb	r3, [r2, #16]
 
@@ -18183,24 +18183,24 @@ void BLUETOOTH_CONTROL_receiveData(T_BLUETOOTH_CONTROL_Data *p_data)
  80068b4:	2000000c 	.word	0x2000000c
  80068b8:	200000c4 	.word	0x200000c4
 
-080068bc <CONSOLE_init>:
+080068bc <CON_init>:
 
-static UART_HandleTypeDef *CONSOLE_uartHandle;
-static uint8_t             CONSOLE_rxBuffer[12] = {0};
+static UART_HandleTypeDef *CON_uartHandle;
+static uint8_t             CON_rxBuffer[12] = {0};
 
-void CONSOLE_init(UART_HandleTypeDef *p_uartHandle)
+void CON_init(UART_HandleTypeDef *p_uartHandle)
 {
  80068bc:	b580      	push	{r7, lr}
  80068be:	b082      	sub	sp, #8
  80068c0:	af00      	add	r7, sp, #0
  80068c2:	6078      	str	r0, [r7, #4]
   LOG_info("Initializing console");
- 80068c4:	4905      	ldr	r1, [pc, #20]	; (80068dc <CONSOLE_init+0x20>)
+ 80068c4:	4905      	ldr	r1, [pc, #20]	; (80068dc <CON_init+0x20>)
  80068c6:	2001      	movs	r0, #1
  80068c8:	f000 fd4c 	bl	8007364 <LOG_log>
 
-  CONSOLE_uartHandle = p_uartHandle;
- 80068cc:	4a04      	ldr	r2, [pc, #16]	; (80068e0 <CONSOLE_init+0x24>)
+  CON_uartHandle = p_uartHandle;
+ 80068cc:	4a04      	ldr	r2, [pc, #16]	; (80068e0 <CON_init+0x24>)
  80068ce:	687b      	ldr	r3, [r7, #4]
  80068d0:	6013      	str	r3, [r2, #0]
 
@@ -18214,22 +18214,22 @@ void CONSOLE_init(UART_HandleTypeDef *p_uartHandle)
  80068dc:	080089cc 	.word	0x080089cc
  80068e0:	200000c8 	.word	0x200000c8
 
-080068e4 <CONSOLE_receiveData>:
+080068e4 <CON_receiveData>:
 
-void CONSOLE_receiveData(void)
+void CON_receiveData(void)
 {
  80068e4:	b580      	push	{r7, lr}
  80068e6:	af00      	add	r7, sp, #0
-  HAL_UART_Receive_IT(CONSOLE_uartHandle, CONSOLE_rxBuffer, 12);
- 80068e8:	4b04      	ldr	r3, [pc, #16]	; (80068fc <CONSOLE_receiveData+0x18>)
+  HAL_UART_Receive_IT(CON_uartHandle, CON_rxBuffer, 12);
+ 80068e8:	4b04      	ldr	r3, [pc, #16]	; (80068fc <CON_receiveData+0x18>)
  80068ea:	681b      	ldr	r3, [r3, #0]
  80068ec:	220c      	movs	r2, #12
- 80068ee:	4904      	ldr	r1, [pc, #16]	; (8006900 <CONSOLE_receiveData+0x1c>)
+ 80068ee:	4904      	ldr	r1, [pc, #16]	; (8006900 <CON_receiveData+0x1c>)
  80068f0:	4618      	mov	r0, r3
  80068f2:	f7ff f8a5 	bl	8005a40 <HAL_UART_Receive_IT>
 
   /* Resend received data (echo) */
-//  HAL_UART_Transmit(CONSOLE_uartHandle, CONSOLE_rxBuffer, 12, 100);
+//  HAL_UART_Transmit(CON_uartHandle, CON_rxBuffer, 12, 100);
 
   return;
  80068f6:	bf00      	nop
@@ -18239,168 +18239,168 @@ void CONSOLE_receiveData(void)
  80068fc:	200000c8 	.word	0x200000c8
  8006900:	200000cc 	.word	0x200000cc
 
-08006904 <DRIVE_init>:
-static void DRIVE_turnRight        (uint32_t  p_speed);
-static void DRIVE_translateLeft    (uint32_t  p_speed);
-static void DRIVE_translateRight   (uint32_t  p_speed);
+08006904 <DRV_init>:
+static void DRV_turnRight        (uint32_t  p_speed);
+static void DRV_translateLeft    (uint32_t  p_speed);
+static void DRV_translateRight   (uint32_t  p_speed);
 
-void DRIVE_init(TIM_HandleTypeDef *p_pwmTimerHandle)
+void DRV_init(TIM_HandleTypeDef *p_pwmTimerHandle)
 {
  8006904:	b580      	push	{r7, lr}
  8006906:	b082      	sub	sp, #8
  8006908:	af00      	add	r7, sp, #0
  800690a:	6078      	str	r0, [r7, #4]
   LOG_info("Initializing Drive module");
- 800690c:	493a      	ldr	r1, [pc, #232]	; (80069f8 <DRIVE_init+0xf4>)
+ 800690c:	493a      	ldr	r1, [pc, #232]	; (80069f8 <DRV_init+0xf4>)
  800690e:	2001      	movs	r0, #1
  8006910:	f000 fd28 	bl	8007364 <LOG_log>
 
-  DRIVE_motorFrontRight.dirPin1Port    = MOTOR_FRONT_RIGHT_IN_1_GPIO_Port;
- 8006914:	4b39      	ldr	r3, [pc, #228]	; (80069fc <DRIVE_init+0xf8>)
- 8006916:	4a3a      	ldr	r2, [pc, #232]	; (8006a00 <DRIVE_init+0xfc>)
+  DRV_motorFrontRight.dirPin1Port    = MOTOR_FRONT_RIGHT_IN_1_GPIO_Port;
+ 8006914:	4b39      	ldr	r3, [pc, #228]	; (80069fc <DRV_init+0xf8>)
+ 8006916:	4a3a      	ldr	r2, [pc, #232]	; (8006a00 <DRV_init+0xfc>)
  8006918:	60da      	str	r2, [r3, #12]
-  DRIVE_motorFrontRight.dirPin1        = MOTOR_FRONT_RIGHT_IN_1_Pin;
- 800691a:	4b38      	ldr	r3, [pc, #224]	; (80069fc <DRIVE_init+0xf8>)
+  DRV_motorFrontRight.dirPin1        = MOTOR_FRONT_RIGHT_IN_1_Pin;
+ 800691a:	4b38      	ldr	r3, [pc, #224]	; (80069fc <DRV_init+0xf8>)
  800691c:	2210      	movs	r2, #16
  800691e:	615a      	str	r2, [r3, #20]
-  DRIVE_motorFrontRight.dirPin2Port    = MOTOR_FRONT_RIGHT_IN_2_GPIO_Port;
- 8006920:	4b36      	ldr	r3, [pc, #216]	; (80069fc <DRIVE_init+0xf8>)
- 8006922:	4a37      	ldr	r2, [pc, #220]	; (8006a00 <DRIVE_init+0xfc>)
+  DRV_motorFrontRight.dirPin2Port    = MOTOR_FRONT_RIGHT_IN_2_GPIO_Port;
+ 8006920:	4b36      	ldr	r3, [pc, #216]	; (80069fc <DRV_init+0xf8>)
+ 8006922:	4a37      	ldr	r2, [pc, #220]	; (8006a00 <DRV_init+0xfc>)
  8006924:	611a      	str	r2, [r3, #16]
-  DRIVE_motorFrontRight.dirPin2        = MOTOR_FRONT_RIGHT_IN_2_Pin;
- 8006926:	4b35      	ldr	r3, [pc, #212]	; (80069fc <DRIVE_init+0xf8>)
+  DRV_motorFrontRight.dirPin2        = MOTOR_FRONT_RIGHT_IN_2_Pin;
+ 8006926:	4b35      	ldr	r3, [pc, #212]	; (80069fc <DRV_init+0xf8>)
  8006928:	2220      	movs	r2, #32
  800692a:	619a      	str	r2, [r3, #24]
-  DRIVE_motorFrontRight.pwmTimerHandle = p_pwmTimerHandle;
- 800692c:	4a33      	ldr	r2, [pc, #204]	; (80069fc <DRIVE_init+0xf8>)
+  DRV_motorFrontRight.pwmTimerHandle = p_pwmTimerHandle;
+ 800692c:	4a33      	ldr	r2, [pc, #204]	; (80069fc <DRV_init+0xf8>)
  800692e:	687b      	ldr	r3, [r7, #4]
  8006930:	6253      	str	r3, [r2, #36]	; 0x24
-  DRIVE_motorFrontRight.pwmChannel     = TIM_CHANNEL_2;
- 8006932:	4b32      	ldr	r3, [pc, #200]	; (80069fc <DRIVE_init+0xf8>)
+  DRV_motorFrontRight.pwmChannel     = TIM_CHANNEL_2;
+ 8006932:	4b32      	ldr	r3, [pc, #200]	; (80069fc <DRV_init+0xf8>)
  8006934:	2204      	movs	r2, #4
  8006936:	629a      	str	r2, [r3, #40]	; 0x28
 
-  DRIVE_motorFrontLeft.dirPin1Port    = MOTOR_FRONT_LEFT_IN_1_GPIO_Port;
- 8006938:	4b32      	ldr	r3, [pc, #200]	; (8006a04 <DRIVE_init+0x100>)
- 800693a:	4a33      	ldr	r2, [pc, #204]	; (8006a08 <DRIVE_init+0x104>)
+  DRV_motorFrontLeft.dirPin1Port    = MOTOR_FRONT_LEFT_IN_1_GPIO_Port;
+ 8006938:	4b32      	ldr	r3, [pc, #200]	; (8006a04 <DRV_init+0x100>)
+ 800693a:	4a33      	ldr	r2, [pc, #204]	; (8006a08 <DRV_init+0x104>)
  800693c:	60da      	str	r2, [r3, #12]
-  DRIVE_motorFrontLeft.dirPin1        = MOTOR_FRONT_LEFT_IN_1_Pin;
- 800693e:	4b31      	ldr	r3, [pc, #196]	; (8006a04 <DRIVE_init+0x100>)
+  DRV_motorFrontLeft.dirPin1        = MOTOR_FRONT_LEFT_IN_1_Pin;
+ 800693e:	4b31      	ldr	r3, [pc, #196]	; (8006a04 <DRV_init+0x100>)
  8006940:	2201      	movs	r2, #1
  8006942:	615a      	str	r2, [r3, #20]
-  DRIVE_motorFrontLeft.dirPin2Port    = MOTOR_FRONT_LEFT_IN_2_GPIO_Port;
- 8006944:	4b2f      	ldr	r3, [pc, #188]	; (8006a04 <DRIVE_init+0x100>)
- 8006946:	4a30      	ldr	r2, [pc, #192]	; (8006a08 <DRIVE_init+0x104>)
+  DRV_motorFrontLeft.dirPin2Port    = MOTOR_FRONT_LEFT_IN_2_GPIO_Port;
+ 8006944:	4b2f      	ldr	r3, [pc, #188]	; (8006a04 <DRV_init+0x100>)
+ 8006946:	4a30      	ldr	r2, [pc, #192]	; (8006a08 <DRV_init+0x104>)
  8006948:	611a      	str	r2, [r3, #16]
-  DRIVE_motorFrontLeft.dirPin2        = MOTOR_FRONT_LEFT_IN_2_Pin;
- 800694a:	4b2e      	ldr	r3, [pc, #184]	; (8006a04 <DRIVE_init+0x100>)
+  DRV_motorFrontLeft.dirPin2        = MOTOR_FRONT_LEFT_IN_2_Pin;
+ 800694a:	4b2e      	ldr	r3, [pc, #184]	; (8006a04 <DRV_init+0x100>)
  800694c:	2202      	movs	r2, #2
  800694e:	619a      	str	r2, [r3, #24]
-  DRIVE_motorFrontLeft.pwmTimerHandle = p_pwmTimerHandle;
- 8006950:	4a2c      	ldr	r2, [pc, #176]	; (8006a04 <DRIVE_init+0x100>)
+  DRV_motorFrontLeft.pwmTimerHandle = p_pwmTimerHandle;
+ 8006950:	4a2c      	ldr	r2, [pc, #176]	; (8006a04 <DRV_init+0x100>)
  8006952:	687b      	ldr	r3, [r7, #4]
  8006954:	6253      	str	r3, [r2, #36]	; 0x24
-  DRIVE_motorFrontLeft.pwmChannel     = TIM_CHANNEL_1;
- 8006956:	4b2b      	ldr	r3, [pc, #172]	; (8006a04 <DRIVE_init+0x100>)
+  DRV_motorFrontLeft.pwmChannel     = TIM_CHANNEL_1;
+ 8006956:	4b2b      	ldr	r3, [pc, #172]	; (8006a04 <DRV_init+0x100>)
  8006958:	2200      	movs	r2, #0
  800695a:	629a      	str	r2, [r3, #40]	; 0x28
 
-  DRIVE_motorRearLeft.dirPin1Port    = MOTOR_REAR_LEFT_IN_1_GPIO_Port;
- 800695c:	4b2b      	ldr	r3, [pc, #172]	; (8006a0c <DRIVE_init+0x108>)
- 800695e:	4a2c      	ldr	r2, [pc, #176]	; (8006a10 <DRIVE_init+0x10c>)
+  DRV_motorRearLeft.dirPin1Port    = MOTOR_REAR_LEFT_IN_1_GPIO_Port;
+ 800695c:	4b2b      	ldr	r3, [pc, #172]	; (8006a0c <DRV_init+0x108>)
+ 800695e:	4a2c      	ldr	r2, [pc, #176]	; (8006a10 <DRV_init+0x10c>)
  8006960:	60da      	str	r2, [r3, #12]
-  DRIVE_motorRearLeft.dirPin1        = MOTOR_REAR_LEFT_IN_1_Pin;
- 8006962:	4b2a      	ldr	r3, [pc, #168]	; (8006a0c <DRIVE_init+0x108>)
+  DRV_motorRearLeft.dirPin1        = MOTOR_REAR_LEFT_IN_1_Pin;
+ 8006962:	4b2a      	ldr	r3, [pc, #168]	; (8006a0c <DRV_init+0x108>)
  8006964:	2204      	movs	r2, #4
  8006966:	615a      	str	r2, [r3, #20]
-  DRIVE_motorRearLeft.dirPin2Port    = MOTOR_REAR_LEFT_IN_2_GPIO_Port;
- 8006968:	4b28      	ldr	r3, [pc, #160]	; (8006a0c <DRIVE_init+0x108>)
- 800696a:	4a25      	ldr	r2, [pc, #148]	; (8006a00 <DRIVE_init+0xfc>)
+  DRV_motorRearLeft.dirPin2Port    = MOTOR_REAR_LEFT_IN_2_GPIO_Port;
+ 8006968:	4b28      	ldr	r3, [pc, #160]	; (8006a0c <DRV_init+0x108>)
+ 800696a:	4a25      	ldr	r2, [pc, #148]	; (8006a00 <DRV_init+0xfc>)
  800696c:	611a      	str	r2, [r3, #16]
-  DRIVE_motorRearLeft.dirPin2        = MOTOR_REAR_LEFT_IN_2_Pin;
- 800696e:	4b27      	ldr	r3, [pc, #156]	; (8006a0c <DRIVE_init+0x108>)
+  DRV_motorRearLeft.dirPin2        = MOTOR_REAR_LEFT_IN_2_Pin;
+ 800696e:	4b27      	ldr	r3, [pc, #156]	; (8006a0c <DRV_init+0x108>)
  8006970:	f44f 5280 	mov.w	r2, #4096	; 0x1000
  8006974:	619a      	str	r2, [r3, #24]
-  DRIVE_motorRearLeft.pwmTimerHandle = p_pwmTimerHandle;
- 8006976:	4a25      	ldr	r2, [pc, #148]	; (8006a0c <DRIVE_init+0x108>)
+  DRV_motorRearLeft.pwmTimerHandle = p_pwmTimerHandle;
+ 8006976:	4a25      	ldr	r2, [pc, #148]	; (8006a0c <DRV_init+0x108>)
  8006978:	687b      	ldr	r3, [r7, #4]
  800697a:	6253      	str	r3, [r2, #36]	; 0x24
-  DRIVE_motorRearLeft.pwmChannel     = TIM_CHANNEL_4;
- 800697c:	4b23      	ldr	r3, [pc, #140]	; (8006a0c <DRIVE_init+0x108>)
+  DRV_motorRearLeft.pwmChannel     = TIM_CHANNEL_4;
+ 800697c:	4b23      	ldr	r3, [pc, #140]	; (8006a0c <DRV_init+0x108>)
  800697e:	220c      	movs	r2, #12
  8006980:	629a      	str	r2, [r3, #40]	; 0x28
 
-  DRIVE_motorRearRight.dirPin1Port    = MOTOR_REAR_RIGHT_IN_1_GPIO_Port;
- 8006982:	4b24      	ldr	r3, [pc, #144]	; (8006a14 <DRIVE_init+0x110>)
- 8006984:	4a20      	ldr	r2, [pc, #128]	; (8006a08 <DRIVE_init+0x104>)
+  DRV_motorRearRight.dirPin1Port    = MOTOR_REAR_RIGHT_IN_1_GPIO_Port;
+ 8006982:	4b24      	ldr	r3, [pc, #144]	; (8006a14 <DRV_init+0x110>)
+ 8006984:	4a20      	ldr	r2, [pc, #128]	; (8006a08 <DRV_init+0x104>)
  8006986:	60da      	str	r2, [r3, #12]
-  DRIVE_motorRearRight.dirPin1        = MOTOR_REAR_RIGHT_IN_1_Pin;
- 8006988:	4b22      	ldr	r3, [pc, #136]	; (8006a14 <DRIVE_init+0x110>)
+  DRV_motorRearRight.dirPin1        = MOTOR_REAR_RIGHT_IN_1_Pin;
+ 8006988:	4b22      	ldr	r3, [pc, #136]	; (8006a14 <DRV_init+0x110>)
  800698a:	2220      	movs	r2, #32
  800698c:	615a      	str	r2, [r3, #20]
-  DRIVE_motorRearRight.dirPin2Port    = MOTOR_REAR_RIGHT_IN_2_GPIO_Port;
- 800698e:	4b21      	ldr	r3, [pc, #132]	; (8006a14 <DRIVE_init+0x110>)
- 8006990:	4a1d      	ldr	r2, [pc, #116]	; (8006a08 <DRIVE_init+0x104>)
+  DRV_motorRearRight.dirPin2Port    = MOTOR_REAR_RIGHT_IN_2_GPIO_Port;
+ 800698e:	4b21      	ldr	r3, [pc, #132]	; (8006a14 <DRV_init+0x110>)
+ 8006990:	4a1d      	ldr	r2, [pc, #116]	; (8006a08 <DRV_init+0x104>)
  8006992:	611a      	str	r2, [r3, #16]
-  DRIVE_motorRearRight.dirPin2        = MOTOR_REAR_RIGHT_IN_2_Pin;
- 8006994:	4b1f      	ldr	r3, [pc, #124]	; (8006a14 <DRIVE_init+0x110>)
+  DRV_motorRearRight.dirPin2        = MOTOR_REAR_RIGHT_IN_2_Pin;
+ 8006994:	4b1f      	ldr	r3, [pc, #124]	; (8006a14 <DRV_init+0x110>)
  8006996:	2210      	movs	r2, #16
  8006998:	619a      	str	r2, [r3, #24]
-  DRIVE_motorRearRight.pwmTimerHandle = p_pwmTimerHandle;
- 800699a:	4a1e      	ldr	r2, [pc, #120]	; (8006a14 <DRIVE_init+0x110>)
+  DRV_motorRearRight.pwmTimerHandle = p_pwmTimerHandle;
+ 800699a:	4a1e      	ldr	r2, [pc, #120]	; (8006a14 <DRV_init+0x110>)
  800699c:	687b      	ldr	r3, [r7, #4]
  800699e:	6253      	str	r3, [r2, #36]	; 0x24
-  DRIVE_motorRearRight.pwmChannel     = TIM_CHANNEL_3;
- 80069a0:	4b1c      	ldr	r3, [pc, #112]	; (8006a14 <DRIVE_init+0x110>)
+  DRV_motorRearRight.pwmChannel     = TIM_CHANNEL_3;
+ 80069a0:	4b1c      	ldr	r3, [pc, #112]	; (8006a14 <DRV_init+0x110>)
  80069a2:	2208      	movs	r2, #8
  80069a4:	629a      	str	r2, [r3, #40]	; 0x28
 
-  MOTOR_init(&DRIVE_motorFrontRight, "FRONT_RIGHT");
- 80069a6:	491c      	ldr	r1, [pc, #112]	; (8006a18 <DRIVE_init+0x114>)
- 80069a8:	4814      	ldr	r0, [pc, #80]	; (80069fc <DRIVE_init+0xf8>)
- 80069aa:	f000 fd31 	bl	8007410 <MOTOR_init>
-  MOTOR_init(&DRIVE_motorFrontLeft , "FRONT_LEFT ");
- 80069ae:	491b      	ldr	r1, [pc, #108]	; (8006a1c <DRIVE_init+0x118>)
- 80069b0:	4814      	ldr	r0, [pc, #80]	; (8006a04 <DRIVE_init+0x100>)
- 80069b2:	f000 fd2d 	bl	8007410 <MOTOR_init>
-  MOTOR_init(&DRIVE_motorRearLeft  , "REAR_LEFT  ");
- 80069b6:	491a      	ldr	r1, [pc, #104]	; (8006a20 <DRIVE_init+0x11c>)
- 80069b8:	4814      	ldr	r0, [pc, #80]	; (8006a0c <DRIVE_init+0x108>)
- 80069ba:	f000 fd29 	bl	8007410 <MOTOR_init>
-  MOTOR_init(&DRIVE_motorRearRight , "REAR_RIGHT ");
- 80069be:	4919      	ldr	r1, [pc, #100]	; (8006a24 <DRIVE_init+0x120>)
- 80069c0:	4814      	ldr	r0, [pc, #80]	; (8006a14 <DRIVE_init+0x110>)
- 80069c2:	f000 fd25 	bl	8007410 <MOTOR_init>
+  MTR_init(&DRV_motorFrontRight, "FRONT_RIGHT");
+ 80069a6:	491c      	ldr	r1, [pc, #112]	; (8006a18 <DRV_init+0x114>)
+ 80069a8:	4814      	ldr	r0, [pc, #80]	; (80069fc <DRV_init+0xf8>)
+ 80069aa:	f000 fd31 	bl	8007410 <MTR_init>
+  MTR_init(&DRV_motorFrontLeft , "FRONT_LEFT ");
+ 80069ae:	491b      	ldr	r1, [pc, #108]	; (8006a1c <DRV_init+0x118>)
+ 80069b0:	4814      	ldr	r0, [pc, #80]	; (8006a04 <DRV_init+0x100>)
+ 80069b2:	f000 fd2d 	bl	8007410 <MTR_init>
+  MTR_init(&DRV_motorRearLeft  , "REAR_LEFT  ");
+ 80069b6:	491a      	ldr	r1, [pc, #104]	; (8006a20 <DRV_init+0x11c>)
+ 80069b8:	4814      	ldr	r0, [pc, #80]	; (8006a0c <DRV_init+0x108>)
+ 80069ba:	f000 fd29 	bl	8007410 <MTR_init>
+  MTR_init(&DRV_motorRearRight , "REAR_RIGHT ");
+ 80069be:	4919      	ldr	r1, [pc, #100]	; (8006a24 <DRV_init+0x120>)
+ 80069c0:	4814      	ldr	r0, [pc, #80]	; (8006a14 <DRV_init+0x110>)
+ 80069c2:	f000 fd25 	bl	8007410 <MTR_init>
 
   /* Start motors (but with a 0 speed at this point) */
-  MOTOR_start(&DRIVE_motorFrontRight);
- 80069c6:	480d      	ldr	r0, [pc, #52]	; (80069fc <DRIVE_init+0xf8>)
- 80069c8:	f000 fdc0 	bl	800754c <MOTOR_start>
-  MOTOR_start(&DRIVE_motorFrontLeft );
- 80069cc:	480d      	ldr	r0, [pc, #52]	; (8006a04 <DRIVE_init+0x100>)
- 80069ce:	f000 fdbd 	bl	800754c <MOTOR_start>
-  MOTOR_start(&DRIVE_motorRearRight );
- 80069d2:	4810      	ldr	r0, [pc, #64]	; (8006a14 <DRIVE_init+0x110>)
- 80069d4:	f000 fdba 	bl	800754c <MOTOR_start>
-  MOTOR_start(&DRIVE_motorRearLeft  );
- 80069d8:	480c      	ldr	r0, [pc, #48]	; (8006a0c <DRIVE_init+0x108>)
- 80069da:	f000 fdb7 	bl	800754c <MOTOR_start>
+  MTR_start(&DRV_motorFrontRight);
+ 80069c6:	480d      	ldr	r0, [pc, #52]	; (80069fc <DRV_init+0xf8>)
+ 80069c8:	f000 fdc0 	bl	800754c <MTR_start>
+  MTR_start(&DRV_motorFrontLeft );
+ 80069cc:	480d      	ldr	r0, [pc, #52]	; (8006a04 <DRV_init+0x100>)
+ 80069ce:	f000 fdbd 	bl	800754c <MTR_start>
+  MTR_start(&DRV_motorRearRight );
+ 80069d2:	4810      	ldr	r0, [pc, #64]	; (8006a14 <DRV_init+0x110>)
+ 80069d4:	f000 fdba 	bl	800754c <MTR_start>
+  MTR_start(&DRV_motorRearLeft  );
+ 80069d8:	480c      	ldr	r0, [pc, #48]	; (8006a0c <DRV_init+0x108>)
+ 80069da:	f000 fdb7 	bl	800754c <MTR_start>
 
   /* De-activate debug mode: motors will make the car move */
-  DRIVE_isDebugOn = false;
- 80069de:	4b12      	ldr	r3, [pc, #72]	; (8006a28 <DRIVE_init+0x124>)
+  DRV_isDebugOn = false;
+ 80069de:	4b12      	ldr	r3, [pc, #72]	; (8006a28 <DRV_init+0x124>)
  80069e0:	2200      	movs	r2, #0
  80069e2:	701a      	strb	r2, [r3, #0]
 
   /* Considered that drive is inactive when the code starts */
-  DRIVE_isActive = false;
- 80069e4:	4b11      	ldr	r3, [pc, #68]	; (8006a2c <DRIVE_init+0x128>)
+  DRV_isActive = false;
+ 80069e4:	4b11      	ldr	r3, [pc, #68]	; (8006a2c <DRV_init+0x128>)
  80069e6:	2200      	movs	r2, #0
  80069e8:	701a      	strb	r2, [r3, #0]
 
   /* Start with master board control mode */
-  DRIVE_mode = DRIVE_MODE_MASTER_BOARD_CONTROLLED_SPEED;
- 80069ea:	4b11      	ldr	r3, [pc, #68]	; (8006a30 <DRIVE_init+0x12c>)
+  DRV_mode = DRV_MODE_MASTER_BOARD_CONTROLLED_SPEED;
+ 80069ea:	4b11      	ldr	r3, [pc, #68]	; (8006a30 <DRV_init+0x12c>)
  80069ec:	2203      	movs	r2, #3
  80069ee:	701a      	strb	r2, [r3, #0]
 
@@ -18426,9 +18426,9 @@ void DRIVE_init(TIM_HandleTypeDef *p_pwmTimerHandle)
  8006a2c:	200000d9 	.word	0x200000d9
  8006a30:	200000da 	.word	0x200000da
 
-08006a34 <DRIVE_update>:
+08006a34 <DRV_update>:
 
-void DRIVE_update(T_BLUETOOTH_CONTROL_Data *p_bluetoothData)
+void DRV_update(T_BLU_Data *p_bluetoothData)
 {
  8006a34:	b580      	push	{r7, lr}
  8006a36:	b084      	sub	sp, #16
@@ -18444,8 +18444,8 @@ void DRIVE_update(T_BLUETOOTH_CONTROL_Data *p_bluetoothData)
  8006a3e:	7c1b      	ldrb	r3, [r3, #16]
  8006a40:	3b01      	subs	r3, #1
  8006a42:	2b0f      	cmp	r3, #15
- 8006a44:	d86d      	bhi.n	8006b22 <DRIVE_update+0xee>
- 8006a46:	a201      	add	r2, pc, #4	; (adr r2, 8006a4c <DRIVE_update+0x18>)
+ 8006a44:	d86d      	bhi.n	8006b22 <DRV_update+0xee>
+ 8006a46:	a201      	add	r2, pc, #4	; (adr r2, 8006a4c <DRV_update+0x18>)
  8006a48:	f852 f023 	ldr.w	pc, [r2, r3, lsl #2]
  8006a4c:	08006aed 	.word	0x08006aed
  8006a50:	08006b23 	.word	0x08006b23
@@ -18464,19 +18464,19 @@ void DRIVE_update(T_BLUETOOTH_CONTROL_Data *p_bluetoothData)
  8006a84:	08006aa5 	.word	0x08006aa5
  8006a88:	08006a8d 	.word	0x08006a8d
   {
-    case BLUETOOTH_CONTROL_BUTTON_PINK_SQUARE:
-      if (DRIVE_mode != DRIVE_MODE_MANUAL_FIXED_SPEED)
- 8006a8c:	4b89      	ldr	r3, [pc, #548]	; (8006cb4 <DRIVE_update+0x280>)
+    case BLU_BUTTON_PINK_SQUARE:
+      if (DRV_mode != DRV_MODE_MANUAL_FIXED_SPEED)
+ 8006a8c:	4b89      	ldr	r3, [pc, #548]	; (8006cb4 <DRV_update+0x280>)
  8006a8e:	781b      	ldrb	r3, [r3, #0]
  8006a90:	2b00      	cmp	r3, #0
- 8006a92:	d048      	beq.n	8006b26 <DRIVE_update+0xf2>
+ 8006a92:	d048      	beq.n	8006b26 <DRV_update+0xf2>
       {
-        LOG_info("Drive mode now DRIVE_MODE_MANUAL_FIXED_SPEED");
- 8006a94:	4988      	ldr	r1, [pc, #544]	; (8006cb8 <DRIVE_update+0x284>)
+        LOG_info("Drive mode now DRV_MODE_MANUAL_FIXED_SPEED");
+ 8006a94:	4988      	ldr	r1, [pc, #544]	; (8006cb8 <DRV_update+0x284>)
  8006a96:	2001      	movs	r0, #1
  8006a98:	f000 fc64 	bl	8007364 <LOG_log>
-        DRIVE_mode = DRIVE_MODE_MANUAL_FIXED_SPEED;
- 8006a9c:	4b85      	ldr	r3, [pc, #532]	; (8006cb4 <DRIVE_update+0x280>)
+        DRV_mode = DRV_MODE_MANUAL_FIXED_SPEED;
+ 8006a9c:	4b85      	ldr	r3, [pc, #532]	; (8006cb4 <DRV_update+0x280>)
  8006a9e:	2200      	movs	r2, #0
  8006aa0:	701a      	strb	r2, [r3, #0]
       }
@@ -18485,21 +18485,21 @@ void DRIVE_update(T_BLUETOOTH_CONTROL_Data *p_bluetoothData)
         ; /* Nothing to do */
       }
       break;
- 8006aa2:	e040      	b.n	8006b26 <DRIVE_update+0xf2>
+ 8006aa2:	e040      	b.n	8006b26 <DRV_update+0xf2>
 
-    case BLUETOOTH_CONTROL_BUTTON_BLUE_CROSS:
-      if (DRIVE_mode != DRIVE_MODE_MANUAL_VARIABLE_SPEED)
- 8006aa4:	4b83      	ldr	r3, [pc, #524]	; (8006cb4 <DRIVE_update+0x280>)
+    case BLU_BUTTON_BLUE_CROSS:
+      if (DRV_mode != DRV_MODE_MANUAL_VARIABLE_SPEED)
+ 8006aa4:	4b83      	ldr	r3, [pc, #524]	; (8006cb4 <DRV_update+0x280>)
  8006aa6:	781b      	ldrb	r3, [r3, #0]
  8006aa8:	2b01      	cmp	r3, #1
- 8006aaa:	d03e      	beq.n	8006b2a <DRIVE_update+0xf6>
+ 8006aaa:	d03e      	beq.n	8006b2a <DRV_update+0xf6>
       {
-        LOG_info("Drive mode now DRIVE_MODE_MANUAL_VARIABLE_SPEED");
- 8006aac:	4983      	ldr	r1, [pc, #524]	; (8006cbc <DRIVE_update+0x288>)
+        LOG_info("Drive mode now DRV_MODE_MANUAL_VARIABLE_SPEED");
+ 8006aac:	4983      	ldr	r1, [pc, #524]	; (8006cbc <DRV_update+0x288>)
  8006aae:	2001      	movs	r0, #1
  8006ab0:	f000 fc58 	bl	8007364 <LOG_log>
-        DRIVE_mode = DRIVE_MODE_MANUAL_VARIABLE_SPEED;
- 8006ab4:	4b7f      	ldr	r3, [pc, #508]	; (8006cb4 <DRIVE_update+0x280>)
+        DRV_mode = DRV_MODE_MANUAL_VARIABLE_SPEED;
+ 8006ab4:	4b7f      	ldr	r3, [pc, #508]	; (8006cb4 <DRV_update+0x280>)
  8006ab6:	2201      	movs	r2, #1
  8006ab8:	701a      	strb	r2, [r3, #0]
       }
@@ -18508,21 +18508,21 @@ void DRIVE_update(T_BLUETOOTH_CONTROL_Data *p_bluetoothData)
         ; /* Nothing to do */
       }
       break;
- 8006aba:	e036      	b.n	8006b2a <DRIVE_update+0xf6>
+ 8006aba:	e036      	b.n	8006b2a <DRV_update+0xf6>
 
-    case BLUETOOTH_CONTROL_BUTTON_RED_CIRCLE:
-      if (DRIVE_mode != DRIVE_MODE_MANUAL_CONTROLLED_SPEED)
- 8006abc:	4b7d      	ldr	r3, [pc, #500]	; (8006cb4 <DRIVE_update+0x280>)
+    case BLU_BUTTON_RED_CIRCLE:
+      if (DRV_mode != DRV_MODE_MANUAL_CONTROLLED_SPEED)
+ 8006abc:	4b7d      	ldr	r3, [pc, #500]	; (8006cb4 <DRV_update+0x280>)
  8006abe:	781b      	ldrb	r3, [r3, #0]
  8006ac0:	2b02      	cmp	r3, #2
- 8006ac2:	d034      	beq.n	8006b2e <DRIVE_update+0xfa>
+ 8006ac2:	d034      	beq.n	8006b2e <DRV_update+0xfa>
       {
-        LOG_info("Drive mode now DRIVE_MODE_MANUAL_CONTROLLED_SPEED");
- 8006ac4:	497e      	ldr	r1, [pc, #504]	; (8006cc0 <DRIVE_update+0x28c>)
+        LOG_info("Drive mode now DRV_MODE_MANUAL_CONTROLLED_SPEED");
+ 8006ac4:	497e      	ldr	r1, [pc, #504]	; (8006cc0 <DRV_update+0x28c>)
  8006ac6:	2001      	movs	r0, #1
  8006ac8:	f000 fc4c 	bl	8007364 <LOG_log>
-        DRIVE_mode = DRIVE_MODE_MANUAL_CONTROLLED_SPEED;
- 8006acc:	4b79      	ldr	r3, [pc, #484]	; (8006cb4 <DRIVE_update+0x280>)
+        DRV_mode = DRV_MODE_MANUAL_CONTROLLED_SPEED;
+ 8006acc:	4b79      	ldr	r3, [pc, #484]	; (8006cb4 <DRV_update+0x280>)
  8006ace:	2202      	movs	r2, #2
  8006ad0:	701a      	strb	r2, [r3, #0]
       }
@@ -18531,21 +18531,21 @@ void DRIVE_update(T_BLUETOOTH_CONTROL_Data *p_bluetoothData)
         ; /* Nothing to do */
       }
       break;
- 8006ad2:	e02c      	b.n	8006b2e <DRIVE_update+0xfa>
+ 8006ad2:	e02c      	b.n	8006b2e <DRV_update+0xfa>
 
-    case BLUETOOTH_CONTROL_BUTTON_GREEN_TRIANGLE:
-      if (DRIVE_mode != DRIVE_MODE_MASTER_BOARD_CONTROLLED_SPEED)
- 8006ad4:	4b77      	ldr	r3, [pc, #476]	; (8006cb4 <DRIVE_update+0x280>)
+    case BLU_BUTTON_GREEN_TRIANGLE:
+      if (DRV_mode != DRV_MODE_MASTER_BOARD_CONTROLLED_SPEED)
+ 8006ad4:	4b77      	ldr	r3, [pc, #476]	; (8006cb4 <DRV_update+0x280>)
  8006ad6:	781b      	ldrb	r3, [r3, #0]
  8006ad8:	2b03      	cmp	r3, #3
- 8006ada:	d02a      	beq.n	8006b32 <DRIVE_update+0xfe>
+ 8006ada:	d02a      	beq.n	8006b32 <DRV_update+0xfe>
       {
-        LOG_info("Drive mode now DRIVE_MODE_MASTER_BOARD_CONTROLLED_SPEED");
- 8006adc:	4979      	ldr	r1, [pc, #484]	; (8006cc4 <DRIVE_update+0x290>)
+        LOG_info("Drive mode now DRV_MODE_MASTER_BOARD_CONTROLLED_SPEED");
+ 8006adc:	4979      	ldr	r1, [pc, #484]	; (8006cc4 <DRV_update+0x290>)
  8006ade:	2001      	movs	r0, #1
  8006ae0:	f000 fc40 	bl	8007364 <LOG_log>
-        DRIVE_mode = DRIVE_MODE_MASTER_BOARD_CONTROLLED_SPEED;
- 8006ae4:	4b73      	ldr	r3, [pc, #460]	; (8006cb4 <DRIVE_update+0x280>)
+        DRV_mode = DRV_MODE_MASTER_BOARD_CONTROLLED_SPEED;
+ 8006ae4:	4b73      	ldr	r3, [pc, #460]	; (8006cb4 <DRV_update+0x280>)
  8006ae6:	2203      	movs	r2, #3
  8006ae8:	701a      	strb	r2, [r3, #0]
       }
@@ -18554,23 +18554,23 @@ void DRIVE_update(T_BLUETOOTH_CONTROL_Data *p_bluetoothData)
         ; /* Nothing to do */
       }
       break;
- 8006aea:	e022      	b.n	8006b32 <DRIVE_update+0xfe>
+ 8006aea:	e022      	b.n	8006b32 <DRV_update+0xfe>
 
-    case BLUETOOTH_CONTROL_BUTTON_SELECT:
-      if (DRIVE_isDebugOn == false)
- 8006aec:	4b76      	ldr	r3, [pc, #472]	; (8006cc8 <DRIVE_update+0x294>)
+    case BLU_BUTTON_SELECT:
+      if (DRV_isDebugOn == false)
+ 8006aec:	4b76      	ldr	r3, [pc, #472]	; (8006cc8 <DRV_update+0x294>)
  8006aee:	781b      	ldrb	r3, [r3, #0]
  8006af0:	f083 0301 	eor.w	r3, r3, #1
  8006af4:	b2db      	uxtb	r3, r3
  8006af6:	2b00      	cmp	r3, #0
- 8006af8:	d01d      	beq.n	8006b36 <DRIVE_update+0x102>
+ 8006af8:	d01d      	beq.n	8006b36 <DRV_update+0x102>
       {
         LOG_info("Drive debug mode turned ON  - Motors now OFF");
- 8006afa:	4974      	ldr	r1, [pc, #464]	; (8006ccc <DRIVE_update+0x298>)
+ 8006afa:	4974      	ldr	r1, [pc, #464]	; (8006ccc <DRV_update+0x298>)
  8006afc:	2001      	movs	r0, #1
  8006afe:	f000 fc31 	bl	8007364 <LOG_log>
-        DRIVE_isDebugOn = true;
- 8006b02:	4b71      	ldr	r3, [pc, #452]	; (8006cc8 <DRIVE_update+0x294>)
+        DRV_isDebugOn = true;
+ 8006b02:	4b71      	ldr	r3, [pc, #452]	; (8006cc8 <DRV_update+0x294>)
  8006b04:	2201      	movs	r2, #1
  8006b06:	701a      	strb	r2, [r3, #0]
       }
@@ -18579,21 +18579,21 @@ void DRIVE_update(T_BLUETOOTH_CONTROL_Data *p_bluetoothData)
         ; /* Nothing to do */
       }
       break;
- 8006b08:	e015      	b.n	8006b36 <DRIVE_update+0x102>
+ 8006b08:	e015      	b.n	8006b36 <DRV_update+0x102>
 
-    case BLUETOOTH_CONTROL_BUTTON_START:
-      if (DRIVE_isDebugOn == true)
- 8006b0a:	4b6f      	ldr	r3, [pc, #444]	; (8006cc8 <DRIVE_update+0x294>)
+    case BLU_BUTTON_START:
+      if (DRV_isDebugOn == true)
+ 8006b0a:	4b6f      	ldr	r3, [pc, #444]	; (8006cc8 <DRV_update+0x294>)
  8006b0c:	781b      	ldrb	r3, [r3, #0]
  8006b0e:	2b00      	cmp	r3, #0
- 8006b10:	d013      	beq.n	8006b3a <DRIVE_update+0x106>
+ 8006b10:	d013      	beq.n	8006b3a <DRV_update+0x106>
       {
         LOG_info("Drive debug mode turned OFF - Motors now ON");
- 8006b12:	496f      	ldr	r1, [pc, #444]	; (8006cd0 <DRIVE_update+0x29c>)
+ 8006b12:	496f      	ldr	r1, [pc, #444]	; (8006cd0 <DRV_update+0x29c>)
  8006b14:	2001      	movs	r0, #1
  8006b16:	f000 fc25 	bl	8007364 <LOG_log>
-        DRIVE_isDebugOn = false;
- 8006b1a:	4b6b      	ldr	r3, [pc, #428]	; (8006cc8 <DRIVE_update+0x294>)
+        DRV_isDebugOn = false;
+ 8006b1a:	4b6b      	ldr	r3, [pc, #428]	; (8006cc8 <DRV_update+0x294>)
  8006b1c:	2200      	movs	r2, #0
  8006b1e:	701a      	strb	r2, [r3, #0]
       }
@@ -18602,257 +18602,257 @@ void DRIVE_update(T_BLUETOOTH_CONTROL_Data *p_bluetoothData)
         ; /* Nothing to do */
       }
       break;
- 8006b20:	e00b      	b.n	8006b3a <DRIVE_update+0x106>
+ 8006b20:	e00b      	b.n	8006b3a <DRV_update+0x106>
 
     default:
       ; /* Nothing to do */
       break;
  8006b22:	bf00      	nop
- 8006b24:	e00a      	b.n	8006b3c <DRIVE_update+0x108>
+ 8006b24:	e00a      	b.n	8006b3c <DRV_update+0x108>
       break;
  8006b26:	bf00      	nop
- 8006b28:	e008      	b.n	8006b3c <DRIVE_update+0x108>
+ 8006b28:	e008      	b.n	8006b3c <DRV_update+0x108>
       break;
  8006b2a:	bf00      	nop
- 8006b2c:	e006      	b.n	8006b3c <DRIVE_update+0x108>
+ 8006b2c:	e006      	b.n	8006b3c <DRV_update+0x108>
       break;
  8006b2e:	bf00      	nop
- 8006b30:	e004      	b.n	8006b3c <DRIVE_update+0x108>
+ 8006b30:	e004      	b.n	8006b3c <DRV_update+0x108>
       break;
  8006b32:	bf00      	nop
- 8006b34:	e002      	b.n	8006b3c <DRIVE_update+0x108>
+ 8006b34:	e002      	b.n	8006b3c <DRV_update+0x108>
       break;
  8006b36:	bf00      	nop
- 8006b38:	e000      	b.n	8006b3c <DRIVE_update+0x108>
+ 8006b38:	e000      	b.n	8006b3c <DRV_update+0x108>
       break;
  8006b3a:	bf00      	nop
   }
 
   /* Master board control mode is an automated mode, so that we will */
   /* ignore any direction/button press received via bluetooth.       */
-  if (DRIVE_mode == DRIVE_MODE_MASTER_BOARD_CONTROLLED_SPEED)
- 8006b3c:	4b5d      	ldr	r3, [pc, #372]	; (8006cb4 <DRIVE_update+0x280>)
+  if (DRV_mode == DRV_MODE_MASTER_BOARD_CONTROLLED_SPEED)
+ 8006b3c:	4b5d      	ldr	r3, [pc, #372]	; (8006cb4 <DRV_update+0x280>)
  8006b3e:	781b      	ldrb	r3, [r3, #0]
  8006b40:	2b03      	cmp	r3, #3
- 8006b42:	f000 80b3 	beq.w	8006cac <DRIVE_update+0x278>
+ 8006b42:	f000 80b3 	beq.w	8006cac <DRV_update+0x278>
     ; /* Nothing to do */
   }
   /* Manual mode, applying directions received by bluetooth */
   else
   {
-    if (p_bluetoothData->leftY > DRIVE_JOYSTICKS_THRESHOLD)
+    if (p_bluetoothData->leftY > DRV_JOYSTICKS_THRESHOLD)
  8006b46:	687b      	ldr	r3, [r7, #4]
  8006b48:	685b      	ldr	r3, [r3, #4]
  8006b4a:	2b0a      	cmp	r3, #10
- 8006b4c:	dd0c      	ble.n	8006b68 <DRIVE_update+0x134>
+ 8006b4c:	dd0c      	ble.n	8006b68 <DRV_update+0x134>
     {
-      l_speed = DRIVE_mode == DRIVE_MODE_MANUAL_FIXED_SPEED ? DRIVE_JOYSTICKS_FIXED_SPEED : p_bluetoothData->leftY;
- 8006b4e:	4b59      	ldr	r3, [pc, #356]	; (8006cb4 <DRIVE_update+0x280>)
+      l_speed = DRV_mode == DRV_MODE_MANUAL_FIXED_SPEED ? DRV_JOYSTICKS_FIXED_SPEED : p_bluetoothData->leftY;
+ 8006b4e:	4b59      	ldr	r3, [pc, #356]	; (8006cb4 <DRV_update+0x280>)
  8006b50:	781b      	ldrb	r3, [r3, #0]
  8006b52:	2b00      	cmp	r3, #0
- 8006b54:	d002      	beq.n	8006b5c <DRIVE_update+0x128>
+ 8006b54:	d002      	beq.n	8006b5c <DRV_update+0x128>
  8006b56:	687b      	ldr	r3, [r7, #4]
  8006b58:	685b      	ldr	r3, [r3, #4]
- 8006b5a:	e000      	b.n	8006b5e <DRIVE_update+0x12a>
+ 8006b5a:	e000      	b.n	8006b5e <DRV_update+0x12a>
  8006b5c:	2319      	movs	r3, #25
  8006b5e:	60fb      	str	r3, [r7, #12]
 
-      DRIVE_moveForward(l_speed);
+      DRV_moveForward(l_speed);
  8006b60:	68f8      	ldr	r0, [r7, #12]
- 8006b62:	f000 f8e3 	bl	8006d2c <DRIVE_moveForward>
+ 8006b62:	f000 f8e3 	bl	8006d2c <DRV_moveForward>
     {
-      DRIVE_sleep();
+      DRV_sleep();
     }
   }
 
   return;
- 8006b66:	e0a1      	b.n	8006cac <DRIVE_update+0x278>
-    else if (p_bluetoothData->rightY > DRIVE_JOYSTICKS_THRESHOLD)
+ 8006b66:	e0a1      	b.n	8006cac <DRV_update+0x278>
+    else if (p_bluetoothData->rightY > DRV_JOYSTICKS_THRESHOLD)
  8006b68:	687b      	ldr	r3, [r7, #4]
  8006b6a:	68db      	ldr	r3, [r3, #12]
  8006b6c:	2b0a      	cmp	r3, #10
- 8006b6e:	dd0c      	ble.n	8006b8a <DRIVE_update+0x156>
-      l_speed = DRIVE_mode == DRIVE_MODE_MANUAL_FIXED_SPEED ? DRIVE_JOYSTICKS_FIXED_SPEED : p_bluetoothData->rightY;
- 8006b70:	4b50      	ldr	r3, [pc, #320]	; (8006cb4 <DRIVE_update+0x280>)
+ 8006b6e:	dd0c      	ble.n	8006b8a <DRV_update+0x156>
+      l_speed = DRV_mode == DRV_MODE_MANUAL_FIXED_SPEED ? DRV_JOYSTICKS_FIXED_SPEED : p_bluetoothData->rightY;
+ 8006b70:	4b50      	ldr	r3, [pc, #320]	; (8006cb4 <DRV_update+0x280>)
  8006b72:	781b      	ldrb	r3, [r3, #0]
  8006b74:	2b00      	cmp	r3, #0
- 8006b76:	d002      	beq.n	8006b7e <DRIVE_update+0x14a>
+ 8006b76:	d002      	beq.n	8006b7e <DRV_update+0x14a>
  8006b78:	687b      	ldr	r3, [r7, #4]
  8006b7a:	68db      	ldr	r3, [r3, #12]
- 8006b7c:	e000      	b.n	8006b80 <DRIVE_update+0x14c>
+ 8006b7c:	e000      	b.n	8006b80 <DRV_update+0x14c>
  8006b7e:	2319      	movs	r3, #25
  8006b80:	60fb      	str	r3, [r7, #12]
-      DRIVE_moveForward(l_speed);
+      DRV_moveForward(l_speed);
  8006b82:	68f8      	ldr	r0, [r7, #12]
- 8006b84:	f000 f8d2 	bl	8006d2c <DRIVE_moveForward>
+ 8006b84:	f000 f8d2 	bl	8006d2c <DRV_moveForward>
   return;
- 8006b88:	e090      	b.n	8006cac <DRIVE_update+0x278>
-    else if (p_bluetoothData->leftY < -DRIVE_JOYSTICKS_THRESHOLD)
+ 8006b88:	e090      	b.n	8006cac <DRV_update+0x278>
+    else if (p_bluetoothData->leftY < -DRV_JOYSTICKS_THRESHOLD)
  8006b8a:	687b      	ldr	r3, [r7, #4]
  8006b8c:	685b      	ldr	r3, [r3, #4]
  8006b8e:	f113 0f0a 	cmn.w	r3, #10
- 8006b92:	da0d      	bge.n	8006bb0 <DRIVE_update+0x17c>
-      l_speed = DRIVE_mode == DRIVE_MODE_MANUAL_FIXED_SPEED ? DRIVE_JOYSTICKS_FIXED_SPEED : -p_bluetoothData->leftY;
- 8006b94:	4b47      	ldr	r3, [pc, #284]	; (8006cb4 <DRIVE_update+0x280>)
+ 8006b92:	da0d      	bge.n	8006bb0 <DRV_update+0x17c>
+      l_speed = DRV_mode == DRV_MODE_MANUAL_FIXED_SPEED ? DRV_JOYSTICKS_FIXED_SPEED : -p_bluetoothData->leftY;
+ 8006b94:	4b47      	ldr	r3, [pc, #284]	; (8006cb4 <DRV_update+0x280>)
  8006b96:	781b      	ldrb	r3, [r3, #0]
  8006b98:	2b00      	cmp	r3, #0
- 8006b9a:	d003      	beq.n	8006ba4 <DRIVE_update+0x170>
+ 8006b9a:	d003      	beq.n	8006ba4 <DRV_update+0x170>
  8006b9c:	687b      	ldr	r3, [r7, #4]
  8006b9e:	685b      	ldr	r3, [r3, #4]
  8006ba0:	425b      	negs	r3, r3
- 8006ba2:	e000      	b.n	8006ba6 <DRIVE_update+0x172>
+ 8006ba2:	e000      	b.n	8006ba6 <DRV_update+0x172>
  8006ba4:	2319      	movs	r3, #25
  8006ba6:	60fb      	str	r3, [r7, #12]
-      DRIVE_moveBackward(l_speed);
+      DRV_moveBackward(l_speed);
  8006ba8:	68f8      	ldr	r0, [r7, #12]
- 8006baa:	f000 f905 	bl	8006db8 <DRIVE_moveBackward>
+ 8006baa:	f000 f905 	bl	8006db8 <DRV_moveBackward>
   return;
- 8006bae:	e07d      	b.n	8006cac <DRIVE_update+0x278>
-    else if (p_bluetoothData->rightY < -DRIVE_JOYSTICKS_THRESHOLD)
+ 8006bae:	e07d      	b.n	8006cac <DRV_update+0x278>
+    else if (p_bluetoothData->rightY < -DRV_JOYSTICKS_THRESHOLD)
  8006bb0:	687b      	ldr	r3, [r7, #4]
  8006bb2:	68db      	ldr	r3, [r3, #12]
  8006bb4:	f113 0f0a 	cmn.w	r3, #10
- 8006bb8:	da0d      	bge.n	8006bd6 <DRIVE_update+0x1a2>
-      l_speed = DRIVE_mode == DRIVE_MODE_MANUAL_FIXED_SPEED ? DRIVE_JOYSTICKS_FIXED_SPEED : -p_bluetoothData->rightY;
- 8006bba:	4b3e      	ldr	r3, [pc, #248]	; (8006cb4 <DRIVE_update+0x280>)
+ 8006bb8:	da0d      	bge.n	8006bd6 <DRV_update+0x1a2>
+      l_speed = DRV_mode == DRV_MODE_MANUAL_FIXED_SPEED ? DRV_JOYSTICKS_FIXED_SPEED : -p_bluetoothData->rightY;
+ 8006bba:	4b3e      	ldr	r3, [pc, #248]	; (8006cb4 <DRV_update+0x280>)
  8006bbc:	781b      	ldrb	r3, [r3, #0]
  8006bbe:	2b00      	cmp	r3, #0
- 8006bc0:	d003      	beq.n	8006bca <DRIVE_update+0x196>
+ 8006bc0:	d003      	beq.n	8006bca <DRV_update+0x196>
  8006bc2:	687b      	ldr	r3, [r7, #4]
  8006bc4:	68db      	ldr	r3, [r3, #12]
  8006bc6:	425b      	negs	r3, r3
- 8006bc8:	e000      	b.n	8006bcc <DRIVE_update+0x198>
+ 8006bc8:	e000      	b.n	8006bcc <DRV_update+0x198>
  8006bca:	2319      	movs	r3, #25
  8006bcc:	60fb      	str	r3, [r7, #12]
-      DRIVE_moveBackward(l_speed);
+      DRV_moveBackward(l_speed);
  8006bce:	68f8      	ldr	r0, [r7, #12]
- 8006bd0:	f000 f8f2 	bl	8006db8 <DRIVE_moveBackward>
+ 8006bd0:	f000 f8f2 	bl	8006db8 <DRV_moveBackward>
   return;
- 8006bd4:	e06a      	b.n	8006cac <DRIVE_update+0x278>
-    else if (p_bluetoothData->leftX < -DRIVE_JOYSTICKS_THRESHOLD)
+ 8006bd4:	e06a      	b.n	8006cac <DRV_update+0x278>
+    else if (p_bluetoothData->leftX < -DRV_JOYSTICKS_THRESHOLD)
  8006bd6:	687b      	ldr	r3, [r7, #4]
  8006bd8:	681b      	ldr	r3, [r3, #0]
  8006bda:	f113 0f0a 	cmn.w	r3, #10
- 8006bde:	da0d      	bge.n	8006bfc <DRIVE_update+0x1c8>
-      l_speed = DRIVE_mode == DRIVE_MODE_MANUAL_FIXED_SPEED ? DRIVE_JOYSTICKS_FIXED_SPEED : -p_bluetoothData->leftX;
- 8006be0:	4b34      	ldr	r3, [pc, #208]	; (8006cb4 <DRIVE_update+0x280>)
+ 8006bde:	da0d      	bge.n	8006bfc <DRV_update+0x1c8>
+      l_speed = DRV_mode == DRV_MODE_MANUAL_FIXED_SPEED ? DRV_JOYSTICKS_FIXED_SPEED : -p_bluetoothData->leftX;
+ 8006be0:	4b34      	ldr	r3, [pc, #208]	; (8006cb4 <DRV_update+0x280>)
  8006be2:	781b      	ldrb	r3, [r3, #0]
  8006be4:	2b00      	cmp	r3, #0
- 8006be6:	d003      	beq.n	8006bf0 <DRIVE_update+0x1bc>
+ 8006be6:	d003      	beq.n	8006bf0 <DRV_update+0x1bc>
  8006be8:	687b      	ldr	r3, [r7, #4]
  8006bea:	681b      	ldr	r3, [r3, #0]
  8006bec:	425b      	negs	r3, r3
- 8006bee:	e000      	b.n	8006bf2 <DRIVE_update+0x1be>
+ 8006bee:	e000      	b.n	8006bf2 <DRV_update+0x1be>
  8006bf0:	2319      	movs	r3, #25
  8006bf2:	60fb      	str	r3, [r7, #12]
-      DRIVE_turnLeft(l_speed);
+      DRV_turnLeft(l_speed);
  8006bf4:	68f8      	ldr	r0, [r7, #12]
- 8006bf6:	f000 fa1d 	bl	8007034 <DRIVE_turnLeft>
+ 8006bf6:	f000 fa1d 	bl	8007034 <DRV_turnLeft>
   return;
- 8006bfa:	e057      	b.n	8006cac <DRIVE_update+0x278>
-    else if (p_bluetoothData->leftX > DRIVE_JOYSTICKS_THRESHOLD)
+ 8006bfa:	e057      	b.n	8006cac <DRV_update+0x278>
+    else if (p_bluetoothData->leftX > DRV_JOYSTICKS_THRESHOLD)
  8006bfc:	687b      	ldr	r3, [r7, #4]
  8006bfe:	681b      	ldr	r3, [r3, #0]
  8006c00:	2b0a      	cmp	r3, #10
- 8006c02:	dd0c      	ble.n	8006c1e <DRIVE_update+0x1ea>
-      l_speed = DRIVE_mode == DRIVE_MODE_MANUAL_FIXED_SPEED ? DRIVE_JOYSTICKS_FIXED_SPEED : p_bluetoothData->leftX;
- 8006c04:	4b2b      	ldr	r3, [pc, #172]	; (8006cb4 <DRIVE_update+0x280>)
+ 8006c02:	dd0c      	ble.n	8006c1e <DRV_update+0x1ea>
+      l_speed = DRV_mode == DRV_MODE_MANUAL_FIXED_SPEED ? DRV_JOYSTICKS_FIXED_SPEED : p_bluetoothData->leftX;
+ 8006c04:	4b2b      	ldr	r3, [pc, #172]	; (8006cb4 <DRV_update+0x280>)
  8006c06:	781b      	ldrb	r3, [r3, #0]
  8006c08:	2b00      	cmp	r3, #0
- 8006c0a:	d002      	beq.n	8006c12 <DRIVE_update+0x1de>
+ 8006c0a:	d002      	beq.n	8006c12 <DRV_update+0x1de>
  8006c0c:	687b      	ldr	r3, [r7, #4]
  8006c0e:	681b      	ldr	r3, [r3, #0]
- 8006c10:	e000      	b.n	8006c14 <DRIVE_update+0x1e0>
+ 8006c10:	e000      	b.n	8006c14 <DRV_update+0x1e0>
  8006c12:	2319      	movs	r3, #25
  8006c14:	60fb      	str	r3, [r7, #12]
-      DRIVE_turnRight(l_speed);
+      DRV_turnRight(l_speed);
  8006c16:	68f8      	ldr	r0, [r7, #12]
- 8006c18:	f000 fa52 	bl	80070c0 <DRIVE_turnRight>
+ 8006c18:	f000 fa52 	bl	80070c0 <DRV_turnRight>
   return;
- 8006c1c:	e046      	b.n	8006cac <DRIVE_update+0x278>
-    else if (p_bluetoothData->rightX < -DRIVE_JOYSTICKS_THRESHOLD)
+ 8006c1c:	e046      	b.n	8006cac <DRV_update+0x278>
+    else if (p_bluetoothData->rightX < -DRV_JOYSTICKS_THRESHOLD)
  8006c1e:	687b      	ldr	r3, [r7, #4]
  8006c20:	689b      	ldr	r3, [r3, #8]
  8006c22:	f113 0f0a 	cmn.w	r3, #10
- 8006c26:	da0d      	bge.n	8006c44 <DRIVE_update+0x210>
-      l_speed = DRIVE_mode == DRIVE_MODE_MANUAL_FIXED_SPEED ? DRIVE_JOYSTICKS_FIXED_SPEED : -p_bluetoothData->rightX;
- 8006c28:	4b22      	ldr	r3, [pc, #136]	; (8006cb4 <DRIVE_update+0x280>)
+ 8006c26:	da0d      	bge.n	8006c44 <DRV_update+0x210>
+      l_speed = DRV_mode == DRV_MODE_MANUAL_FIXED_SPEED ? DRV_JOYSTICKS_FIXED_SPEED : -p_bluetoothData->rightX;
+ 8006c28:	4b22      	ldr	r3, [pc, #136]	; (8006cb4 <DRV_update+0x280>)
  8006c2a:	781b      	ldrb	r3, [r3, #0]
  8006c2c:	2b00      	cmp	r3, #0
- 8006c2e:	d003      	beq.n	8006c38 <DRIVE_update+0x204>
+ 8006c2e:	d003      	beq.n	8006c38 <DRV_update+0x204>
  8006c30:	687b      	ldr	r3, [r7, #4]
  8006c32:	689b      	ldr	r3, [r3, #8]
  8006c34:	425b      	negs	r3, r3
- 8006c36:	e000      	b.n	8006c3a <DRIVE_update+0x206>
+ 8006c36:	e000      	b.n	8006c3a <DRV_update+0x206>
  8006c38:	2319      	movs	r3, #25
  8006c3a:	60fb      	str	r3, [r7, #12]
-      DRIVE_translateLeft(l_speed);
+      DRV_translateLeft(l_speed);
  8006c3c:	68f8      	ldr	r0, [r7, #12]
- 8006c3e:	f000 fa85 	bl	800714c <DRIVE_translateLeft>
+ 8006c3e:	f000 fa85 	bl	800714c <DRV_translateLeft>
   return;
- 8006c42:	e033      	b.n	8006cac <DRIVE_update+0x278>
-    else if (p_bluetoothData->rightX > DRIVE_JOYSTICKS_THRESHOLD)
+ 8006c42:	e033      	b.n	8006cac <DRV_update+0x278>
+    else if (p_bluetoothData->rightX > DRV_JOYSTICKS_THRESHOLD)
  8006c44:	687b      	ldr	r3, [r7, #4]
  8006c46:	689b      	ldr	r3, [r3, #8]
  8006c48:	2b0a      	cmp	r3, #10
- 8006c4a:	dd0c      	ble.n	8006c66 <DRIVE_update+0x232>
-      l_speed = DRIVE_mode == DRIVE_MODE_MANUAL_FIXED_SPEED ? DRIVE_JOYSTICKS_FIXED_SPEED : p_bluetoothData->rightX;
- 8006c4c:	4b19      	ldr	r3, [pc, #100]	; (8006cb4 <DRIVE_update+0x280>)
+ 8006c4a:	dd0c      	ble.n	8006c66 <DRV_update+0x232>
+      l_speed = DRV_mode == DRV_MODE_MANUAL_FIXED_SPEED ? DRV_JOYSTICKS_FIXED_SPEED : p_bluetoothData->rightX;
+ 8006c4c:	4b19      	ldr	r3, [pc, #100]	; (8006cb4 <DRV_update+0x280>)
  8006c4e:	781b      	ldrb	r3, [r3, #0]
  8006c50:	2b00      	cmp	r3, #0
- 8006c52:	d002      	beq.n	8006c5a <DRIVE_update+0x226>
+ 8006c52:	d002      	beq.n	8006c5a <DRV_update+0x226>
  8006c54:	687b      	ldr	r3, [r7, #4]
  8006c56:	689b      	ldr	r3, [r3, #8]
- 8006c58:	e000      	b.n	8006c5c <DRIVE_update+0x228>
+ 8006c58:	e000      	b.n	8006c5c <DRV_update+0x228>
  8006c5a:	2319      	movs	r3, #25
  8006c5c:	60fb      	str	r3, [r7, #12]
-      DRIVE_translateRight(l_speed);
+      DRV_translateRight(l_speed);
  8006c5e:	68f8      	ldr	r0, [r7, #12]
- 8006c60:	f000 faba 	bl	80071d8 <DRIVE_translateRight>
+ 8006c60:	f000 faba 	bl	80071d8 <DRV_translateRight>
   return;
- 8006c64:	e022      	b.n	8006cac <DRIVE_update+0x278>
-    else if (p_bluetoothData->button == BLUETOOTH_CONTROL_BUTTON_L1)
+ 8006c64:	e022      	b.n	8006cac <DRV_update+0x278>
+    else if (p_bluetoothData->button == BLU_BUTTON_L1)
  8006c66:	687b      	ldr	r3, [r7, #4]
  8006c68:	7c1b      	ldrb	r3, [r3, #16]
  8006c6a:	2b0b      	cmp	r3, #11
- 8006c6c:	d103      	bne.n	8006c76 <DRIVE_update+0x242>
-      DRIVE_moveForwardLeft(DRIVE_BUTTONS_FIXED_SPEED);
+ 8006c6c:	d103      	bne.n	8006c76 <DRV_update+0x242>
+      DRV_moveForwardLeft(DRV_BUTTONS_FIXED_SPEED);
  8006c6e:	2032      	movs	r0, #50	; 0x32
- 8006c70:	f000 f926 	bl	8006ec0 <DRIVE_moveForwardLeft>
+ 8006c70:	f000 f926 	bl	8006ec0 <DRV_moveForwardLeft>
   return;
- 8006c74:	e01a      	b.n	8006cac <DRIVE_update+0x278>
-    else if (p_bluetoothData->button == BLUETOOTH_CONTROL_BUTTON_L2)
+ 8006c74:	e01a      	b.n	8006cac <DRV_update+0x278>
+    else if (p_bluetoothData->button == BLU_BUTTON_L2)
  8006c76:	687b      	ldr	r3, [r7, #4]
  8006c78:	7c1b      	ldrb	r3, [r3, #16]
  8006c7a:	2b09      	cmp	r3, #9
- 8006c7c:	d103      	bne.n	8006c86 <DRIVE_update+0x252>
-      DRIVE_moveBackwardRight(DRIVE_BUTTONS_FIXED_SPEED);
+ 8006c7c:	d103      	bne.n	8006c86 <DRV_update+0x252>
+      DRV_moveBackwardRight(DRV_BUTTONS_FIXED_SPEED);
  8006c7e:	2032      	movs	r0, #50	; 0x32
- 8006c80:	f000 f95c 	bl	8006f3c <DRIVE_moveBackwardRight>
+ 8006c80:	f000 f95c 	bl	8006f3c <DRV_moveBackwardRight>
   return;
- 8006c84:	e012      	b.n	8006cac <DRIVE_update+0x278>
-    else if (p_bluetoothData->button == BLUETOOTH_CONTROL_BUTTON_R1)
+ 8006c84:	e012      	b.n	8006cac <DRV_update+0x278>
+    else if (p_bluetoothData->button == BLU_BUTTON_R1)
  8006c86:	687b      	ldr	r3, [r7, #4]
  8006c88:	7c1b      	ldrb	r3, [r3, #16]
  8006c8a:	2b0c      	cmp	r3, #12
- 8006c8c:	d103      	bne.n	8006c96 <DRIVE_update+0x262>
-      DRIVE_moveForwardRight(DRIVE_BUTTONS_FIXED_SPEED);
+ 8006c8c:	d103      	bne.n	8006c96 <DRV_update+0x262>
+      DRV_moveForwardRight(DRV_BUTTONS_FIXED_SPEED);
  8006c8e:	2032      	movs	r0, #50	; 0x32
- 8006c90:	f000 f8d8 	bl	8006e44 <DRIVE_moveForwardRight>
+ 8006c90:	f000 f8d8 	bl	8006e44 <DRV_moveForwardRight>
   return;
- 8006c94:	e00a      	b.n	8006cac <DRIVE_update+0x278>
-    else if (p_bluetoothData->button == BLUETOOTH_CONTROL_BUTTON_R2)
+ 8006c94:	e00a      	b.n	8006cac <DRV_update+0x278>
+    else if (p_bluetoothData->button == BLU_BUTTON_R2)
  8006c96:	687b      	ldr	r3, [r7, #4]
  8006c98:	7c1b      	ldrb	r3, [r3, #16]
  8006c9a:	2b0a      	cmp	r3, #10
- 8006c9c:	d103      	bne.n	8006ca6 <DRIVE_update+0x272>
-      DRIVE_moveBackwardLeft(DRIVE_BUTTONS_FIXED_SPEED);
+ 8006c9c:	d103      	bne.n	8006ca6 <DRV_update+0x272>
+      DRV_moveBackwardLeft(DRV_BUTTONS_FIXED_SPEED);
  8006c9e:	2032      	movs	r0, #50	; 0x32
- 8006ca0:	f000 f98a 	bl	8006fb8 <DRIVE_moveBackwardLeft>
+ 8006ca0:	f000 f98a 	bl	8006fb8 <DRV_moveBackwardLeft>
   return;
- 8006ca4:	e002      	b.n	8006cac <DRIVE_update+0x278>
-      DRIVE_sleep();
- 8006ca6:	f000 f815 	bl	8006cd4 <DRIVE_sleep>
+ 8006ca4:	e002      	b.n	8006cac <DRV_update+0x278>
+      DRV_sleep();
+ 8006ca6:	f000 f815 	bl	8006cd4 <DRV_sleep>
   return;
  8006caa:	bf00      	nop
  8006cac:	bf00      	nop
@@ -18862,49 +18862,49 @@ void DRIVE_update(T_BLUETOOTH_CONTROL_Data *p_bluetoothData)
  8006cb2:	bd80      	pop	{r7, pc}
  8006cb4:	200000da 	.word	0x200000da
  8006cb8:	08008a30 	.word	0x08008a30
- 8006cbc:	08008a60 	.word	0x08008a60
- 8006cc0:	08008a90 	.word	0x08008a90
- 8006cc4:	08008ac4 	.word	0x08008ac4
+ 8006cbc:	08008a5c 	.word	0x08008a5c
+ 8006cc0:	08008a8c 	.word	0x08008a8c
+ 8006cc4:	08008abc 	.word	0x08008abc
  8006cc8:	200000d8 	.word	0x200000d8
- 8006ccc:	08008afc 	.word	0x08008afc
- 8006cd0:	08008b2c 	.word	0x08008b2c
+ 8006ccc:	08008af4 	.word	0x08008af4
+ 8006cd0:	08008b24 	.word	0x08008b24
 
-08006cd4 <DRIVE_sleep>:
+08006cd4 <DRV_sleep>:
 
-static void DRIVE_sleep(void)
+static void DRV_sleep(void)
 {
  8006cd4:	b580      	push	{r7, lr}
  8006cd6:	af00      	add	r7, sp, #0
-  if (DRIVE_isActive == true)
- 8006cd8:	4b0e      	ldr	r3, [pc, #56]	; (8006d14 <DRIVE_sleep+0x40>)
+  if (DRV_isActive == true)
+ 8006cd8:	4b0e      	ldr	r3, [pc, #56]	; (8006d14 <DRV_sleep+0x40>)
  8006cda:	781b      	ldrb	r3, [r3, #0]
  8006cdc:	2b00      	cmp	r3, #0
- 8006cde:	d017      	beq.n	8006d10 <DRIVE_sleep+0x3c>
+ 8006cde:	d017      	beq.n	8006d10 <DRV_sleep+0x3c>
   {
     LOG_info("Drive going to sleep");
- 8006ce0:	490d      	ldr	r1, [pc, #52]	; (8006d18 <DRIVE_sleep+0x44>)
+ 8006ce0:	490d      	ldr	r1, [pc, #52]	; (8006d18 <DRV_sleep+0x44>)
  8006ce2:	2001      	movs	r0, #1
  8006ce4:	f000 fb3e 	bl	8007364 <LOG_log>
 
-    MOTOR_setSpeed(&DRIVE_motorFrontRight, 0);
+    MTR_setSpeed(&DRV_motorFrontRight, 0);
  8006ce8:	2100      	movs	r1, #0
- 8006cea:	480c      	ldr	r0, [pc, #48]	; (8006d1c <DRIVE_sleep+0x48>)
- 8006cec:	f000 fbf0 	bl	80074d0 <MOTOR_setSpeed>
-    MOTOR_setSpeed(&DRIVE_motorFrontLeft , 0);
+ 8006cea:	480c      	ldr	r0, [pc, #48]	; (8006d1c <DRV_sleep+0x48>)
+ 8006cec:	f000 fbf0 	bl	80074d0 <MTR_setSpeed>
+    MTR_setSpeed(&DRV_motorFrontLeft , 0);
  8006cf0:	2100      	movs	r1, #0
- 8006cf2:	480b      	ldr	r0, [pc, #44]	; (8006d20 <DRIVE_sleep+0x4c>)
- 8006cf4:	f000 fbec 	bl	80074d0 <MOTOR_setSpeed>
-    MOTOR_setSpeed(&DRIVE_motorRearRight , 0);
+ 8006cf2:	480b      	ldr	r0, [pc, #44]	; (8006d20 <DRV_sleep+0x4c>)
+ 8006cf4:	f000 fbec 	bl	80074d0 <MTR_setSpeed>
+    MTR_setSpeed(&DRV_motorRearRight , 0);
  8006cf8:	2100      	movs	r1, #0
- 8006cfa:	480a      	ldr	r0, [pc, #40]	; (8006d24 <DRIVE_sleep+0x50>)
- 8006cfc:	f000 fbe8 	bl	80074d0 <MOTOR_setSpeed>
-    MOTOR_setSpeed(&DRIVE_motorRearLeft  , 0);
+ 8006cfa:	480a      	ldr	r0, [pc, #40]	; (8006d24 <DRV_sleep+0x50>)
+ 8006cfc:	f000 fbe8 	bl	80074d0 <MTR_setSpeed>
+    MTR_setSpeed(&DRV_motorRearLeft  , 0);
  8006d00:	2100      	movs	r1, #0
- 8006d02:	4809      	ldr	r0, [pc, #36]	; (8006d28 <DRIVE_sleep+0x54>)
- 8006d04:	f000 fbe4 	bl	80074d0 <MOTOR_setSpeed>
+ 8006d02:	4809      	ldr	r0, [pc, #36]	; (8006d28 <DRV_sleep+0x54>)
+ 8006d04:	f000 fbe4 	bl	80074d0 <MTR_setSpeed>
 
-    DRIVE_isActive = false;
- 8006d08:	4b02      	ldr	r3, [pc, #8]	; (8006d14 <DRIVE_sleep+0x40>)
+    DRV_isActive = false;
+ 8006d08:	4b02      	ldr	r3, [pc, #8]	; (8006d14 <DRV_sleep+0x40>)
  8006d0a:	2200      	movs	r2, #0
  8006d0c:	701a      	strb	r2, [r3, #0]
   else
@@ -18918,15 +18918,15 @@ static void DRIVE_sleep(void)
 }
  8006d12:	bd80      	pop	{r7, pc}
  8006d14:	200000d9 	.word	0x200000d9
- 8006d18:	08008b58 	.word	0x08008b58
+ 8006d18:	08008b50 	.word	0x08008b50
  8006d1c:	200000dc 	.word	0x200000dc
  8006d20:	20000108 	.word	0x20000108
  8006d24:	20000160 	.word	0x20000160
  8006d28:	20000134 	.word	0x20000134
 
-08006d2c <DRIVE_moveForward>:
+08006d2c <DRV_moveForward>:
 
-static void DRIVE_moveForward(uint32_t p_speed)
+static void DRV_moveForward(uint32_t p_speed)
 {
  8006d2c:	b580      	push	{r7, lr}
  8006d2e:	b084      	sub	sp, #16
@@ -18938,58 +18938,58 @@ static void DRIVE_moveForward(uint32_t p_speed)
 
   LOG_info("Moving forward @%u", l_speed);
  8006d38:	68fa      	ldr	r2, [r7, #12]
- 8006d3a:	4918      	ldr	r1, [pc, #96]	; (8006d9c <DRIVE_moveForward+0x70>)
+ 8006d3a:	4918      	ldr	r1, [pc, #96]	; (8006d9c <DRV_moveForward+0x70>)
  8006d3c:	2001      	movs	r0, #1
  8006d3e:	f000 fb11 	bl	8007364 <LOG_log>
 
-  DRIVE_isActive = true;
- 8006d42:	4b17      	ldr	r3, [pc, #92]	; (8006da0 <DRIVE_moveForward+0x74>)
+  DRV_isActive = true;
+ 8006d42:	4b17      	ldr	r3, [pc, #92]	; (8006da0 <DRV_moveForward+0x74>)
  8006d44:	2201      	movs	r2, #1
  8006d46:	701a      	strb	r2, [r3, #0]
 
-  MOTOR_setDirection(&DRIVE_motorFrontRight, MOTOR_DIRECTION_FORWARD);
+  MTR_setDirection(&DRV_motorFrontRight, MTR_DIRECTION_FORWARD);
  8006d48:	2100      	movs	r1, #0
- 8006d4a:	4816      	ldr	r0, [pc, #88]	; (8006da4 <DRIVE_moveForward+0x78>)
- 8006d4c:	f000 fb7e 	bl	800744c <MOTOR_setDirection>
-  MOTOR_setDirection(&DRIVE_motorFrontLeft , MOTOR_DIRECTION_FORWARD);
+ 8006d4a:	4816      	ldr	r0, [pc, #88]	; (8006da4 <DRV_moveForward+0x78>)
+ 8006d4c:	f000 fb7e 	bl	800744c <MTR_setDirection>
+  MTR_setDirection(&DRV_motorFrontLeft , MTR_DIRECTION_FORWARD);
  8006d50:	2100      	movs	r1, #0
- 8006d52:	4815      	ldr	r0, [pc, #84]	; (8006da8 <DRIVE_moveForward+0x7c>)
- 8006d54:	f000 fb7a 	bl	800744c <MOTOR_setDirection>
-  MOTOR_setDirection(&DRIVE_motorRearRight , MOTOR_DIRECTION_FORWARD);
+ 8006d52:	4815      	ldr	r0, [pc, #84]	; (8006da8 <DRV_moveForward+0x7c>)
+ 8006d54:	f000 fb7a 	bl	800744c <MTR_setDirection>
+  MTR_setDirection(&DRV_motorRearRight , MTR_DIRECTION_FORWARD);
  8006d58:	2100      	movs	r1, #0
- 8006d5a:	4814      	ldr	r0, [pc, #80]	; (8006dac <DRIVE_moveForward+0x80>)
- 8006d5c:	f000 fb76 	bl	800744c <MOTOR_setDirection>
-  MOTOR_setDirection(&DRIVE_motorRearLeft  , MOTOR_DIRECTION_FORWARD);
+ 8006d5a:	4814      	ldr	r0, [pc, #80]	; (8006dac <DRV_moveForward+0x80>)
+ 8006d5c:	f000 fb76 	bl	800744c <MTR_setDirection>
+  MTR_setDirection(&DRV_motorRearLeft  , MTR_DIRECTION_FORWARD);
  8006d60:	2100      	movs	r1, #0
- 8006d62:	4813      	ldr	r0, [pc, #76]	; (8006db0 <DRIVE_moveForward+0x84>)
- 8006d64:	f000 fb72 	bl	800744c <MOTOR_setDirection>
+ 8006d62:	4813      	ldr	r0, [pc, #76]	; (8006db0 <DRV_moveForward+0x84>)
+ 8006d64:	f000 fb72 	bl	800744c <MTR_setDirection>
 
-  if (DRIVE_isDebugOn == true)
- 8006d68:	4b12      	ldr	r3, [pc, #72]	; (8006db4 <DRIVE_moveForward+0x88>)
+  if (DRV_isDebugOn == true)
+ 8006d68:	4b12      	ldr	r3, [pc, #72]	; (8006db4 <DRV_moveForward+0x88>)
  8006d6a:	781b      	ldrb	r3, [r3, #0]
  8006d6c:	2b00      	cmp	r3, #0
- 8006d6e:	d110      	bne.n	8006d92 <DRIVE_moveForward+0x66>
+ 8006d6e:	d110      	bne.n	8006d92 <DRV_moveForward+0x66>
   {
     ; /* Nothing to do */
   }
   else
   {
-    MOTOR_setSpeed(&DRIVE_motorFrontRight, l_speed);
+    MTR_setSpeed(&DRV_motorFrontRight, l_speed);
  8006d70:	68f9      	ldr	r1, [r7, #12]
- 8006d72:	480c      	ldr	r0, [pc, #48]	; (8006da4 <DRIVE_moveForward+0x78>)
- 8006d74:	f000 fbac 	bl	80074d0 <MOTOR_setSpeed>
-    MOTOR_setSpeed(&DRIVE_motorFrontLeft , l_speed);
+ 8006d72:	480c      	ldr	r0, [pc, #48]	; (8006da4 <DRV_moveForward+0x78>)
+ 8006d74:	f000 fbac 	bl	80074d0 <MTR_setSpeed>
+    MTR_setSpeed(&DRV_motorFrontLeft , l_speed);
  8006d78:	68f9      	ldr	r1, [r7, #12]
- 8006d7a:	480b      	ldr	r0, [pc, #44]	; (8006da8 <DRIVE_moveForward+0x7c>)
- 8006d7c:	f000 fba8 	bl	80074d0 <MOTOR_setSpeed>
-    MOTOR_setSpeed(&DRIVE_motorRearRight , l_speed);
+ 8006d7a:	480b      	ldr	r0, [pc, #44]	; (8006da8 <DRV_moveForward+0x7c>)
+ 8006d7c:	f000 fba8 	bl	80074d0 <MTR_setSpeed>
+    MTR_setSpeed(&DRV_motorRearRight , l_speed);
  8006d80:	68f9      	ldr	r1, [r7, #12]
- 8006d82:	480a      	ldr	r0, [pc, #40]	; (8006dac <DRIVE_moveForward+0x80>)
- 8006d84:	f000 fba4 	bl	80074d0 <MOTOR_setSpeed>
-    MOTOR_setSpeed(&DRIVE_motorRearLeft  , l_speed);
+ 8006d82:	480a      	ldr	r0, [pc, #40]	; (8006dac <DRV_moveForward+0x80>)
+ 8006d84:	f000 fba4 	bl	80074d0 <MTR_setSpeed>
+    MTR_setSpeed(&DRV_motorRearLeft  , l_speed);
  8006d88:	68f9      	ldr	r1, [r7, #12]
- 8006d8a:	4809      	ldr	r0, [pc, #36]	; (8006db0 <DRIVE_moveForward+0x84>)
- 8006d8c:	f000 fba0 	bl	80074d0 <MOTOR_setSpeed>
+ 8006d8a:	4809      	ldr	r0, [pc, #36]	; (8006db0 <DRV_moveForward+0x84>)
+ 8006d8c:	f000 fba0 	bl	80074d0 <MTR_setSpeed>
   }
 
   return;
@@ -19000,7 +19000,7 @@ static void DRIVE_moveForward(uint32_t p_speed)
  8006d96:	46bd      	mov	sp, r7
  8006d98:	bd80      	pop	{r7, pc}
  8006d9a:	bf00      	nop
- 8006d9c:	08008b70 	.word	0x08008b70
+ 8006d9c:	08008b68 	.word	0x08008b68
  8006da0:	200000d9 	.word	0x200000d9
  8006da4:	200000dc 	.word	0x200000dc
  8006da8:	20000108 	.word	0x20000108
@@ -19008,9 +19008,9 @@ static void DRIVE_moveForward(uint32_t p_speed)
  8006db0:	20000134 	.word	0x20000134
  8006db4:	200000d8 	.word	0x200000d8
 
-08006db8 <DRIVE_moveBackward>:
+08006db8 <DRV_moveBackward>:
 
-static void DRIVE_moveBackward(uint32_t p_speed)
+static void DRV_moveBackward(uint32_t p_speed)
 {
  8006db8:	b580      	push	{r7, lr}
  8006dba:	b084      	sub	sp, #16
@@ -19022,58 +19022,58 @@ static void DRIVE_moveBackward(uint32_t p_speed)
 
   LOG_info("Moving backward @%u", l_speed);
  8006dc4:	68fa      	ldr	r2, [r7, #12]
- 8006dc6:	4918      	ldr	r1, [pc, #96]	; (8006e28 <DRIVE_moveBackward+0x70>)
+ 8006dc6:	4918      	ldr	r1, [pc, #96]	; (8006e28 <DRV_moveBackward+0x70>)
  8006dc8:	2001      	movs	r0, #1
  8006dca:	f000 facb 	bl	8007364 <LOG_log>
 
-  DRIVE_isActive = true;
- 8006dce:	4b17      	ldr	r3, [pc, #92]	; (8006e2c <DRIVE_moveBackward+0x74>)
+  DRV_isActive = true;
+ 8006dce:	4b17      	ldr	r3, [pc, #92]	; (8006e2c <DRV_moveBackward+0x74>)
  8006dd0:	2201      	movs	r2, #1
  8006dd2:	701a      	strb	r2, [r3, #0]
 
-  MOTOR_setDirection(&DRIVE_motorFrontRight, MOTOR_DIRECTION_BACKWARD);
+  MTR_setDirection(&DRV_motorFrontRight, MTR_DIRECTION_BACKWARD);
  8006dd4:	2101      	movs	r1, #1
- 8006dd6:	4816      	ldr	r0, [pc, #88]	; (8006e30 <DRIVE_moveBackward+0x78>)
- 8006dd8:	f000 fb38 	bl	800744c <MOTOR_setDirection>
-  MOTOR_setDirection(&DRIVE_motorFrontLeft , MOTOR_DIRECTION_BACKWARD);
+ 8006dd6:	4816      	ldr	r0, [pc, #88]	; (8006e30 <DRV_moveBackward+0x78>)
+ 8006dd8:	f000 fb38 	bl	800744c <MTR_setDirection>
+  MTR_setDirection(&DRV_motorFrontLeft , MTR_DIRECTION_BACKWARD);
  8006ddc:	2101      	movs	r1, #1
- 8006dde:	4815      	ldr	r0, [pc, #84]	; (8006e34 <DRIVE_moveBackward+0x7c>)
- 8006de0:	f000 fb34 	bl	800744c <MOTOR_setDirection>
-  MOTOR_setDirection(&DRIVE_motorRearRight , MOTOR_DIRECTION_BACKWARD);
+ 8006dde:	4815      	ldr	r0, [pc, #84]	; (8006e34 <DRV_moveBackward+0x7c>)
+ 8006de0:	f000 fb34 	bl	800744c <MTR_setDirection>
+  MTR_setDirection(&DRV_motorRearRight , MTR_DIRECTION_BACKWARD);
  8006de4:	2101      	movs	r1, #1
- 8006de6:	4814      	ldr	r0, [pc, #80]	; (8006e38 <DRIVE_moveBackward+0x80>)
- 8006de8:	f000 fb30 	bl	800744c <MOTOR_setDirection>
-  MOTOR_setDirection(&DRIVE_motorRearLeft  , MOTOR_DIRECTION_BACKWARD);
+ 8006de6:	4814      	ldr	r0, [pc, #80]	; (8006e38 <DRV_moveBackward+0x80>)
+ 8006de8:	f000 fb30 	bl	800744c <MTR_setDirection>
+  MTR_setDirection(&DRV_motorRearLeft  , MTR_DIRECTION_BACKWARD);
  8006dec:	2101      	movs	r1, #1
- 8006dee:	4813      	ldr	r0, [pc, #76]	; (8006e3c <DRIVE_moveBackward+0x84>)
- 8006df0:	f000 fb2c 	bl	800744c <MOTOR_setDirection>
+ 8006dee:	4813      	ldr	r0, [pc, #76]	; (8006e3c <DRV_moveBackward+0x84>)
+ 8006df0:	f000 fb2c 	bl	800744c <MTR_setDirection>
 
-  if (DRIVE_isDebugOn == true)
- 8006df4:	4b12      	ldr	r3, [pc, #72]	; (8006e40 <DRIVE_moveBackward+0x88>)
+  if (DRV_isDebugOn == true)
+ 8006df4:	4b12      	ldr	r3, [pc, #72]	; (8006e40 <DRV_moveBackward+0x88>)
  8006df6:	781b      	ldrb	r3, [r3, #0]
  8006df8:	2b00      	cmp	r3, #0
- 8006dfa:	d110      	bne.n	8006e1e <DRIVE_moveBackward+0x66>
+ 8006dfa:	d110      	bne.n	8006e1e <DRV_moveBackward+0x66>
   {
     ; /* Nothing to do */
   }
   else
   {
-    MOTOR_setSpeed(&DRIVE_motorFrontRight, l_speed);
+    MTR_setSpeed(&DRV_motorFrontRight, l_speed);
  8006dfc:	68f9      	ldr	r1, [r7, #12]
- 8006dfe:	480c      	ldr	r0, [pc, #48]	; (8006e30 <DRIVE_moveBackward+0x78>)
- 8006e00:	f000 fb66 	bl	80074d0 <MOTOR_setSpeed>
-    MOTOR_setSpeed(&DRIVE_motorFrontLeft , l_speed);
+ 8006dfe:	480c      	ldr	r0, [pc, #48]	; (8006e30 <DRV_moveBackward+0x78>)
+ 8006e00:	f000 fb66 	bl	80074d0 <MTR_setSpeed>
+    MTR_setSpeed(&DRV_motorFrontLeft , l_speed);
  8006e04:	68f9      	ldr	r1, [r7, #12]
- 8006e06:	480b      	ldr	r0, [pc, #44]	; (8006e34 <DRIVE_moveBackward+0x7c>)
- 8006e08:	f000 fb62 	bl	80074d0 <MOTOR_setSpeed>
-    MOTOR_setSpeed(&DRIVE_motorRearRight , l_speed);
+ 8006e06:	480b      	ldr	r0, [pc, #44]	; (8006e34 <DRV_moveBackward+0x7c>)
+ 8006e08:	f000 fb62 	bl	80074d0 <MTR_setSpeed>
+    MTR_setSpeed(&DRV_motorRearRight , l_speed);
  8006e0c:	68f9      	ldr	r1, [r7, #12]
- 8006e0e:	480a      	ldr	r0, [pc, #40]	; (8006e38 <DRIVE_moveBackward+0x80>)
- 8006e10:	f000 fb5e 	bl	80074d0 <MOTOR_setSpeed>
-    MOTOR_setSpeed(&DRIVE_motorRearLeft  , l_speed);
+ 8006e0e:	480a      	ldr	r0, [pc, #40]	; (8006e38 <DRV_moveBackward+0x80>)
+ 8006e10:	f000 fb5e 	bl	80074d0 <MTR_setSpeed>
+    MTR_setSpeed(&DRV_motorRearLeft  , l_speed);
  8006e14:	68f9      	ldr	r1, [r7, #12]
- 8006e16:	4809      	ldr	r0, [pc, #36]	; (8006e3c <DRIVE_moveBackward+0x84>)
- 8006e18:	f000 fb5a 	bl	80074d0 <MOTOR_setSpeed>
+ 8006e16:	4809      	ldr	r0, [pc, #36]	; (8006e3c <DRV_moveBackward+0x84>)
+ 8006e18:	f000 fb5a 	bl	80074d0 <MTR_setSpeed>
   }
 
   return;
@@ -19084,7 +19084,7 @@ static void DRIVE_moveBackward(uint32_t p_speed)
  8006e22:	46bd      	mov	sp, r7
  8006e24:	bd80      	pop	{r7, pc}
  8006e26:	bf00      	nop
- 8006e28:	08008b84 	.word	0x08008b84
+ 8006e28:	08008b7c 	.word	0x08008b7c
  8006e2c:	200000d9 	.word	0x200000d9
  8006e30:	200000dc 	.word	0x200000dc
  8006e34:	20000108 	.word	0x20000108
@@ -19092,9 +19092,9 @@ static void DRIVE_moveBackward(uint32_t p_speed)
  8006e3c:	20000134 	.word	0x20000134
  8006e40:	200000d8 	.word	0x200000d8
 
-08006e44 <DRIVE_moveForwardRight>:
+08006e44 <DRV_moveForwardRight>:
 
-static void DRIVE_moveForwardRight (uint32_t p_speed)
+static void DRV_moveForwardRight (uint32_t p_speed)
 {
  8006e44:	b580      	push	{r7, lr}
  8006e46:	b084      	sub	sp, #16
@@ -19106,50 +19106,50 @@ static void DRIVE_moveForwardRight (uint32_t p_speed)
 
   LOG_info("Moving forward-right @%u", l_speed);
  8006e50:	68fa      	ldr	r2, [r7, #12]
- 8006e52:	4914      	ldr	r1, [pc, #80]	; (8006ea4 <DRIVE_moveForwardRight+0x60>)
+ 8006e52:	4914      	ldr	r1, [pc, #80]	; (8006ea4 <DRV_moveForwardRight+0x60>)
  8006e54:	2001      	movs	r0, #1
  8006e56:	f000 fa85 	bl	8007364 <LOG_log>
 
-  DRIVE_isActive = true;
- 8006e5a:	4b13      	ldr	r3, [pc, #76]	; (8006ea8 <DRIVE_moveForwardRight+0x64>)
+  DRV_isActive = true;
+ 8006e5a:	4b13      	ldr	r3, [pc, #76]	; (8006ea8 <DRV_moveForwardRight+0x64>)
  8006e5c:	2201      	movs	r2, #1
  8006e5e:	701a      	strb	r2, [r3, #0]
 
-  MOTOR_setDirection(&DRIVE_motorFrontLeft, MOTOR_DIRECTION_FORWARD);
+  MTR_setDirection(&DRV_motorFrontLeft, MTR_DIRECTION_FORWARD);
  8006e60:	2100      	movs	r1, #0
- 8006e62:	4812      	ldr	r0, [pc, #72]	; (8006eac <DRIVE_moveForwardRight+0x68>)
- 8006e64:	f000 faf2 	bl	800744c <MOTOR_setDirection>
-  MOTOR_setDirection(&DRIVE_motorRearRight, MOTOR_DIRECTION_FORWARD);
+ 8006e62:	4812      	ldr	r0, [pc, #72]	; (8006eac <DRV_moveForwardRight+0x68>)
+ 8006e64:	f000 faf2 	bl	800744c <MTR_setDirection>
+  MTR_setDirection(&DRV_motorRearRight, MTR_DIRECTION_FORWARD);
  8006e68:	2100      	movs	r1, #0
- 8006e6a:	4811      	ldr	r0, [pc, #68]	; (8006eb0 <DRIVE_moveForwardRight+0x6c>)
- 8006e6c:	f000 faee 	bl	800744c <MOTOR_setDirection>
+ 8006e6a:	4811      	ldr	r0, [pc, #68]	; (8006eb0 <DRV_moveForwardRight+0x6c>)
+ 8006e6c:	f000 faee 	bl	800744c <MTR_setDirection>
 
-  if (DRIVE_isDebugOn == true)
- 8006e70:	4b10      	ldr	r3, [pc, #64]	; (8006eb4 <DRIVE_moveForwardRight+0x70>)
+  if (DRV_isDebugOn == true)
+ 8006e70:	4b10      	ldr	r3, [pc, #64]	; (8006eb4 <DRV_moveForwardRight+0x70>)
  8006e72:	781b      	ldrb	r3, [r3, #0]
  8006e74:	2b00      	cmp	r3, #0
- 8006e76:	d110      	bne.n	8006e9a <DRIVE_moveForwardRight+0x56>
+ 8006e76:	d110      	bne.n	8006e9a <DRV_moveForwardRight+0x56>
   {
     ; /* Nothing to do */
   }
   else
   {
-    MOTOR_setSpeed(&DRIVE_motorFrontRight,       0);
+    MTR_setSpeed(&DRV_motorFrontRight,       0);
  8006e78:	2100      	movs	r1, #0
- 8006e7a:	480f      	ldr	r0, [pc, #60]	; (8006eb8 <DRIVE_moveForwardRight+0x74>)
- 8006e7c:	f000 fb28 	bl	80074d0 <MOTOR_setSpeed>
-    MOTOR_setSpeed(&DRIVE_motorFrontLeft , l_speed);
+ 8006e7a:	480f      	ldr	r0, [pc, #60]	; (8006eb8 <DRV_moveForwardRight+0x74>)
+ 8006e7c:	f000 fb28 	bl	80074d0 <MTR_setSpeed>
+    MTR_setSpeed(&DRV_motorFrontLeft , l_speed);
  8006e80:	68f9      	ldr	r1, [r7, #12]
- 8006e82:	480a      	ldr	r0, [pc, #40]	; (8006eac <DRIVE_moveForwardRight+0x68>)
- 8006e84:	f000 fb24 	bl	80074d0 <MOTOR_setSpeed>
-    MOTOR_setSpeed(&DRIVE_motorRearRight , l_speed);
+ 8006e82:	480a      	ldr	r0, [pc, #40]	; (8006eac <DRV_moveForwardRight+0x68>)
+ 8006e84:	f000 fb24 	bl	80074d0 <MTR_setSpeed>
+    MTR_setSpeed(&DRV_motorRearRight , l_speed);
  8006e88:	68f9      	ldr	r1, [r7, #12]
- 8006e8a:	4809      	ldr	r0, [pc, #36]	; (8006eb0 <DRIVE_moveForwardRight+0x6c>)
- 8006e8c:	f000 fb20 	bl	80074d0 <MOTOR_setSpeed>
-    MOTOR_setSpeed(&DRIVE_motorRearLeft  ,       0);
+ 8006e8a:	4809      	ldr	r0, [pc, #36]	; (8006eb0 <DRV_moveForwardRight+0x6c>)
+ 8006e8c:	f000 fb20 	bl	80074d0 <MTR_setSpeed>
+    MTR_setSpeed(&DRV_motorRearLeft  ,       0);
  8006e90:	2100      	movs	r1, #0
- 8006e92:	480a      	ldr	r0, [pc, #40]	; (8006ebc <DRIVE_moveForwardRight+0x78>)
- 8006e94:	f000 fb1c 	bl	80074d0 <MOTOR_setSpeed>
+ 8006e92:	480a      	ldr	r0, [pc, #40]	; (8006ebc <DRV_moveForwardRight+0x78>)
+ 8006e94:	f000 fb1c 	bl	80074d0 <MTR_setSpeed>
   }
 
   return;
@@ -19160,7 +19160,7 @@ static void DRIVE_moveForwardRight (uint32_t p_speed)
  8006e9e:	46bd      	mov	sp, r7
  8006ea0:	bd80      	pop	{r7, pc}
  8006ea2:	bf00      	nop
- 8006ea4:	08008b98 	.word	0x08008b98
+ 8006ea4:	08008b90 	.word	0x08008b90
  8006ea8:	200000d9 	.word	0x200000d9
  8006eac:	20000108 	.word	0x20000108
  8006eb0:	20000160 	.word	0x20000160
@@ -19168,9 +19168,9 @@ static void DRIVE_moveForwardRight (uint32_t p_speed)
  8006eb8:	200000dc 	.word	0x200000dc
  8006ebc:	20000134 	.word	0x20000134
 
-08006ec0 <DRIVE_moveForwardLeft>:
+08006ec0 <DRV_moveForwardLeft>:
 
-static void DRIVE_moveForwardLeft  (uint32_t p_speed)
+static void DRV_moveForwardLeft  (uint32_t p_speed)
 {
  8006ec0:	b580      	push	{r7, lr}
  8006ec2:	b084      	sub	sp, #16
@@ -19182,50 +19182,50 @@ static void DRIVE_moveForwardLeft  (uint32_t p_speed)
 
   LOG_info("Moving forward-left @%u", l_speed);
  8006ecc:	68fa      	ldr	r2, [r7, #12]
- 8006ece:	4914      	ldr	r1, [pc, #80]	; (8006f20 <DRIVE_moveForwardLeft+0x60>)
+ 8006ece:	4914      	ldr	r1, [pc, #80]	; (8006f20 <DRV_moveForwardLeft+0x60>)
  8006ed0:	2001      	movs	r0, #1
  8006ed2:	f000 fa47 	bl	8007364 <LOG_log>
 
-  DRIVE_isActive = true;
- 8006ed6:	4b13      	ldr	r3, [pc, #76]	; (8006f24 <DRIVE_moveForwardLeft+0x64>)
+  DRV_isActive = true;
+ 8006ed6:	4b13      	ldr	r3, [pc, #76]	; (8006f24 <DRV_moveForwardLeft+0x64>)
  8006ed8:	2201      	movs	r2, #1
  8006eda:	701a      	strb	r2, [r3, #0]
 
-  MOTOR_setDirection(&DRIVE_motorFrontRight, MOTOR_DIRECTION_FORWARD);
+  MTR_setDirection(&DRV_motorFrontRight, MTR_DIRECTION_FORWARD);
  8006edc:	2100      	movs	r1, #0
- 8006ede:	4812      	ldr	r0, [pc, #72]	; (8006f28 <DRIVE_moveForwardLeft+0x68>)
- 8006ee0:	f000 fab4 	bl	800744c <MOTOR_setDirection>
-  MOTOR_setDirection(&DRIVE_motorRearLeft  , MOTOR_DIRECTION_FORWARD);
+ 8006ede:	4812      	ldr	r0, [pc, #72]	; (8006f28 <DRV_moveForwardLeft+0x68>)
+ 8006ee0:	f000 fab4 	bl	800744c <MTR_setDirection>
+  MTR_setDirection(&DRV_motorRearLeft  , MTR_DIRECTION_FORWARD);
  8006ee4:	2100      	movs	r1, #0
- 8006ee6:	4811      	ldr	r0, [pc, #68]	; (8006f2c <DRIVE_moveForwardLeft+0x6c>)
- 8006ee8:	f000 fab0 	bl	800744c <MOTOR_setDirection>
+ 8006ee6:	4811      	ldr	r0, [pc, #68]	; (8006f2c <DRV_moveForwardLeft+0x6c>)
+ 8006ee8:	f000 fab0 	bl	800744c <MTR_setDirection>
 
-  if (DRIVE_isDebugOn == true)
- 8006eec:	4b10      	ldr	r3, [pc, #64]	; (8006f30 <DRIVE_moveForwardLeft+0x70>)
+  if (DRV_isDebugOn == true)
+ 8006eec:	4b10      	ldr	r3, [pc, #64]	; (8006f30 <DRV_moveForwardLeft+0x70>)
  8006eee:	781b      	ldrb	r3, [r3, #0]
  8006ef0:	2b00      	cmp	r3, #0
- 8006ef2:	d110      	bne.n	8006f16 <DRIVE_moveForwardLeft+0x56>
+ 8006ef2:	d110      	bne.n	8006f16 <DRV_moveForwardLeft+0x56>
   {
     ; /* Nothing to do */
   }
   else
   {
-    MOTOR_setSpeed(&DRIVE_motorFrontRight, l_speed);
+    MTR_setSpeed(&DRV_motorFrontRight, l_speed);
  8006ef4:	68f9      	ldr	r1, [r7, #12]
- 8006ef6:	480c      	ldr	r0, [pc, #48]	; (8006f28 <DRIVE_moveForwardLeft+0x68>)
- 8006ef8:	f000 faea 	bl	80074d0 <MOTOR_setSpeed>
-    MOTOR_setSpeed(&DRIVE_motorFrontLeft ,       0);
+ 8006ef6:	480c      	ldr	r0, [pc, #48]	; (8006f28 <DRV_moveForwardLeft+0x68>)
+ 8006ef8:	f000 faea 	bl	80074d0 <MTR_setSpeed>
+    MTR_setSpeed(&DRV_motorFrontLeft ,       0);
  8006efc:	2100      	movs	r1, #0
- 8006efe:	480d      	ldr	r0, [pc, #52]	; (8006f34 <DRIVE_moveForwardLeft+0x74>)
- 8006f00:	f000 fae6 	bl	80074d0 <MOTOR_setSpeed>
-    MOTOR_setSpeed(&DRIVE_motorRearRight ,       0);
+ 8006efe:	480d      	ldr	r0, [pc, #52]	; (8006f34 <DRV_moveForwardLeft+0x74>)
+ 8006f00:	f000 fae6 	bl	80074d0 <MTR_setSpeed>
+    MTR_setSpeed(&DRV_motorRearRight ,       0);
  8006f04:	2100      	movs	r1, #0
- 8006f06:	480c      	ldr	r0, [pc, #48]	; (8006f38 <DRIVE_moveForwardLeft+0x78>)
- 8006f08:	f000 fae2 	bl	80074d0 <MOTOR_setSpeed>
-    MOTOR_setSpeed(&DRIVE_motorRearLeft  , l_speed);
+ 8006f06:	480c      	ldr	r0, [pc, #48]	; (8006f38 <DRV_moveForwardLeft+0x78>)
+ 8006f08:	f000 fae2 	bl	80074d0 <MTR_setSpeed>
+    MTR_setSpeed(&DRV_motorRearLeft  , l_speed);
  8006f0c:	68f9      	ldr	r1, [r7, #12]
- 8006f0e:	4807      	ldr	r0, [pc, #28]	; (8006f2c <DRIVE_moveForwardLeft+0x6c>)
- 8006f10:	f000 fade 	bl	80074d0 <MOTOR_setSpeed>
+ 8006f0e:	4807      	ldr	r0, [pc, #28]	; (8006f2c <DRV_moveForwardLeft+0x6c>)
+ 8006f10:	f000 fade 	bl	80074d0 <MTR_setSpeed>
   }
 
   return;
@@ -19236,7 +19236,7 @@ static void DRIVE_moveForwardLeft  (uint32_t p_speed)
  8006f1a:	46bd      	mov	sp, r7
  8006f1c:	bd80      	pop	{r7, pc}
  8006f1e:	bf00      	nop
- 8006f20:	08008bb4 	.word	0x08008bb4
+ 8006f20:	08008bac 	.word	0x08008bac
  8006f24:	200000d9 	.word	0x200000d9
  8006f28:	200000dc 	.word	0x200000dc
  8006f2c:	20000134 	.word	0x20000134
@@ -19244,9 +19244,9 @@ static void DRIVE_moveForwardLeft  (uint32_t p_speed)
  8006f34:	20000108 	.word	0x20000108
  8006f38:	20000160 	.word	0x20000160
 
-08006f3c <DRIVE_moveBackwardRight>:
+08006f3c <DRV_moveBackwardRight>:
 
-static void DRIVE_moveBackwardRight(uint32_t p_speed)
+static void DRV_moveBackwardRight(uint32_t p_speed)
 {
  8006f3c:	b580      	push	{r7, lr}
  8006f3e:	b084      	sub	sp, #16
@@ -19258,50 +19258,50 @@ static void DRIVE_moveBackwardRight(uint32_t p_speed)
 
   LOG_info("Moving backward-right @%u", l_speed);
  8006f48:	68fa      	ldr	r2, [r7, #12]
- 8006f4a:	4914      	ldr	r1, [pc, #80]	; (8006f9c <DRIVE_moveBackwardRight+0x60>)
+ 8006f4a:	4914      	ldr	r1, [pc, #80]	; (8006f9c <DRV_moveBackwardRight+0x60>)
  8006f4c:	2001      	movs	r0, #1
  8006f4e:	f000 fa09 	bl	8007364 <LOG_log>
 
-  DRIVE_isActive = true;
- 8006f52:	4b13      	ldr	r3, [pc, #76]	; (8006fa0 <DRIVE_moveBackwardRight+0x64>)
+  DRV_isActive = true;
+ 8006f52:	4b13      	ldr	r3, [pc, #76]	; (8006fa0 <DRV_moveBackwardRight+0x64>)
  8006f54:	2201      	movs	r2, #1
  8006f56:	701a      	strb	r2, [r3, #0]
 
-  MOTOR_setDirection(&DRIVE_motorFrontRight, MOTOR_DIRECTION_BACKWARD);
+  MTR_setDirection(&DRV_motorFrontRight, MTR_DIRECTION_BACKWARD);
  8006f58:	2101      	movs	r1, #1
- 8006f5a:	4812      	ldr	r0, [pc, #72]	; (8006fa4 <DRIVE_moveBackwardRight+0x68>)
- 8006f5c:	f000 fa76 	bl	800744c <MOTOR_setDirection>
-  MOTOR_setDirection(&DRIVE_motorRearLeft  , MOTOR_DIRECTION_BACKWARD);
+ 8006f5a:	4812      	ldr	r0, [pc, #72]	; (8006fa4 <DRV_moveBackwardRight+0x68>)
+ 8006f5c:	f000 fa76 	bl	800744c <MTR_setDirection>
+  MTR_setDirection(&DRV_motorRearLeft  , MTR_DIRECTION_BACKWARD);
  8006f60:	2101      	movs	r1, #1
- 8006f62:	4811      	ldr	r0, [pc, #68]	; (8006fa8 <DRIVE_moveBackwardRight+0x6c>)
- 8006f64:	f000 fa72 	bl	800744c <MOTOR_setDirection>
+ 8006f62:	4811      	ldr	r0, [pc, #68]	; (8006fa8 <DRV_moveBackwardRight+0x6c>)
+ 8006f64:	f000 fa72 	bl	800744c <MTR_setDirection>
 
-  if (DRIVE_isDebugOn == true)
- 8006f68:	4b10      	ldr	r3, [pc, #64]	; (8006fac <DRIVE_moveBackwardRight+0x70>)
+  if (DRV_isDebugOn == true)
+ 8006f68:	4b10      	ldr	r3, [pc, #64]	; (8006fac <DRV_moveBackwardRight+0x70>)
  8006f6a:	781b      	ldrb	r3, [r3, #0]
  8006f6c:	2b00      	cmp	r3, #0
- 8006f6e:	d110      	bne.n	8006f92 <DRIVE_moveBackwardRight+0x56>
+ 8006f6e:	d110      	bne.n	8006f92 <DRV_moveBackwardRight+0x56>
   {
     ; /* Nothing to do */
   }
   else
   {
-    MOTOR_setSpeed(&DRIVE_motorFrontRight, l_speed);
+    MTR_setSpeed(&DRV_motorFrontRight, l_speed);
  8006f70:	68f9      	ldr	r1, [r7, #12]
- 8006f72:	480c      	ldr	r0, [pc, #48]	; (8006fa4 <DRIVE_moveBackwardRight+0x68>)
- 8006f74:	f000 faac 	bl	80074d0 <MOTOR_setSpeed>
-    MOTOR_setSpeed(&DRIVE_motorFrontLeft ,       0);
+ 8006f72:	480c      	ldr	r0, [pc, #48]	; (8006fa4 <DRV_moveBackwardRight+0x68>)
+ 8006f74:	f000 faac 	bl	80074d0 <MTR_setSpeed>
+    MTR_setSpeed(&DRV_motorFrontLeft ,       0);
  8006f78:	2100      	movs	r1, #0
- 8006f7a:	480d      	ldr	r0, [pc, #52]	; (8006fb0 <DRIVE_moveBackwardRight+0x74>)
- 8006f7c:	f000 faa8 	bl	80074d0 <MOTOR_setSpeed>
-    MOTOR_setSpeed(&DRIVE_motorRearRight ,       0);
+ 8006f7a:	480d      	ldr	r0, [pc, #52]	; (8006fb0 <DRV_moveBackwardRight+0x74>)
+ 8006f7c:	f000 faa8 	bl	80074d0 <MTR_setSpeed>
+    MTR_setSpeed(&DRV_motorRearRight ,       0);
  8006f80:	2100      	movs	r1, #0
- 8006f82:	480c      	ldr	r0, [pc, #48]	; (8006fb4 <DRIVE_moveBackwardRight+0x78>)
- 8006f84:	f000 faa4 	bl	80074d0 <MOTOR_setSpeed>
-    MOTOR_setSpeed(&DRIVE_motorRearLeft  , l_speed);
+ 8006f82:	480c      	ldr	r0, [pc, #48]	; (8006fb4 <DRV_moveBackwardRight+0x78>)
+ 8006f84:	f000 faa4 	bl	80074d0 <MTR_setSpeed>
+    MTR_setSpeed(&DRV_motorRearLeft  , l_speed);
  8006f88:	68f9      	ldr	r1, [r7, #12]
- 8006f8a:	4807      	ldr	r0, [pc, #28]	; (8006fa8 <DRIVE_moveBackwardRight+0x6c>)
- 8006f8c:	f000 faa0 	bl	80074d0 <MOTOR_setSpeed>
+ 8006f8a:	4807      	ldr	r0, [pc, #28]	; (8006fa8 <DRV_moveBackwardRight+0x6c>)
+ 8006f8c:	f000 faa0 	bl	80074d0 <MTR_setSpeed>
   }
 
   return;
@@ -19312,7 +19312,7 @@ static void DRIVE_moveBackwardRight(uint32_t p_speed)
  8006f96:	46bd      	mov	sp, r7
  8006f98:	bd80      	pop	{r7, pc}
  8006f9a:	bf00      	nop
- 8006f9c:	08008bcc 	.word	0x08008bcc
+ 8006f9c:	08008bc4 	.word	0x08008bc4
  8006fa0:	200000d9 	.word	0x200000d9
  8006fa4:	200000dc 	.word	0x200000dc
  8006fa8:	20000134 	.word	0x20000134
@@ -19320,9 +19320,9 @@ static void DRIVE_moveBackwardRight(uint32_t p_speed)
  8006fb0:	20000108 	.word	0x20000108
  8006fb4:	20000160 	.word	0x20000160
 
-08006fb8 <DRIVE_moveBackwardLeft>:
+08006fb8 <DRV_moveBackwardLeft>:
 
-static void DRIVE_moveBackwardLeft (uint32_t p_speed)
+static void DRV_moveBackwardLeft (uint32_t p_speed)
 {
  8006fb8:	b580      	push	{r7, lr}
  8006fba:	b084      	sub	sp, #16
@@ -19334,50 +19334,50 @@ static void DRIVE_moveBackwardLeft (uint32_t p_speed)
 
   LOG_info("Moving backward-left @%u", l_speed);
  8006fc4:	68fa      	ldr	r2, [r7, #12]
- 8006fc6:	4914      	ldr	r1, [pc, #80]	; (8007018 <DRIVE_moveBackwardLeft+0x60>)
+ 8006fc6:	4914      	ldr	r1, [pc, #80]	; (8007018 <DRV_moveBackwardLeft+0x60>)
  8006fc8:	2001      	movs	r0, #1
  8006fca:	f000 f9cb 	bl	8007364 <LOG_log>
 
-  DRIVE_isActive = true;
- 8006fce:	4b13      	ldr	r3, [pc, #76]	; (800701c <DRIVE_moveBackwardLeft+0x64>)
+  DRV_isActive = true;
+ 8006fce:	4b13      	ldr	r3, [pc, #76]	; (800701c <DRV_moveBackwardLeft+0x64>)
  8006fd0:	2201      	movs	r2, #1
  8006fd2:	701a      	strb	r2, [r3, #0]
 
-  MOTOR_setDirection(&DRIVE_motorFrontLeft, MOTOR_DIRECTION_BACKWARD);
+  MTR_setDirection(&DRV_motorFrontLeft, MTR_DIRECTION_BACKWARD);
  8006fd4:	2101      	movs	r1, #1
- 8006fd6:	4812      	ldr	r0, [pc, #72]	; (8007020 <DRIVE_moveBackwardLeft+0x68>)
- 8006fd8:	f000 fa38 	bl	800744c <MOTOR_setDirection>
-  MOTOR_setDirection(&DRIVE_motorRearRight, MOTOR_DIRECTION_BACKWARD);
+ 8006fd6:	4812      	ldr	r0, [pc, #72]	; (8007020 <DRV_moveBackwardLeft+0x68>)
+ 8006fd8:	f000 fa38 	bl	800744c <MTR_setDirection>
+  MTR_setDirection(&DRV_motorRearRight, MTR_DIRECTION_BACKWARD);
  8006fdc:	2101      	movs	r1, #1
- 8006fde:	4811      	ldr	r0, [pc, #68]	; (8007024 <DRIVE_moveBackwardLeft+0x6c>)
- 8006fe0:	f000 fa34 	bl	800744c <MOTOR_setDirection>
+ 8006fde:	4811      	ldr	r0, [pc, #68]	; (8007024 <DRV_moveBackwardLeft+0x6c>)
+ 8006fe0:	f000 fa34 	bl	800744c <MTR_setDirection>
 
-  if (DRIVE_isDebugOn == true)
- 8006fe4:	4b10      	ldr	r3, [pc, #64]	; (8007028 <DRIVE_moveBackwardLeft+0x70>)
+  if (DRV_isDebugOn == true)
+ 8006fe4:	4b10      	ldr	r3, [pc, #64]	; (8007028 <DRV_moveBackwardLeft+0x70>)
  8006fe6:	781b      	ldrb	r3, [r3, #0]
  8006fe8:	2b00      	cmp	r3, #0
- 8006fea:	d110      	bne.n	800700e <DRIVE_moveBackwardLeft+0x56>
+ 8006fea:	d110      	bne.n	800700e <DRV_moveBackwardLeft+0x56>
   {
     ; /* Nothing to do */
   }
   else
   {
-    MOTOR_setSpeed(&DRIVE_motorFrontRight,       0);
+    MTR_setSpeed(&DRV_motorFrontRight,       0);
  8006fec:	2100      	movs	r1, #0
- 8006fee:	480f      	ldr	r0, [pc, #60]	; (800702c <DRIVE_moveBackwardLeft+0x74>)
- 8006ff0:	f000 fa6e 	bl	80074d0 <MOTOR_setSpeed>
-    MOTOR_setSpeed(&DRIVE_motorFrontLeft , l_speed);
+ 8006fee:	480f      	ldr	r0, [pc, #60]	; (800702c <DRV_moveBackwardLeft+0x74>)
+ 8006ff0:	f000 fa6e 	bl	80074d0 <MTR_setSpeed>
+    MTR_setSpeed(&DRV_motorFrontLeft , l_speed);
  8006ff4:	68f9      	ldr	r1, [r7, #12]
- 8006ff6:	480a      	ldr	r0, [pc, #40]	; (8007020 <DRIVE_moveBackwardLeft+0x68>)
- 8006ff8:	f000 fa6a 	bl	80074d0 <MOTOR_setSpeed>
-    MOTOR_setSpeed(&DRIVE_motorRearRight , l_speed);
+ 8006ff6:	480a      	ldr	r0, [pc, #40]	; (8007020 <DRV_moveBackwardLeft+0x68>)
+ 8006ff8:	f000 fa6a 	bl	80074d0 <MTR_setSpeed>
+    MTR_setSpeed(&DRV_motorRearRight , l_speed);
  8006ffc:	68f9      	ldr	r1, [r7, #12]
- 8006ffe:	4809      	ldr	r0, [pc, #36]	; (8007024 <DRIVE_moveBackwardLeft+0x6c>)
- 8007000:	f000 fa66 	bl	80074d0 <MOTOR_setSpeed>
-    MOTOR_setSpeed(&DRIVE_motorRearLeft  ,       0);
+ 8006ffe:	4809      	ldr	r0, [pc, #36]	; (8007024 <DRV_moveBackwardLeft+0x6c>)
+ 8007000:	f000 fa66 	bl	80074d0 <MTR_setSpeed>
+    MTR_setSpeed(&DRV_motorRearLeft  ,       0);
  8007004:	2100      	movs	r1, #0
- 8007006:	480a      	ldr	r0, [pc, #40]	; (8007030 <DRIVE_moveBackwardLeft+0x78>)
- 8007008:	f000 fa62 	bl	80074d0 <MOTOR_setSpeed>
+ 8007006:	480a      	ldr	r0, [pc, #40]	; (8007030 <DRV_moveBackwardLeft+0x78>)
+ 8007008:	f000 fa62 	bl	80074d0 <MTR_setSpeed>
   }
 
   return;
@@ -19388,7 +19388,7 @@ static void DRIVE_moveBackwardLeft (uint32_t p_speed)
  8007012:	46bd      	mov	sp, r7
  8007014:	bd80      	pop	{r7, pc}
  8007016:	bf00      	nop
- 8007018:	08008be8 	.word	0x08008be8
+ 8007018:	08008be0 	.word	0x08008be0
  800701c:	200000d9 	.word	0x200000d9
  8007020:	20000108 	.word	0x20000108
  8007024:	20000160 	.word	0x20000160
@@ -19396,9 +19396,9 @@ static void DRIVE_moveBackwardLeft (uint32_t p_speed)
  800702c:	200000dc 	.word	0x200000dc
  8007030:	20000134 	.word	0x20000134
 
-08007034 <DRIVE_turnLeft>:
+08007034 <DRV_turnLeft>:
 
-static void DRIVE_turnLeft(uint32_t p_speed)
+static void DRV_turnLeft(uint32_t p_speed)
 {
  8007034:	b580      	push	{r7, lr}
  8007036:	b084      	sub	sp, #16
@@ -19410,58 +19410,58 @@ static void DRIVE_turnLeft(uint32_t p_speed)
 
   LOG_info("Turning left @%u", l_speed);
  8007040:	68fa      	ldr	r2, [r7, #12]
- 8007042:	4918      	ldr	r1, [pc, #96]	; (80070a4 <DRIVE_turnLeft+0x70>)
+ 8007042:	4918      	ldr	r1, [pc, #96]	; (80070a4 <DRV_turnLeft+0x70>)
  8007044:	2001      	movs	r0, #1
  8007046:	f000 f98d 	bl	8007364 <LOG_log>
 
-  DRIVE_isActive = true;
- 800704a:	4b17      	ldr	r3, [pc, #92]	; (80070a8 <DRIVE_turnLeft+0x74>)
+  DRV_isActive = true;
+ 800704a:	4b17      	ldr	r3, [pc, #92]	; (80070a8 <DRV_turnLeft+0x74>)
  800704c:	2201      	movs	r2, #1
  800704e:	701a      	strb	r2, [r3, #0]
 
-  MOTOR_setDirection(&DRIVE_motorFrontRight, MOTOR_DIRECTION_FORWARD );
+  MTR_setDirection(&DRV_motorFrontRight, MTR_DIRECTION_FORWARD );
  8007050:	2100      	movs	r1, #0
- 8007052:	4816      	ldr	r0, [pc, #88]	; (80070ac <DRIVE_turnLeft+0x78>)
- 8007054:	f000 f9fa 	bl	800744c <MOTOR_setDirection>
-  MOTOR_setDirection(&DRIVE_motorFrontLeft , MOTOR_DIRECTION_BACKWARD);
+ 8007052:	4816      	ldr	r0, [pc, #88]	; (80070ac <DRV_turnLeft+0x78>)
+ 8007054:	f000 f9fa 	bl	800744c <MTR_setDirection>
+  MTR_setDirection(&DRV_motorFrontLeft , MTR_DIRECTION_BACKWARD);
  8007058:	2101      	movs	r1, #1
- 800705a:	4815      	ldr	r0, [pc, #84]	; (80070b0 <DRIVE_turnLeft+0x7c>)
- 800705c:	f000 f9f6 	bl	800744c <MOTOR_setDirection>
-  MOTOR_setDirection(&DRIVE_motorRearRight , MOTOR_DIRECTION_FORWARD );
+ 800705a:	4815      	ldr	r0, [pc, #84]	; (80070b0 <DRV_turnLeft+0x7c>)
+ 800705c:	f000 f9f6 	bl	800744c <MTR_setDirection>
+  MTR_setDirection(&DRV_motorRearRight , MTR_DIRECTION_FORWARD );
  8007060:	2100      	movs	r1, #0
- 8007062:	4814      	ldr	r0, [pc, #80]	; (80070b4 <DRIVE_turnLeft+0x80>)
- 8007064:	f000 f9f2 	bl	800744c <MOTOR_setDirection>
-  MOTOR_setDirection(&DRIVE_motorRearLeft  , MOTOR_DIRECTION_BACKWARD);
+ 8007062:	4814      	ldr	r0, [pc, #80]	; (80070b4 <DRV_turnLeft+0x80>)
+ 8007064:	f000 f9f2 	bl	800744c <MTR_setDirection>
+  MTR_setDirection(&DRV_motorRearLeft  , MTR_DIRECTION_BACKWARD);
  8007068:	2101      	movs	r1, #1
- 800706a:	4813      	ldr	r0, [pc, #76]	; (80070b8 <DRIVE_turnLeft+0x84>)
- 800706c:	f000 f9ee 	bl	800744c <MOTOR_setDirection>
+ 800706a:	4813      	ldr	r0, [pc, #76]	; (80070b8 <DRV_turnLeft+0x84>)
+ 800706c:	f000 f9ee 	bl	800744c <MTR_setDirection>
 
-  if (DRIVE_isDebugOn == true)
- 8007070:	4b12      	ldr	r3, [pc, #72]	; (80070bc <DRIVE_turnLeft+0x88>)
+  if (DRV_isDebugOn == true)
+ 8007070:	4b12      	ldr	r3, [pc, #72]	; (80070bc <DRV_turnLeft+0x88>)
  8007072:	781b      	ldrb	r3, [r3, #0]
  8007074:	2b00      	cmp	r3, #0
- 8007076:	d110      	bne.n	800709a <DRIVE_turnLeft+0x66>
+ 8007076:	d110      	bne.n	800709a <DRV_turnLeft+0x66>
   {
     ; /* Nothing to do */
   }
   else
   {
-    MOTOR_setSpeed(&DRIVE_motorFrontRight, l_speed);
+    MTR_setSpeed(&DRV_motorFrontRight, l_speed);
  8007078:	68f9      	ldr	r1, [r7, #12]
- 800707a:	480c      	ldr	r0, [pc, #48]	; (80070ac <DRIVE_turnLeft+0x78>)
- 800707c:	f000 fa28 	bl	80074d0 <MOTOR_setSpeed>
-    MOTOR_setSpeed(&DRIVE_motorFrontLeft , l_speed);
+ 800707a:	480c      	ldr	r0, [pc, #48]	; (80070ac <DRV_turnLeft+0x78>)
+ 800707c:	f000 fa28 	bl	80074d0 <MTR_setSpeed>
+    MTR_setSpeed(&DRV_motorFrontLeft , l_speed);
  8007080:	68f9      	ldr	r1, [r7, #12]
- 8007082:	480b      	ldr	r0, [pc, #44]	; (80070b0 <DRIVE_turnLeft+0x7c>)
- 8007084:	f000 fa24 	bl	80074d0 <MOTOR_setSpeed>
-    MOTOR_setSpeed(&DRIVE_motorRearRight , l_speed);
+ 8007082:	480b      	ldr	r0, [pc, #44]	; (80070b0 <DRV_turnLeft+0x7c>)
+ 8007084:	f000 fa24 	bl	80074d0 <MTR_setSpeed>
+    MTR_setSpeed(&DRV_motorRearRight , l_speed);
  8007088:	68f9      	ldr	r1, [r7, #12]
- 800708a:	480a      	ldr	r0, [pc, #40]	; (80070b4 <DRIVE_turnLeft+0x80>)
- 800708c:	f000 fa20 	bl	80074d0 <MOTOR_setSpeed>
-    MOTOR_setSpeed(&DRIVE_motorRearLeft  , l_speed);
+ 800708a:	480a      	ldr	r0, [pc, #40]	; (80070b4 <DRV_turnLeft+0x80>)
+ 800708c:	f000 fa20 	bl	80074d0 <MTR_setSpeed>
+    MTR_setSpeed(&DRV_motorRearLeft  , l_speed);
  8007090:	68f9      	ldr	r1, [r7, #12]
- 8007092:	4809      	ldr	r0, [pc, #36]	; (80070b8 <DRIVE_turnLeft+0x84>)
- 8007094:	f000 fa1c 	bl	80074d0 <MOTOR_setSpeed>
+ 8007092:	4809      	ldr	r0, [pc, #36]	; (80070b8 <DRV_turnLeft+0x84>)
+ 8007094:	f000 fa1c 	bl	80074d0 <MTR_setSpeed>
   }
 
   return;
@@ -19472,7 +19472,7 @@ static void DRIVE_turnLeft(uint32_t p_speed)
  800709e:	46bd      	mov	sp, r7
  80070a0:	bd80      	pop	{r7, pc}
  80070a2:	bf00      	nop
- 80070a4:	08008c04 	.word	0x08008c04
+ 80070a4:	08008bfc 	.word	0x08008bfc
  80070a8:	200000d9 	.word	0x200000d9
  80070ac:	200000dc 	.word	0x200000dc
  80070b0:	20000108 	.word	0x20000108
@@ -19480,9 +19480,9 @@ static void DRIVE_turnLeft(uint32_t p_speed)
  80070b8:	20000134 	.word	0x20000134
  80070bc:	200000d8 	.word	0x200000d8
 
-080070c0 <DRIVE_turnRight>:
+080070c0 <DRV_turnRight>:
 
-static void DRIVE_turnRight(uint32_t p_speed)
+static void DRV_turnRight(uint32_t p_speed)
 {
  80070c0:	b580      	push	{r7, lr}
  80070c2:	b084      	sub	sp, #16
@@ -19494,58 +19494,58 @@ static void DRIVE_turnRight(uint32_t p_speed)
 
   LOG_info("Turning right @%u", l_speed);
  80070cc:	68fa      	ldr	r2, [r7, #12]
- 80070ce:	4918      	ldr	r1, [pc, #96]	; (8007130 <DRIVE_turnRight+0x70>)
+ 80070ce:	4918      	ldr	r1, [pc, #96]	; (8007130 <DRV_turnRight+0x70>)
  80070d0:	2001      	movs	r0, #1
  80070d2:	f000 f947 	bl	8007364 <LOG_log>
 
-  DRIVE_isActive = true;
- 80070d6:	4b17      	ldr	r3, [pc, #92]	; (8007134 <DRIVE_turnRight+0x74>)
+  DRV_isActive = true;
+ 80070d6:	4b17      	ldr	r3, [pc, #92]	; (8007134 <DRV_turnRight+0x74>)
  80070d8:	2201      	movs	r2, #1
  80070da:	701a      	strb	r2, [r3, #0]
 
-  MOTOR_setDirection(&DRIVE_motorFrontRight, MOTOR_DIRECTION_BACKWARD);
+  MTR_setDirection(&DRV_motorFrontRight, MTR_DIRECTION_BACKWARD);
  80070dc:	2101      	movs	r1, #1
- 80070de:	4816      	ldr	r0, [pc, #88]	; (8007138 <DRIVE_turnRight+0x78>)
- 80070e0:	f000 f9b4 	bl	800744c <MOTOR_setDirection>
-  MOTOR_setDirection(&DRIVE_motorFrontLeft , MOTOR_DIRECTION_FORWARD );
+ 80070de:	4816      	ldr	r0, [pc, #88]	; (8007138 <DRV_turnRight+0x78>)
+ 80070e0:	f000 f9b4 	bl	800744c <MTR_setDirection>
+  MTR_setDirection(&DRV_motorFrontLeft , MTR_DIRECTION_FORWARD );
  80070e4:	2100      	movs	r1, #0
- 80070e6:	4815      	ldr	r0, [pc, #84]	; (800713c <DRIVE_turnRight+0x7c>)
- 80070e8:	f000 f9b0 	bl	800744c <MOTOR_setDirection>
-  MOTOR_setDirection(&DRIVE_motorRearRight , MOTOR_DIRECTION_BACKWARD);
+ 80070e6:	4815      	ldr	r0, [pc, #84]	; (800713c <DRV_turnRight+0x7c>)
+ 80070e8:	f000 f9b0 	bl	800744c <MTR_setDirection>
+  MTR_setDirection(&DRV_motorRearRight , MTR_DIRECTION_BACKWARD);
  80070ec:	2101      	movs	r1, #1
- 80070ee:	4814      	ldr	r0, [pc, #80]	; (8007140 <DRIVE_turnRight+0x80>)
- 80070f0:	f000 f9ac 	bl	800744c <MOTOR_setDirection>
-  MOTOR_setDirection(&DRIVE_motorRearLeft  , MOTOR_DIRECTION_FORWARD );
+ 80070ee:	4814      	ldr	r0, [pc, #80]	; (8007140 <DRV_turnRight+0x80>)
+ 80070f0:	f000 f9ac 	bl	800744c <MTR_setDirection>
+  MTR_setDirection(&DRV_motorRearLeft  , MTR_DIRECTION_FORWARD );
  80070f4:	2100      	movs	r1, #0
- 80070f6:	4813      	ldr	r0, [pc, #76]	; (8007144 <DRIVE_turnRight+0x84>)
- 80070f8:	f000 f9a8 	bl	800744c <MOTOR_setDirection>
+ 80070f6:	4813      	ldr	r0, [pc, #76]	; (8007144 <DRV_turnRight+0x84>)
+ 80070f8:	f000 f9a8 	bl	800744c <MTR_setDirection>
 
-  if (DRIVE_isDebugOn == true)
- 80070fc:	4b12      	ldr	r3, [pc, #72]	; (8007148 <DRIVE_turnRight+0x88>)
+  if (DRV_isDebugOn == true)
+ 80070fc:	4b12      	ldr	r3, [pc, #72]	; (8007148 <DRV_turnRight+0x88>)
  80070fe:	781b      	ldrb	r3, [r3, #0]
  8007100:	2b00      	cmp	r3, #0
- 8007102:	d110      	bne.n	8007126 <DRIVE_turnRight+0x66>
+ 8007102:	d110      	bne.n	8007126 <DRV_turnRight+0x66>
   {
     ; /* Nothing to do */
   }
   else
   {
-    MOTOR_setSpeed(&DRIVE_motorFrontRight, l_speed);
+    MTR_setSpeed(&DRV_motorFrontRight, l_speed);
  8007104:	68f9      	ldr	r1, [r7, #12]
- 8007106:	480c      	ldr	r0, [pc, #48]	; (8007138 <DRIVE_turnRight+0x78>)
- 8007108:	f000 f9e2 	bl	80074d0 <MOTOR_setSpeed>
-    MOTOR_setSpeed(&DRIVE_motorFrontLeft , l_speed);
+ 8007106:	480c      	ldr	r0, [pc, #48]	; (8007138 <DRV_turnRight+0x78>)
+ 8007108:	f000 f9e2 	bl	80074d0 <MTR_setSpeed>
+    MTR_setSpeed(&DRV_motorFrontLeft , l_speed);
  800710c:	68f9      	ldr	r1, [r7, #12]
- 800710e:	480b      	ldr	r0, [pc, #44]	; (800713c <DRIVE_turnRight+0x7c>)
- 8007110:	f000 f9de 	bl	80074d0 <MOTOR_setSpeed>
-    MOTOR_setSpeed(&DRIVE_motorRearRight , l_speed);
+ 800710e:	480b      	ldr	r0, [pc, #44]	; (800713c <DRV_turnRight+0x7c>)
+ 8007110:	f000 f9de 	bl	80074d0 <MTR_setSpeed>
+    MTR_setSpeed(&DRV_motorRearRight , l_speed);
  8007114:	68f9      	ldr	r1, [r7, #12]
- 8007116:	480a      	ldr	r0, [pc, #40]	; (8007140 <DRIVE_turnRight+0x80>)
- 8007118:	f000 f9da 	bl	80074d0 <MOTOR_setSpeed>
-    MOTOR_setSpeed(&DRIVE_motorRearLeft  , l_speed);
+ 8007116:	480a      	ldr	r0, [pc, #40]	; (8007140 <DRV_turnRight+0x80>)
+ 8007118:	f000 f9da 	bl	80074d0 <MTR_setSpeed>
+    MTR_setSpeed(&DRV_motorRearLeft  , l_speed);
  800711c:	68f9      	ldr	r1, [r7, #12]
- 800711e:	4809      	ldr	r0, [pc, #36]	; (8007144 <DRIVE_turnRight+0x84>)
- 8007120:	f000 f9d6 	bl	80074d0 <MOTOR_setSpeed>
+ 800711e:	4809      	ldr	r0, [pc, #36]	; (8007144 <DRV_turnRight+0x84>)
+ 8007120:	f000 f9d6 	bl	80074d0 <MTR_setSpeed>
   }
 
   return;
@@ -19556,7 +19556,7 @@ static void DRIVE_turnRight(uint32_t p_speed)
  800712a:	46bd      	mov	sp, r7
  800712c:	bd80      	pop	{r7, pc}
  800712e:	bf00      	nop
- 8007130:	08008c18 	.word	0x08008c18
+ 8007130:	08008c10 	.word	0x08008c10
  8007134:	200000d9 	.word	0x200000d9
  8007138:	200000dc 	.word	0x200000dc
  800713c:	20000108 	.word	0x20000108
@@ -19564,9 +19564,9 @@ static void DRIVE_turnRight(uint32_t p_speed)
  8007144:	20000134 	.word	0x20000134
  8007148:	200000d8 	.word	0x200000d8
 
-0800714c <DRIVE_translateLeft>:
+0800714c <DRV_translateLeft>:
 
-static void DRIVE_translateLeft(uint32_t p_speed)
+static void DRV_translateLeft(uint32_t p_speed)
 {
  800714c:	b580      	push	{r7, lr}
  800714e:	b084      	sub	sp, #16
@@ -19578,58 +19578,58 @@ static void DRIVE_translateLeft(uint32_t p_speed)
 
   LOG_info("Translating left @%u", l_speed);
  8007158:	68fa      	ldr	r2, [r7, #12]
- 800715a:	4918      	ldr	r1, [pc, #96]	; (80071bc <DRIVE_translateLeft+0x70>)
+ 800715a:	4918      	ldr	r1, [pc, #96]	; (80071bc <DRV_translateLeft+0x70>)
  800715c:	2001      	movs	r0, #1
  800715e:	f000 f901 	bl	8007364 <LOG_log>
 
-  DRIVE_isActive = true;
- 8007162:	4b17      	ldr	r3, [pc, #92]	; (80071c0 <DRIVE_translateLeft+0x74>)
+  DRV_isActive = true;
+ 8007162:	4b17      	ldr	r3, [pc, #92]	; (80071c0 <DRV_translateLeft+0x74>)
  8007164:	2201      	movs	r2, #1
  8007166:	701a      	strb	r2, [r3, #0]
 
-  MOTOR_setDirection(&DRIVE_motorFrontRight, MOTOR_DIRECTION_FORWARD );
+  MTR_setDirection(&DRV_motorFrontRight, MTR_DIRECTION_FORWARD );
  8007168:	2100      	movs	r1, #0
- 800716a:	4816      	ldr	r0, [pc, #88]	; (80071c4 <DRIVE_translateLeft+0x78>)
- 800716c:	f000 f96e 	bl	800744c <MOTOR_setDirection>
-  MOTOR_setDirection(&DRIVE_motorFrontLeft , MOTOR_DIRECTION_BACKWARD);
+ 800716a:	4816      	ldr	r0, [pc, #88]	; (80071c4 <DRV_translateLeft+0x78>)
+ 800716c:	f000 f96e 	bl	800744c <MTR_setDirection>
+  MTR_setDirection(&DRV_motorFrontLeft , MTR_DIRECTION_BACKWARD);
  8007170:	2101      	movs	r1, #1
- 8007172:	4815      	ldr	r0, [pc, #84]	; (80071c8 <DRIVE_translateLeft+0x7c>)
- 8007174:	f000 f96a 	bl	800744c <MOTOR_setDirection>
-  MOTOR_setDirection(&DRIVE_motorRearRight , MOTOR_DIRECTION_BACKWARD);
+ 8007172:	4815      	ldr	r0, [pc, #84]	; (80071c8 <DRV_translateLeft+0x7c>)
+ 8007174:	f000 f96a 	bl	800744c <MTR_setDirection>
+  MTR_setDirection(&DRV_motorRearRight , MTR_DIRECTION_BACKWARD);
  8007178:	2101      	movs	r1, #1
- 800717a:	4814      	ldr	r0, [pc, #80]	; (80071cc <DRIVE_translateLeft+0x80>)
- 800717c:	f000 f966 	bl	800744c <MOTOR_setDirection>
-  MOTOR_setDirection(&DRIVE_motorRearLeft  , MOTOR_DIRECTION_FORWARD );
+ 800717a:	4814      	ldr	r0, [pc, #80]	; (80071cc <DRV_translateLeft+0x80>)
+ 800717c:	f000 f966 	bl	800744c <MTR_setDirection>
+  MTR_setDirection(&DRV_motorRearLeft  , MTR_DIRECTION_FORWARD );
  8007180:	2100      	movs	r1, #0
- 8007182:	4813      	ldr	r0, [pc, #76]	; (80071d0 <DRIVE_translateLeft+0x84>)
- 8007184:	f000 f962 	bl	800744c <MOTOR_setDirection>
+ 8007182:	4813      	ldr	r0, [pc, #76]	; (80071d0 <DRV_translateLeft+0x84>)
+ 8007184:	f000 f962 	bl	800744c <MTR_setDirection>
 
-  if (DRIVE_isDebugOn == true)
- 8007188:	4b12      	ldr	r3, [pc, #72]	; (80071d4 <DRIVE_translateLeft+0x88>)
+  if (DRV_isDebugOn == true)
+ 8007188:	4b12      	ldr	r3, [pc, #72]	; (80071d4 <DRV_translateLeft+0x88>)
  800718a:	781b      	ldrb	r3, [r3, #0]
  800718c:	2b00      	cmp	r3, #0
- 800718e:	d110      	bne.n	80071b2 <DRIVE_translateLeft+0x66>
+ 800718e:	d110      	bne.n	80071b2 <DRV_translateLeft+0x66>
   {
     ; /* Nothing to do */
   }
   else
   {
-    MOTOR_setSpeed(&DRIVE_motorFrontRight, l_speed);
+    MTR_setSpeed(&DRV_motorFrontRight, l_speed);
  8007190:	68f9      	ldr	r1, [r7, #12]
- 8007192:	480c      	ldr	r0, [pc, #48]	; (80071c4 <DRIVE_translateLeft+0x78>)
- 8007194:	f000 f99c 	bl	80074d0 <MOTOR_setSpeed>
-    MOTOR_setSpeed(&DRIVE_motorFrontLeft , l_speed);
+ 8007192:	480c      	ldr	r0, [pc, #48]	; (80071c4 <DRV_translateLeft+0x78>)
+ 8007194:	f000 f99c 	bl	80074d0 <MTR_setSpeed>
+    MTR_setSpeed(&DRV_motorFrontLeft , l_speed);
  8007198:	68f9      	ldr	r1, [r7, #12]
- 800719a:	480b      	ldr	r0, [pc, #44]	; (80071c8 <DRIVE_translateLeft+0x7c>)
- 800719c:	f000 f998 	bl	80074d0 <MOTOR_setSpeed>
-    MOTOR_setSpeed(&DRIVE_motorRearRight , l_speed);
+ 800719a:	480b      	ldr	r0, [pc, #44]	; (80071c8 <DRV_translateLeft+0x7c>)
+ 800719c:	f000 f998 	bl	80074d0 <MTR_setSpeed>
+    MTR_setSpeed(&DRV_motorRearRight , l_speed);
  80071a0:	68f9      	ldr	r1, [r7, #12]
- 80071a2:	480a      	ldr	r0, [pc, #40]	; (80071cc <DRIVE_translateLeft+0x80>)
- 80071a4:	f000 f994 	bl	80074d0 <MOTOR_setSpeed>
-    MOTOR_setSpeed(&DRIVE_motorRearLeft  , l_speed);
+ 80071a2:	480a      	ldr	r0, [pc, #40]	; (80071cc <DRV_translateLeft+0x80>)
+ 80071a4:	f000 f994 	bl	80074d0 <MTR_setSpeed>
+    MTR_setSpeed(&DRV_motorRearLeft  , l_speed);
  80071a8:	68f9      	ldr	r1, [r7, #12]
- 80071aa:	4809      	ldr	r0, [pc, #36]	; (80071d0 <DRIVE_translateLeft+0x84>)
- 80071ac:	f000 f990 	bl	80074d0 <MOTOR_setSpeed>
+ 80071aa:	4809      	ldr	r0, [pc, #36]	; (80071d0 <DRV_translateLeft+0x84>)
+ 80071ac:	f000 f990 	bl	80074d0 <MTR_setSpeed>
   }
 
   return;
@@ -19640,7 +19640,7 @@ static void DRIVE_translateLeft(uint32_t p_speed)
  80071b6:	46bd      	mov	sp, r7
  80071b8:	bd80      	pop	{r7, pc}
  80071ba:	bf00      	nop
- 80071bc:	08008c2c 	.word	0x08008c2c
+ 80071bc:	08008c24 	.word	0x08008c24
  80071c0:	200000d9 	.word	0x200000d9
  80071c4:	200000dc 	.word	0x200000dc
  80071c8:	20000108 	.word	0x20000108
@@ -19648,9 +19648,9 @@ static void DRIVE_translateLeft(uint32_t p_speed)
  80071d0:	20000134 	.word	0x20000134
  80071d4:	200000d8 	.word	0x200000d8
 
-080071d8 <DRIVE_translateRight>:
+080071d8 <DRV_translateRight>:
 
-static void DRIVE_translateRight(uint32_t p_speed)
+static void DRV_translateRight(uint32_t p_speed)
 {
  80071d8:	b580      	push	{r7, lr}
  80071da:	b084      	sub	sp, #16
@@ -19662,58 +19662,58 @@ static void DRIVE_translateRight(uint32_t p_speed)
 
   LOG_info("Translating right @%u", l_speed);
  80071e4:	68fa      	ldr	r2, [r7, #12]
- 80071e6:	4918      	ldr	r1, [pc, #96]	; (8007248 <DRIVE_translateRight+0x70>)
+ 80071e6:	4918      	ldr	r1, [pc, #96]	; (8007248 <DRV_translateRight+0x70>)
  80071e8:	2001      	movs	r0, #1
  80071ea:	f000 f8bb 	bl	8007364 <LOG_log>
 
-  DRIVE_isActive = true;
- 80071ee:	4b17      	ldr	r3, [pc, #92]	; (800724c <DRIVE_translateRight+0x74>)
+  DRV_isActive = true;
+ 80071ee:	4b17      	ldr	r3, [pc, #92]	; (800724c <DRV_translateRight+0x74>)
  80071f0:	2201      	movs	r2, #1
  80071f2:	701a      	strb	r2, [r3, #0]
 
-  MOTOR_setDirection(&DRIVE_motorFrontRight, MOTOR_DIRECTION_BACKWARD);
+  MTR_setDirection(&DRV_motorFrontRight, MTR_DIRECTION_BACKWARD);
  80071f4:	2101      	movs	r1, #1
- 80071f6:	4816      	ldr	r0, [pc, #88]	; (8007250 <DRIVE_translateRight+0x78>)
- 80071f8:	f000 f928 	bl	800744c <MOTOR_setDirection>
-  MOTOR_setDirection(&DRIVE_motorFrontLeft , MOTOR_DIRECTION_FORWARD );
+ 80071f6:	4816      	ldr	r0, [pc, #88]	; (8007250 <DRV_translateRight+0x78>)
+ 80071f8:	f000 f928 	bl	800744c <MTR_setDirection>
+  MTR_setDirection(&DRV_motorFrontLeft , MTR_DIRECTION_FORWARD );
  80071fc:	2100      	movs	r1, #0
- 80071fe:	4815      	ldr	r0, [pc, #84]	; (8007254 <DRIVE_translateRight+0x7c>)
- 8007200:	f000 f924 	bl	800744c <MOTOR_setDirection>
-  MOTOR_setDirection(&DRIVE_motorRearRight , MOTOR_DIRECTION_FORWARD );
+ 80071fe:	4815      	ldr	r0, [pc, #84]	; (8007254 <DRV_translateRight+0x7c>)
+ 8007200:	f000 f924 	bl	800744c <MTR_setDirection>
+  MTR_setDirection(&DRV_motorRearRight , MTR_DIRECTION_FORWARD );
  8007204:	2100      	movs	r1, #0
- 8007206:	4814      	ldr	r0, [pc, #80]	; (8007258 <DRIVE_translateRight+0x80>)
- 8007208:	f000 f920 	bl	800744c <MOTOR_setDirection>
-  MOTOR_setDirection(&DRIVE_motorRearLeft  , MOTOR_DIRECTION_BACKWARD);
+ 8007206:	4814      	ldr	r0, [pc, #80]	; (8007258 <DRV_translateRight+0x80>)
+ 8007208:	f000 f920 	bl	800744c <MTR_setDirection>
+  MTR_setDirection(&DRV_motorRearLeft  , MTR_DIRECTION_BACKWARD);
  800720c:	2101      	movs	r1, #1
- 800720e:	4813      	ldr	r0, [pc, #76]	; (800725c <DRIVE_translateRight+0x84>)
- 8007210:	f000 f91c 	bl	800744c <MOTOR_setDirection>
+ 800720e:	4813      	ldr	r0, [pc, #76]	; (800725c <DRV_translateRight+0x84>)
+ 8007210:	f000 f91c 	bl	800744c <MTR_setDirection>
 
-  if (DRIVE_isDebugOn == true)
- 8007214:	4b12      	ldr	r3, [pc, #72]	; (8007260 <DRIVE_translateRight+0x88>)
+  if (DRV_isDebugOn == true)
+ 8007214:	4b12      	ldr	r3, [pc, #72]	; (8007260 <DRV_translateRight+0x88>)
  8007216:	781b      	ldrb	r3, [r3, #0]
  8007218:	2b00      	cmp	r3, #0
- 800721a:	d110      	bne.n	800723e <DRIVE_translateRight+0x66>
+ 800721a:	d110      	bne.n	800723e <DRV_translateRight+0x66>
   {
     ; /* Nothing to do */
   }
   else
   {
-    MOTOR_setSpeed(&DRIVE_motorFrontRight, l_speed);
+    MTR_setSpeed(&DRV_motorFrontRight, l_speed);
  800721c:	68f9      	ldr	r1, [r7, #12]
- 800721e:	480c      	ldr	r0, [pc, #48]	; (8007250 <DRIVE_translateRight+0x78>)
- 8007220:	f000 f956 	bl	80074d0 <MOTOR_setSpeed>
-    MOTOR_setSpeed(&DRIVE_motorFrontLeft , l_speed);
+ 800721e:	480c      	ldr	r0, [pc, #48]	; (8007250 <DRV_translateRight+0x78>)
+ 8007220:	f000 f956 	bl	80074d0 <MTR_setSpeed>
+    MTR_setSpeed(&DRV_motorFrontLeft , l_speed);
  8007224:	68f9      	ldr	r1, [r7, #12]
- 8007226:	480b      	ldr	r0, [pc, #44]	; (8007254 <DRIVE_translateRight+0x7c>)
- 8007228:	f000 f952 	bl	80074d0 <MOTOR_setSpeed>
-    MOTOR_setSpeed(&DRIVE_motorRearRight , l_speed);
+ 8007226:	480b      	ldr	r0, [pc, #44]	; (8007254 <DRV_translateRight+0x7c>)
+ 8007228:	f000 f952 	bl	80074d0 <MTR_setSpeed>
+    MTR_setSpeed(&DRV_motorRearRight , l_speed);
  800722c:	68f9      	ldr	r1, [r7, #12]
- 800722e:	480a      	ldr	r0, [pc, #40]	; (8007258 <DRIVE_translateRight+0x80>)
- 8007230:	f000 f94e 	bl	80074d0 <MOTOR_setSpeed>
-    MOTOR_setSpeed(&DRIVE_motorRearLeft  , l_speed);
+ 800722e:	480a      	ldr	r0, [pc, #40]	; (8007258 <DRV_translateRight+0x80>)
+ 8007230:	f000 f94e 	bl	80074d0 <MTR_setSpeed>
+    MTR_setSpeed(&DRV_motorRearLeft  , l_speed);
  8007234:	68f9      	ldr	r1, [r7, #12]
- 8007236:	4809      	ldr	r0, [pc, #36]	; (800725c <DRIVE_translateRight+0x84>)
- 8007238:	f000 f94a 	bl	80074d0 <MOTOR_setSpeed>
+ 8007236:	4809      	ldr	r0, [pc, #36]	; (800725c <DRV_translateRight+0x84>)
+ 8007238:	f000 f94a 	bl	80074d0 <MTR_setSpeed>
   }
 
   return;
@@ -19724,7 +19724,7 @@ static void DRIVE_translateRight(uint32_t p_speed)
  8007242:	46bd      	mov	sp, r7
  8007244:	bd80      	pop	{r7, pc}
  8007246:	bf00      	nop
- 8007248:	08008c44 	.word	0x08008c44
+ 8007248:	08008c3c 	.word	0x08008c3c
  800724c:	200000d9 	.word	0x200000d9
  8007250:	200000dc 	.word	0x200000dc
  8007254:	20000108 	.word	0x20000108
@@ -19762,7 +19762,7 @@ void LED_setMode(T_LED_MODE p_mode)
  8007282:	3708      	adds	r7, #8
  8007284:	46bd      	mov	sp, r7
  8007286:	bd80      	pop	{r7, pc}
- 8007288:	08008c5c 	.word	0x08008c5c
+ 8007288:	08008c54 	.word	0x08008c54
  800728c:	20000020 	.word	0x20000020
 
 08007290 <LED_getMode>:
@@ -19788,8 +19788,6 @@ void LED_update(void)
  80072a4:	b580      	push	{r7, lr}
  80072a6:	af00      	add	r7, sp, #0
   static uint32_t l_slowBlinkCounter = 0;
-
-  // LOG_debug("Updating LED");
 
   switch (LED_mode)
  80072a8:	4b1c      	ldr	r3, [pc, #112]	; (800731c <LED_update+0x78>)
@@ -20000,23 +19998,23 @@ void LOG_log(T_LOG_LEVEL p_level, const char *p_format, ...)
  80073dc:	20000190 	.word	0x20000190
  80073e0:	20000194 	.word	0x20000194
  80073e4:	20000024 	.word	0x20000024
- 80073e8:	08008c94 	.word	0x08008c94
- 80073ec:	08008cb0 	.word	0x08008cb0
+ 80073e8:	08008c8c 	.word	0x08008c8c
+ 80073ec:	08008ca8 	.word	0x08008ca8
 
-080073f0 <MASTER_CONTROL_receiveData>:
+080073f0 <MAS_receiveData>:
 #include "stm32f1xx_hal.h"
 
-static uint8_t MASTER_CONTROL_rxBuffer[12] = {0};
+static uint8_t MAS_rxBuffer[12] = {0};
 
-void MASTER_CONTROL_receiveData(UART_HandleTypeDef *p_huart)
+void MAS_receiveData(UART_HandleTypeDef *p_huart)
 {
  80073f0:	b580      	push	{r7, lr}
  80073f2:	b082      	sub	sp, #8
  80073f4:	af00      	add	r7, sp, #0
  80073f6:	6078      	str	r0, [r7, #4]
-  HAL_UART_Receive_IT(p_huart, MASTER_CONTROL_rxBuffer, 1);
+  HAL_UART_Receive_IT(p_huart, MAS_rxBuffer, 1);
  80073f8:	2201      	movs	r2, #1
- 80073fa:	4904      	ldr	r1, [pc, #16]	; (800740c <MASTER_CONTROL_receiveData+0x1c>)
+ 80073fa:	4904      	ldr	r1, [pc, #16]	; (800740c <MAS_receiveData+0x1c>)
  80073fc:	6878      	ldr	r0, [r7, #4]
  80073fe:	f7fe fb1f 	bl	8005a40 <HAL_UART_Receive_IT>
 
@@ -20029,12 +20027,12 @@ void MASTER_CONTROL_receiveData(UART_HandleTypeDef *p_huart)
  800740a:	bf00      	nop
  800740c:	20000198 	.word	0x20000198
 
-08007410 <MOTOR_init>:
+08007410 <MTR_init>:
 
 #include "stm32f1xx_hal.h"
 #include "log.h"
 
-void MOTOR_init(T_MOTOR_Handle *p_handle, char *p_name)
+void MTR_init(T_MTR_Handle *p_handle, char *p_name)
 {
  8007410:	b580      	push	{r7, lr}
  8007412:	b082      	sub	sp, #8
@@ -20043,24 +20041,24 @@ void MOTOR_init(T_MOTOR_Handle *p_handle, char *p_name)
  8007418:	6039      	str	r1, [r7, #0]
   LOG_info("Initializing Motor module for %s", p_name);
  800741a:	683a      	ldr	r2, [r7, #0]
- 800741c:	490a      	ldr	r1, [pc, #40]	; (8007448 <MOTOR_init+0x38>)
+ 800741c:	490a      	ldr	r1, [pc, #40]	; (8007448 <MTR_init+0x38>)
  800741e:	2001      	movs	r0, #1
  8007420:	f7ff ffa0 	bl	8007364 <LOG_log>
 
-  (void)strncpy((char *)p_handle->name, p_name, MOTOR_NAME_MAX_LENGTH);
+  (void)strncpy((char *)p_handle->name, p_name, MTR_NAME_MAX_LENGTH);
  8007424:	687b      	ldr	r3, [r7, #4]
  8007426:	220c      	movs	r2, #12
  8007428:	6839      	ldr	r1, [r7, #0]
  800742a:	4618      	mov	r0, r3
  800742c:	f000 f9b4 	bl	8007798 <strncpy>
 
-  MOTOR_setSpeed(p_handle, 0);
+  MTR_setSpeed(p_handle, 0);
  8007430:	2100      	movs	r1, #0
  8007432:	6878      	ldr	r0, [r7, #4]
- 8007434:	f000 f84c 	bl	80074d0 <MOTOR_setSpeed>
-  MOTOR_stop    (p_handle   );
+ 8007434:	f000 f84c 	bl	80074d0 <MTR_setSpeed>
+  MTR_stop    (p_handle   );
  8007438:	6878      	ldr	r0, [r7, #4]
- 800743a:	f000 f89d 	bl	8007578 <MOTOR_stop>
+ 800743a:	f000 f89d 	bl	8007578 <MTR_stop>
 
   return;
  800743e:	bf00      	nop
@@ -20069,11 +20067,11 @@ void MOTOR_init(T_MOTOR_Handle *p_handle, char *p_name)
  8007442:	46bd      	mov	sp, r7
  8007444:	bd80      	pop	{r7, pc}
  8007446:	bf00      	nop
- 8007448:	08008cb4 	.word	0x08008cb4
+ 8007448:	08008cac 	.word	0x08008cac
 
-0800744c <MOTOR_setDirection>:
+0800744c <MTR_setDirection>:
 
-void MOTOR_setDirection(T_MOTOR_Handle *p_handle, uint32_t p_direction)
+void MTR_setDirection(T_MTR_Handle *p_handle, uint32_t p_direction)
 {
  800744c:	b580      	push	{r7, lr}
  800744e:	b082      	sub	sp, #8
@@ -20085,7 +20083,7 @@ void MOTOR_setDirection(T_MOTOR_Handle *p_handle, uint32_t p_direction)
  8007458:	69db      	ldr	r3, [r3, #28]
  800745a:	683a      	ldr	r2, [r7, #0]
  800745c:	429a      	cmp	r2, r3
- 800745e:	d031      	beq.n	80074c4 <MOTOR_setDirection+0x78>
+ 800745e:	d031      	beq.n	80074c4 <MTR_setDirection+0x78>
   {
     ; /* Nothing to do */
   }
@@ -20094,14 +20092,14 @@ void MOTOR_setDirection(T_MOTOR_Handle *p_handle, uint32_t p_direction)
     LOG_debug("Setting  %s motor direction to %u", p_handle->name, p_direction);
  8007460:	687a      	ldr	r2, [r7, #4]
  8007462:	683b      	ldr	r3, [r7, #0]
- 8007464:	4919      	ldr	r1, [pc, #100]	; (80074cc <MOTOR_setDirection+0x80>)
+ 8007464:	4919      	ldr	r1, [pc, #100]	; (80074cc <MTR_setDirection+0x80>)
  8007466:	2000      	movs	r0, #0
  8007468:	f7ff ff7c 	bl	8007364 <LOG_log>
 
-    if (p_direction == MOTOR_DIRECTION_FORWARD)
+    if (p_direction == MTR_DIRECTION_FORWARD)
  800746c:	683b      	ldr	r3, [r7, #0]
  800746e:	2b00      	cmp	r3, #0
- 8007470:	d112      	bne.n	8007498 <MOTOR_setDirection+0x4c>
+ 8007470:	d112      	bne.n	8007498 <MTR_setDirection+0x4c>
     {
       HAL_GPIO_WritePin(p_handle->dirPin1Port, p_handle->dirPin1, GPIO_PIN_RESET);
  8007472:	687b      	ldr	r3, [r7, #4]
@@ -20121,7 +20119,7 @@ void MOTOR_setDirection(T_MOTOR_Handle *p_handle, uint32_t p_direction)
  800748e:	2201      	movs	r2, #1
  8007490:	4619      	mov	r1, r3
  8007492:	f7fb fbc5 	bl	8002c20 <HAL_GPIO_WritePin>
- 8007496:	e011      	b.n	80074bc <MOTOR_setDirection+0x70>
+ 8007496:	e011      	b.n	80074bc <MTR_setDirection+0x70>
     }
     else
     {
@@ -20158,11 +20156,11 @@ void MOTOR_setDirection(T_MOTOR_Handle *p_handle, uint32_t p_direction)
  80074c6:	3708      	adds	r7, #8
  80074c8:	46bd      	mov	sp, r7
  80074ca:	bd80      	pop	{r7, pc}
- 80074cc:	08008cd8 	.word	0x08008cd8
+ 80074cc:	08008cd0 	.word	0x08008cd0
 
-080074d0 <MOTOR_setSpeed>:
+080074d0 <MTR_setSpeed>:
 
-void MOTOR_setSpeed(T_MOTOR_Handle *p_handle, uint32_t p_speed)
+void MTR_setSpeed(T_MTR_Handle *p_handle, uint32_t p_speed)
 {
  80074d0:	b580      	push	{r7, lr}
  80074d2:	b082      	sub	sp, #8
@@ -20174,7 +20172,7 @@ void MOTOR_setSpeed(T_MOTOR_Handle *p_handle, uint32_t p_speed)
  80074dc:	6a1b      	ldr	r3, [r3, #32]
  80074de:	683a      	ldr	r2, [r7, #0]
  80074e0:	429a      	cmp	r2, r3
- 80074e2:	d02c      	beq.n	800753e <MOTOR_setSpeed+0x6e>
+ 80074e2:	d02c      	beq.n	800753e <MTR_setSpeed+0x6e>
   {
     ; /* Nothing to do */
   }
@@ -20183,7 +20181,7 @@ void MOTOR_setSpeed(T_MOTOR_Handle *p_handle, uint32_t p_speed)
     LOG_debug("Setting  %s motor p_speed to %u", p_handle->name, p_speed);
  80074e4:	687a      	ldr	r2, [r7, #4]
  80074e6:	683b      	ldr	r3, [r7, #0]
- 80074e8:	4917      	ldr	r1, [pc, #92]	; (8007548 <MOTOR_setSpeed+0x78>)
+ 80074e8:	4917      	ldr	r1, [pc, #92]	; (8007548 <MTR_setSpeed+0x78>)
  80074ea:	2000      	movs	r0, #0
  80074ec:	f7ff ff3a 	bl	8007364 <LOG_log>
 
@@ -20191,33 +20189,33 @@ void MOTOR_setSpeed(T_MOTOR_Handle *p_handle, uint32_t p_speed)
  80074f0:	687b      	ldr	r3, [r7, #4]
  80074f2:	6a9b      	ldr	r3, [r3, #40]	; 0x28
  80074f4:	2b00      	cmp	r3, #0
- 80074f6:	d105      	bne.n	8007504 <MOTOR_setSpeed+0x34>
+ 80074f6:	d105      	bne.n	8007504 <MTR_setSpeed+0x34>
  80074f8:	687b      	ldr	r3, [r7, #4]
  80074fa:	6a5b      	ldr	r3, [r3, #36]	; 0x24
  80074fc:	681b      	ldr	r3, [r3, #0]
  80074fe:	683a      	ldr	r2, [r7, #0]
  8007500:	635a      	str	r2, [r3, #52]	; 0x34
- 8007502:	e018      	b.n	8007536 <MOTOR_setSpeed+0x66>
+ 8007502:	e018      	b.n	8007536 <MTR_setSpeed+0x66>
  8007504:	687b      	ldr	r3, [r7, #4]
  8007506:	6a9b      	ldr	r3, [r3, #40]	; 0x28
  8007508:	2b04      	cmp	r3, #4
- 800750a:	d105      	bne.n	8007518 <MOTOR_setSpeed+0x48>
+ 800750a:	d105      	bne.n	8007518 <MTR_setSpeed+0x48>
  800750c:	687b      	ldr	r3, [r7, #4]
  800750e:	6a5b      	ldr	r3, [r3, #36]	; 0x24
  8007510:	681a      	ldr	r2, [r3, #0]
  8007512:	683b      	ldr	r3, [r7, #0]
  8007514:	6393      	str	r3, [r2, #56]	; 0x38
- 8007516:	e00e      	b.n	8007536 <MOTOR_setSpeed+0x66>
+ 8007516:	e00e      	b.n	8007536 <MTR_setSpeed+0x66>
  8007518:	687b      	ldr	r3, [r7, #4]
  800751a:	6a9b      	ldr	r3, [r3, #40]	; 0x28
  800751c:	2b08      	cmp	r3, #8
- 800751e:	d105      	bne.n	800752c <MOTOR_setSpeed+0x5c>
+ 800751e:	d105      	bne.n	800752c <MTR_setSpeed+0x5c>
  8007520:	687b      	ldr	r3, [r7, #4]
  8007522:	6a5b      	ldr	r3, [r3, #36]	; 0x24
  8007524:	681a      	ldr	r2, [r3, #0]
  8007526:	683b      	ldr	r3, [r7, #0]
  8007528:	63d3      	str	r3, [r2, #60]	; 0x3c
- 800752a:	e004      	b.n	8007536 <MOTOR_setSpeed+0x66>
+ 800752a:	e004      	b.n	8007536 <MTR_setSpeed+0x66>
  800752c:	687b      	ldr	r3, [r7, #4]
  800752e:	6a5b      	ldr	r3, [r3, #36]	; 0x24
  8007530:	681a      	ldr	r2, [r3, #0]
@@ -20238,11 +20236,11 @@ void MOTOR_setSpeed(T_MOTOR_Handle *p_handle, uint32_t p_speed)
  8007542:	46bd      	mov	sp, r7
  8007544:	bd80      	pop	{r7, pc}
  8007546:	bf00      	nop
- 8007548:	08008cfc 	.word	0x08008cfc
+ 8007548:	08008cf4 	.word	0x08008cf4
 
-0800754c <MOTOR_start>:
+0800754c <MTR_start>:
 
-void MOTOR_start(T_MOTOR_Handle *p_handle)
+void MTR_start(T_MTR_Handle *p_handle)
 {
  800754c:	b580      	push	{r7, lr}
  800754e:	b082      	sub	sp, #8
@@ -20251,16 +20249,16 @@ void MOTOR_start(T_MOTOR_Handle *p_handle)
   LOG_info("Starting %s motor", p_handle->name);
  8007554:	687b      	ldr	r3, [r7, #4]
  8007556:	461a      	mov	r2, r3
- 8007558:	4906      	ldr	r1, [pc, #24]	; (8007574 <MOTOR_start+0x28>)
+ 8007558:	4906      	ldr	r1, [pc, #24]	; (8007574 <MTR_start+0x28>)
  800755a:	2001      	movs	r0, #1
  800755c:	f7ff ff02 	bl	8007364 <LOG_log>
 
-  MOTOR_setDirection(p_handle, p_handle->direction);
+  MTR_setDirection(p_handle, p_handle->direction);
  8007560:	687b      	ldr	r3, [r7, #4]
  8007562:	69db      	ldr	r3, [r3, #28]
  8007564:	4619      	mov	r1, r3
  8007566:	6878      	ldr	r0, [r7, #4]
- 8007568:	f7ff ff70 	bl	800744c <MOTOR_setDirection>
+ 8007568:	f7ff ff70 	bl	800744c <MTR_setDirection>
 
   return;
  800756c:	bf00      	nop
@@ -20268,11 +20266,11 @@ void MOTOR_start(T_MOTOR_Handle *p_handle)
  800756e:	3708      	adds	r7, #8
  8007570:	46bd      	mov	sp, r7
  8007572:	bd80      	pop	{r7, pc}
- 8007574:	08008d1c 	.word	0x08008d1c
+ 8007574:	08008d14 	.word	0x08008d14
 
-08007578 <MOTOR_stop>:
+08007578 <MTR_stop>:
 
-void MOTOR_stop(T_MOTOR_Handle *p_handle)
+void MTR_stop(T_MTR_Handle *p_handle)
 {
  8007578:	b580      	push	{r7, lr}
  800757a:	b082      	sub	sp, #8
@@ -20281,7 +20279,7 @@ void MOTOR_stop(T_MOTOR_Handle *p_handle)
   LOG_info("Stopping %s", p_handle->name);
  8007580:	687b      	ldr	r3, [r7, #4]
  8007582:	461a      	mov	r2, r3
- 8007584:	490c      	ldr	r1, [pc, #48]	; (80075b8 <MOTOR_stop+0x40>)
+ 8007584:	490c      	ldr	r1, [pc, #48]	; (80075b8 <MTR_stop+0x40>)
  8007586:	2001      	movs	r0, #1
  8007588:	f7ff feec 	bl	8007364 <LOG_log>
 
@@ -20310,26 +20308,26 @@ void MOTOR_stop(T_MOTOR_Handle *p_handle)
  80075b2:	3708      	adds	r7, #8
  80075b4:	46bd      	mov	sp, r7
  80075b6:	bd80      	pop	{r7, pc}
- 80075b8:	08008d30 	.word	0x08008d30
+ 80075b8:	08008d28 	.word	0x08008d28
 
-080075bc <UTILS_init>:
+080075bc <UTI_init>:
 #include "log.h"
 
-static TIM_HandleTypeDef *UTILS_delayTimerHandle;
+static TIM_HandleTypeDef *UTI_delayTimerHandle;
 
-void UTILS_init(TIM_HandleTypeDef *p_delayTimerHandle)
+void UTI_init(TIM_HandleTypeDef *p_delayTimerHandle)
 {
  80075bc:	b580      	push	{r7, lr}
  80075be:	b082      	sub	sp, #8
  80075c0:	af00      	add	r7, sp, #0
  80075c2:	6078      	str	r0, [r7, #4]
   LOG_info("Initializing utilities");
- 80075c4:	4905      	ldr	r1, [pc, #20]	; (80075dc <UTILS_init+0x20>)
+ 80075c4:	4905      	ldr	r1, [pc, #20]	; (80075dc <UTI_init+0x20>)
  80075c6:	2001      	movs	r0, #1
  80075c8:	f7ff fecc 	bl	8007364 <LOG_log>
 
-  UTILS_delayTimerHandle = p_delayTimerHandle;
- 80075cc:	4a04      	ldr	r2, [pc, #16]	; (80075e0 <UTILS_init+0x24>)
+  UTI_delayTimerHandle = p_delayTimerHandle;
+ 80075cc:	4a04      	ldr	r2, [pc, #16]	; (80075e0 <UTI_init+0x24>)
  80075ce:	687b      	ldr	r3, [r7, #4]
  80075d0:	6013      	str	r3, [r2, #0]
 
@@ -20340,12 +20338,12 @@ void UTILS_init(TIM_HandleTypeDef *p_delayTimerHandle)
  80075d6:	46bd      	mov	sp, r7
  80075d8:	bd80      	pop	{r7, pc}
  80075da:	bf00      	nop
- 80075dc:	08008d3c 	.word	0x08008d3c
+ 80075dc:	08008d34 	.word	0x08008d34
  80075e0:	200001a4 	.word	0x200001a4
 
-080075e4 <UTILS_delayUs>:
+080075e4 <UTI_delayUs>:
 
-void UTILS_delayUs(uint16_t p_delay)
+void UTI_delayUs(uint16_t p_delay)
 {
  80075e4:	b480      	push	{r7}
  80075e6:	b083      	sub	sp, #12
@@ -20353,23 +20351,23 @@ void UTILS_delayUs(uint16_t p_delay)
  80075ea:	4603      	mov	r3, r0
  80075ec:	80fb      	strh	r3, [r7, #6]
   /* Reset the micro-seconds counter */
-  __HAL_TIM_SET_COUNTER(UTILS_delayTimerHandle,0);
- 80075ee:	4b09      	ldr	r3, [pc, #36]	; (8007614 <UTILS_delayUs+0x30>)
+  __HAL_TIM_SET_COUNTER(UTI_delayTimerHandle,0);
+ 80075ee:	4b09      	ldr	r3, [pc, #36]	; (8007614 <UTI_delayUs+0x30>)
  80075f0:	681b      	ldr	r3, [r3, #0]
  80075f2:	681b      	ldr	r3, [r3, #0]
  80075f4:	2200      	movs	r2, #0
  80075f6:	625a      	str	r2, [r3, #36]	; 0x24
 
   /* Wait for the counter to reach the input micro-seconds number */
-  while (__HAL_TIM_GET_COUNTER(UTILS_delayTimerHandle) < p_delay)
+  while (__HAL_TIM_GET_COUNTER(UTI_delayTimerHandle) < p_delay)
  80075f8:	bf00      	nop
- 80075fa:	4b06      	ldr	r3, [pc, #24]	; (8007614 <UTILS_delayUs+0x30>)
+ 80075fa:	4b06      	ldr	r3, [pc, #24]	; (8007614 <UTI_delayUs+0x30>)
  80075fc:	681b      	ldr	r3, [r3, #0]
  80075fe:	681b      	ldr	r3, [r3, #0]
  8007600:	6a5a      	ldr	r2, [r3, #36]	; 0x24
  8007602:	88fb      	ldrh	r3, [r7, #6]
  8007604:	429a      	cmp	r2, r3
- 8007606:	d3f8      	bcc.n	80075fa <UTILS_delayUs+0x16>
+ 8007606:	d3f8      	bcc.n	80075fa <UTI_delayUs+0x16>
   {
     ; /* Nothing to do */
   }
@@ -20417,10 +20415,10 @@ void UTILS_delayUs(uint16_t p_delay)
  8007656:	4798      	blx	r3
  8007658:	3601      	adds	r6, #1
  800765a:	e7f2      	b.n	8007642 <__libc_init_array+0x1e>
- 800765c:	08008e04 	.word	0x08008e04
- 8007660:	08008e04 	.word	0x08008e04
- 8007664:	08008e04 	.word	0x08008e04
- 8007668:	08008e08 	.word	0x08008e08
+ 800765c:	08008dfc 	.word	0x08008dfc
+ 8007660:	08008dfc 	.word	0x08008dfc
+ 8007664:	08008dfc 	.word	0x08008dfc
+ 8007668:	08008e00 	.word	0x08008e00
 
 0800766c <memset>:
  800766c:	4603      	mov	r3, r0
@@ -20549,9 +20547,9 @@ void UTILS_delayUs(uint16_t p_delay)
  8007776:	6022      	str	r2, [r4, #0]
  8007778:	701d      	strb	r5, [r3, #0]
  800777a:	e7db      	b.n	8007734 <_puts_r+0x88>
- 800777c:	08008d90 	.word	0x08008d90
- 8007780:	08008db0 	.word	0x08008db0
- 8007784:	08008d70 	.word	0x08008d70
+ 800777c:	08008d88 	.word	0x08008d88
+ 8007780:	08008da8 	.word	0x08008da8
+ 8007784:	08008d68 	.word	0x08008d68
 
 08007788 <puts>:
  8007788:	4b02      	ldr	r3, [pc, #8]	; (8007794 <puts+0xc>)
@@ -20672,9 +20670,9 @@ void UTILS_delayUs(uint16_t p_delay)
  800787c:	f04f 37ff 	mov.w	r7, #4294967295
  8007880:	e7ea      	b.n	8007858 <__swbuf_r+0x6c>
  8007882:	bf00      	nop
- 8007884:	08008d90 	.word	0x08008d90
- 8007888:	08008db0 	.word	0x08008db0
- 800788c:	08008d70 	.word	0x08008d70
+ 8007884:	08008d88 	.word	0x08008d88
+ 8007888:	08008da8 	.word	0x08008da8
+ 800788c:	08008d68 	.word	0x08008d68
 
 08007890 <__swsetup_r>:
  8007890:	4b32      	ldr	r3, [pc, #200]	; (800795c <__swsetup_r+0xcc>)
@@ -20766,9 +20764,9 @@ void UTILS_delayUs(uint16_t p_delay)
  8007958:	e7f7      	b.n	800794a <__swsetup_r+0xba>
  800795a:	bf00      	nop
  800795c:	20000034 	.word	0x20000034
- 8007960:	08008d90 	.word	0x08008d90
- 8007964:	08008db0 	.word	0x08008db0
- 8007968:	08008d70 	.word	0x08008d70
+ 8007960:	08008d88 	.word	0x08008d88
+ 8007964:	08008da8 	.word	0x08008da8
+ 8007968:	08008d68 	.word	0x08008d68
 
 0800796c <__sflush_r>:
  800796c:	898a      	ldrh	r2, [r1, #12]
@@ -20944,9 +20942,9 @@ void UTILS_delayUs(uint16_t p_delay)
  8007ade:	bf08      	it	eq
  8007ae0:	68ec      	ldreq	r4, [r5, #12]
  8007ae2:	e7da      	b.n	8007a9a <_fflush_r+0x22>
- 8007ae4:	08008d90 	.word	0x08008d90
- 8007ae8:	08008db0 	.word	0x08008db0
- 8007aec:	08008d70 	.word	0x08008d70
+ 8007ae4:	08008d88 	.word	0x08008d88
+ 8007ae8:	08008da8 	.word	0x08008da8
+ 8007aec:	08008d68 	.word	0x08008d68
 
 08007af0 <std>:
  8007af0:	2300      	movs	r3, #0
@@ -21071,7 +21069,7 @@ void UTILS_delayUs(uint16_t p_delay)
  8007c02:	2301      	movs	r3, #1
  8007c04:	61a3      	str	r3, [r4, #24]
  8007c06:	e7d1      	b.n	8007bac <__sinit+0xc>
- 8007c08:	08008d6c 	.word	0x08008d6c
+ 8007c08:	08008d64 	.word	0x08008d64
  8007c0c:	08007b39 	.word	0x08007b39
 
 08007c10 <__sfp>:
@@ -21126,7 +21124,7 @@ void UTILS_delayUs(uint16_t p_delay)
  8007c8e:	603b      	str	r3, [r7, #0]
  8007c90:	e7ee      	b.n	8007c70 <__sfp+0x60>
  8007c92:	bf00      	nop
- 8007c94:	08008d6c 	.word	0x08008d6c
+ 8007c94:	08008d64 	.word	0x08008d64
  8007c98:	ffff0001 	.word	0xffff0001
 
 08007c9c <_fwalk_reent>:
@@ -21686,14 +21684,14 @@ void UTILS_delayUs(uint16_t p_delay)
  800817c:	f000 f882 	bl	8008284 <_printf_i>
  8008180:	e7e4      	b.n	800814c <_vfiprintf_r+0x208>
  8008182:	bf00      	nop
- 8008184:	08008d90 	.word	0x08008d90
- 8008188:	08008db0 	.word	0x08008db0
- 800818c:	08008d70 	.word	0x08008d70
- 8008190:	08008dd0 	.word	0x08008dd0
- 8008194:	08008dda 	.word	0x08008dda
+ 8008184:	08008d88 	.word	0x08008d88
+ 8008188:	08008da8 	.word	0x08008da8
+ 800818c:	08008d68 	.word	0x08008d68
+ 8008190:	08008dc8 	.word	0x08008dc8
+ 8008194:	08008dd2 	.word	0x08008dd2
  8008198:	00000000 	.word	0x00000000
  800819c:	08007f1f 	.word	0x08007f1f
- 80081a0:	08008dd6 	.word	0x08008dd6
+ 80081a0:	08008dce 	.word	0x08008dce
 
 080081a4 <_printf_common>:
  80081a4:	e92d 47f0 	stmdb	sp!, {r4, r5, r6, r7, r8, r9, sl, lr}
@@ -22030,8 +22028,8 @@ void UTILS_delayUs(uint16_t p_delay)
  80084c0:	2500      	movs	r5, #0
  80084c2:	f104 0619 	add.w	r6, r4, #25
  80084c6:	e7f5      	b.n	80084b4 <_printf_i+0x230>
- 80084c8:	08008de1 	.word	0x08008de1
- 80084cc:	08008df2 	.word	0x08008df2
+ 80084c8:	08008dd9 	.word	0x08008dd9
+ 80084cc:	08008dea 	.word	0x08008dea
 
 080084d0 <_sbrk_r>:
  80084d0:	b538      	push	{r3, r4, r5, lr}

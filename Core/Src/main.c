@@ -87,8 +87,8 @@ static void MX_TIM4_Init(void);
 static void MX_TIM5_Init(void);
 /* USER CODE BEGIN PFP */
 
-static void MAIN_displayRcfwBanner(void);
-static void MAIN_updateLedMode    (T_BLUETOOTH_CONTROL_Data *data);
+static void MAIN_displayRcfwBanner(void            );
+static void MAIN_updateLedMode    (T_BLU_Data *data);
 
 /* USER CODE END PFP */
 
@@ -113,7 +113,7 @@ int main(void)
   /* USART1 UART  is used  for USB/serial console           - PA9 / PA10 */
   /* USART2 UART  is used  to get control from master board - PA2 / PA3  */
 
-  T_BLUETOOTH_CONTROL_Data bluetoothData;
+  T_BLU_Data l_bluetoothData;
 
   /* USER CODE END 1 */
 
@@ -149,7 +149,7 @@ int main(void)
   /* USER CODE BEGIN 2 */
 
   /* Setup console */
-  CONSOLE_init(&huart1);
+  CON_init(&huart1);
 
   /* Display RCFW banner */
   MAIN_displayRcfwBanner();
@@ -161,7 +161,7 @@ int main(void)
 
   /* Initialize Timer 7 and delay function in utilities */
   HAL_TIM_Base_Start_IT(&htim7);
-  UTILS_init           (&htim7);
+  UTI_init             (&htim7);
 
   LOG_debug("Started TIMER 7 (utilities)");
 
@@ -185,7 +185,7 @@ int main(void)
   LOG_debug("Started TIMER 8 (PWM channels)");
 
   /* Initialize battery monitor */
-  BATTERY_CHECK_init(&hadc1, &hrtc);
+  BAT_init(&hadc1, &hrtc);
 
   /* Initialize PWM channels */
   HAL_TIM_PWM_Start(&htim8, TIM_CHANNEL_1);
@@ -196,10 +196,10 @@ int main(void)
   LOG_debug("Started PWM channels");
 
   /* Initialize bluetooth control */
-  BLUETOOTH_CONTROL_init(DRIVE_MAXIMUM_SPEED);
+  BLU_init(DRV_MAXIMUM_SPEED);
 
   /* Initialize driving module */
-  DRIVE_init(&htim8);
+  DRV_init(&htim8);
 
   /* USER CODE END 2 */
 
@@ -207,12 +207,12 @@ int main(void)
   /* USER CODE BEGIN WHILE */
   while (1)
   {
-    BATTERY_CHECK_update         (              );
-    CONSOLE_receiveData          (              );
-    BLUETOOTH_CONTROL_receiveData(&bluetoothData);
-    DRIVE_update                 (&bluetoothData);
-    MAIN_updateLedMode           (&bluetoothData);
-    UTILS_delayUs                (10000         );
+    BAT_update        (                );
+    CON_receiveData   (                );
+    BLU_receiveData   (&l_bluetoothData);
+    DRV_update        (&l_bluetoothData);
+    MAIN_updateLedMode(&l_bluetoothData);
+    UTI_delayUs       (10000           );
 
     /* USER CODE END WHILE */
 
@@ -891,7 +891,7 @@ static void MAIN_displayRcfwBanner(void)
   return;
 }
 
-static void MAIN_updateLedMode(T_BLUETOOTH_CONTROL_Data *data)
+static void MAIN_updateLedMode(T_BLU_Data *data)
 {
   T_LED_MODE currentLedMode;
   T_LED_MODE requestLedMode;
@@ -900,19 +900,19 @@ static void MAIN_updateLedMode(T_BLUETOOTH_CONTROL_Data *data)
 
     switch (data->button)
   {
-    case BLUETOOTH_CONTROL_BUTTON_PAD_UP:
+    case BLU_BUTTON_PAD_UP:
       requestLedMode = LED_MODE_FORCED_ON;
       break;
 
-    case BLUETOOTH_CONTROL_BUTTON_PAD_DOWN:
+    case BLU_BUTTON_PAD_DOWN:
       requestLedMode = LED_MODE_FORCED_OFF;
       break;
 
-    case BLUETOOTH_CONTROL_BUTTON_PAD_LEFT:
+    case BLU_BUTTON_PAD_LEFT:
       requestLedMode = LED_MODE_BLINK_SLOW;
       break;
 
-    case BLUETOOTH_CONTROL_BUTTON_PAD_RIGHT:
+    case BLU_BUTTON_PAD_RIGHT:
       requestLedMode = LED_MODE_BLINK_FAST;
       break;
 
@@ -951,11 +951,11 @@ void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
   /* Check the handle of the UART triggering this callback and actually receive date */
   if (huart == &huart1)
   {
-    CONSOLE_receiveData();
+    CON_receiveData();
   }
   else if (huart == &huart2)
   {
-    MASTER_CONTROL_receiveData(&huart2);
+    MAS_receiveData(&huart2);
   }
   else
   {

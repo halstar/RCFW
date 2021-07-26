@@ -3,24 +3,24 @@
 #include "stm32f1xx_hal.h"
 #include "log.h"
 
-static TIM_HandleTypeDef *UTILS_delayTimerHandle;
+static TIM_HandleTypeDef *UTI_delayTimerHandle;
 
-void UTILS_init(TIM_HandleTypeDef *p_delayTimerHandle)
+void UTI_init(TIM_HandleTypeDef *p_delayTimerHandle)
 {
   LOG_info("Initializing utilities");
 
-  UTILS_delayTimerHandle = p_delayTimerHandle;
+  UTI_delayTimerHandle = p_delayTimerHandle;
 
   return;
 }
 
-void UTILS_delayUs(uint16_t p_delay)
+void UTI_delayUs(uint16_t p_delay)
 {
   /* Reset the micro-seconds counter */
-  __HAL_TIM_SET_COUNTER(UTILS_delayTimerHandle,0);
+  __HAL_TIM_SET_COUNTER(UTI_delayTimerHandle,0);
 
   /* Wait for the counter to reach the input micro-seconds number */
-  while (__HAL_TIM_GET_COUNTER(UTILS_delayTimerHandle) < p_delay)
+  while (__HAL_TIM_GET_COUNTER(UTI_delayTimerHandle) < p_delay)
   {
     ; /* Nothing to do */
   }
@@ -28,7 +28,7 @@ void UTILS_delayUs(uint16_t p_delay)
   return;
 }
 
-int32_t UTILS_clampIntValue(int32_t p_value, int32_t p_minValue, int32_t p_maxValue, bool p_clampToNearest, int32_t p_clampValue)
+int32_t UTI_clampIntValue(int32_t p_value, int32_t p_minValue, int32_t p_maxValue, bool p_clampToNearest, int32_t p_clampValue)
 {
   int32_t l_returnValue;
 

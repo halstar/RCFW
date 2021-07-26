@@ -3,7 +3,7 @@
 
 #include "stm32f1xx_hal.h"
 
-void CONSOLE_init       (UART_HandleTypeDef *p_uartHandle);
-void CONSOLE_receiveData(void                            );
+void CON_init       (UART_HandleTypeDef *p_uartHandle);
+void CON_receiveData(void                            );
 
 #endif /* __CONSOLE_H */

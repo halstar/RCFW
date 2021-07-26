@@ -5,9 +5,9 @@
 
 #include "bluetooth_control.h"
 
-#define DRIVE_MAXIMUM_SPEED 60
+#define DRV_MAXIMUM_SPEED 60
 
-void DRIVE_init  (TIM_HandleTypeDef        *p_pwmTimerHandle);
-void DRIVE_update(T_BLUETOOTH_CONTROL_Data *p_bluetoothData );
+void DRV_init  (TIM_HandleTypeDef *p_pwmTimerHandle);
+void DRV_update(T_BLU_Data        *p_bluetoothData );
 
 #endif /* __DRIVE_H */
