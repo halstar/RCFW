@@ -5,8 +5,11 @@
 
 #include "stm32f1xx_hal.h"
 
-void UTILS_init          (TIM_HandleTypeDef *htim );
-void UTILS_delayUs       (uint16_t           delay);
-void UTILS_clampUIntValue(uint32_t *p_value, uint32_t p_minValue, uint32_t p_maxValue, bool p_clampToNearest, uint32_t p_clampValue);
+#define UTILS_MAX(a, b) ((a) > (b) ? a : b)
+#define UTILS_MIN(a, b) ((a) < (b) ? a : b)
+
+void    UTILS_init         (TIM_HandleTypeDef *htim );
+void    UTILS_delayUs      (uint16_t           delay);
+int32_t UTILS_clampIntValue(int32_t p_value, int32_t p_minValue, int32_t p_maxValue, bool p_clampToNearest, int32_t p_clampValue);
 
 #endif /* __UTILS_H */

@@ -31,4 +31,5 @@
 "Rcfw/Src/log.o"
 "Rcfw/Src/master_control.o"
 "Rcfw/Src/motor.o"
+"Rcfw/Src/pid.o"
 "Rcfw/Src/utils.o"

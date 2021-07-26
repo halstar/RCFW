@@ -3,6 +3,8 @@
 
 #include <stdarg.h>
 
+#include "stm32f1xx_hal.h"
+
 typedef enum
 {
   LOG_LEVEL_DEBUG = 0,

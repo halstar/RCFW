@@ -1,7 +1,8 @@
 #include <stdio.h>
 
-#include "stm32f1xx_hal.h"
 #include "log.h"
+
+#include "stm32f1xx_hal.h"
 
 static uint32_t           LOG_level;
 static RTC_HandleTypeDef *LOG_rtcHandle;

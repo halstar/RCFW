@@ -28,28 +28,30 @@ void UTILS_delayUs(uint16_t p_delay)
   return;
 }
 
-void UTILS_clampUIntValue(uint32_t *p_value, uint32_t p_minValue, uint32_t p_maxValue, bool p_clampToNearest, uint32_t p_clampValue)
+int32_t UTILS_clampIntValue(int32_t p_value, int32_t p_minValue, int32_t p_maxValue, bool p_clampToNearest, int32_t p_clampValue)
 {
-  if (*p_value < p_minValue)
+  int32_t l_returnValue;
+
+  if (p_value < p_minValue)
   {
     if (p_clampToNearest == true)
     {
-      *p_value = p_minValue;
+      l_returnValue = p_minValue;
     }
     else
     {
-      *p_value = p_clampValue;
+      l_returnValue = p_clampValue;
     }
   }
-  else if (*p_value > p_maxValue)
+  else if (p_value > p_maxValue)
   {
     if (p_clampToNearest == true)
     {
-      *p_value = p_maxValue;
+      l_returnValue = p_maxValue;
     }
     else
     {
-      *p_value = p_clampValue;
+      l_returnValue = p_clampValue;
     }
   }
   else
@@ -57,5 +59,5 @@ void UTILS_clampUIntValue(uint32_t *p_value, uint32_t p_minValue, uint32_t p_max
     ; /* Nothing to do */
   }
 
-  return;
+  return l_returnValue;
 }
