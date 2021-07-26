@@ -3,7 +3,7 @@
 
 #include "stm32f1xx_hal.h"
 
-#define MTR_NAME_MAX_LENGTH 12
+#define MTR_NAME_MAX_LENGTH   12
 
 #define MTR_DIRECTION_FORWARD  0
 #define MTR_DIRECTION_BACKWARD 1

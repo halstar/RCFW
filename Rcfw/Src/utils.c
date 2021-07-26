@@ -3,13 +3,13 @@
 #include "stm32f1xx_hal.h"
 #include "log.h"
 
-static TIM_HandleTypeDef *UTI_delayTimerHandle;
+static TIM_HandleTypeDef *g_UTI_delayTimerHandle;
 
 void UTI_init(TIM_HandleTypeDef *p_delayTimerHandle)
 {
   LOG_info("Initializing utilities");
 
-  UTI_delayTimerHandle = p_delayTimerHandle;
+  g_UTI_delayTimerHandle = p_delayTimerHandle;
 
   return;
 }
@@ -17,10 +17,10 @@ void UTI_init(TIM_HandleTypeDef *p_delayTimerHandle)
 void UTI_delayUs(uint16_t p_delay)
 {
   /* Reset the micro-seconds counter */
-  __HAL_TIM_SET_COUNTER(UTI_delayTimerHandle,0);
+  __HAL_TIM_SET_COUNTER(g_UTI_delayTimerHandle,0);
 
   /* Wait for the counter to reach the input micro-seconds number */
-  while (__HAL_TIM_GET_COUNTER(UTI_delayTimerHandle) < p_delay)
+  while (__HAL_TIM_GET_COUNTER(g_UTI_delayTimerHandle) < p_delay)
   {
     ; /* Nothing to do */
   }

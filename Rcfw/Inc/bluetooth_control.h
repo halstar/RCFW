@@ -26,10 +26,10 @@ typedef enum
 } T_BLU_BUTTON;
 
 typedef struct {
-  int32_t                    leftX;
-  int32_t                    leftY;
-  int32_t                    rightX;
-  int32_t                    rightY;
+  int32_t      leftX;
+  int32_t      leftY;
+  int32_t      rightX;
+  int32_t      rightY;
   T_BLU_BUTTON button;
 } T_BLU_Data;
 
