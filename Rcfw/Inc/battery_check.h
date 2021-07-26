@@ -4,6 +4,6 @@
 #include "stm32f1xx_hal.h"
 
 void BAT_init  (ADC_HandleTypeDef *p_adcHandle, RTC_HandleTypeDef *p_rtcHandle);
-void BAT_update(void                                                          );
+void BAT_update(uint32_t          *p_voltageInV                               );
 
 #endif /* __BATTERY_CHECK_H */

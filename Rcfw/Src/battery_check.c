@@ -26,11 +26,12 @@ void BAT_init(ADC_HandleTypeDef *p_adcHandle, RTC_HandleTypeDef *p_rtcHandle)
   return;
 }
 
-void BAT_update(void)
+void BAT_update(uint32_t *p_voltageInMv)
 {
   RTC_TimeTypeDef l_time;
   RTC_DateTypeDef l_date;
   uint32_t        l_adcRawData;
+  float           l_voltageInV;
 
   HAL_RTC_GetTime(BAT_rtcHandle, &l_time, RTC_FORMAT_BCD);
   HAL_RTC_GetDate(BAT_rtcHandle, &l_date, RTC_FORMAT_BCD);
@@ -38,13 +39,21 @@ void BAT_update(void)
   if ((l_time.Hours * 3600 + l_time.Minutes * 60 + l_time.Seconds) -
       (BAT_lastReadTime.Hours * 3600 + BAT_lastReadTime.Minutes * 60 + BAT_lastReadTime.Seconds) >= BAT_POLLING_PERIOD_IN_S)
   {
-    HAL_ADC_Start                (BAT_adcHandle);
-    HAL_ADC_PollForConversion    (BAT_adcHandle, HAL_MAX_DELAY);
+    BAT_lastReadTime = l_time;
+
+    HAL_ADC_Start                  (BAT_adcHandle);
+    HAL_ADC_PollForConversion      (BAT_adcHandle, HAL_MAX_DELAY);
     l_adcRawData = HAL_ADC_GetValue(BAT_adcHandle);
 
-    LOG_debug("Battery level: %u", l_adcRawData);
+    /* Apply conversion based on STM32 reference voltage & resolution */
+    l_voltageInV  = (l_adcRawData * 3.30f ) / 4096.0f;
 
-    BAT_lastReadTime = l_time;
+    /* Consider voltage divider used between the battery & the ADC input */
+    l_voltageInV *= 11.0f;
+
+    *p_voltageInMv = (uint32_t)(l_voltageInV * 1000.0f);
+
+    LOG_debug("Battery level: %u mV", *p_voltageInMv);
   }
   else
   {

@@ -17,9 +17,9 @@ void LOG_init    (RTC_HandleTypeDef *p_rctHandle                );
 void LOG_setLevel(T_LOG_LEVEL p_level                           );
 void LOG_log     (T_LOG_LEVEL p_level, const char *p_format, ...);
 
-#define LOG_debug(...) LOG_log(LOG_LEVEL_DEBUG, __VA_ARGS__)
-#define LOG_info(...)  LOG_log(LOG_LEVEL_INFO , __VA_ARGS__)
-#define LOG_warn(...)  LOG_log(LOG_LEVEL_WARN , __VA_ARGS__)
-#define LOG_error(...) LOG_log(LOG_LEVEL_ERROR, __VA_ARGS__)
+#define LOG_debug(...)   LOG_log(LOG_LEVEL_DEBUG, __VA_ARGS__)
+#define LOG_info(...)    LOG_log(LOG_LEVEL_INFO , __VA_ARGS__)
+#define LOG_warning(...) LOG_log(LOG_LEVEL_WARN , __VA_ARGS__)
+#define LOG_error(...)   LOG_log(LOG_LEVEL_ERROR, __VA_ARGS__)
 
 #endif /* __LOG_H */

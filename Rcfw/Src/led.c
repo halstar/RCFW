@@ -22,7 +22,7 @@ T_LED_MODE LED_getMode(void)
 
 void LED_update(void)
 {
-  static uint32_t l_slowBlinkCounter = 0;
+  static uint32_t l_blinkCounter = 0;
 
   switch (LED_mode)
   {
@@ -35,8 +35,8 @@ void LED_update(void)
       break;
 
     case LED_MODE_BLINK_SLOW:
-      l_slowBlinkCounter++;
-      if (l_slowBlinkCounter % 4 == 0)
+      l_blinkCounter++;
+      if (l_blinkCounter % 5 == 0)
       {
         HAL_GPIO_TogglePin(BLUE_LED_GPIO_Port, BLUE_LED_Pin);
       }
@@ -47,6 +47,18 @@ void LED_update(void)
       break;
 
     case LED_MODE_BLINK_FAST:
+      l_blinkCounter++;
+      if (l_blinkCounter % 2 == 0)
+      {
+        HAL_GPIO_TogglePin(BLUE_LED_GPIO_Port, BLUE_LED_Pin);
+      }
+      else
+      {
+        ; /* Nothing to do */
+      }
+      break;
+
+    case LED_MODE_BATTERY_LOW:
       HAL_GPIO_TogglePin(BLUE_LED_GPIO_Port, BLUE_LED_Pin);
       break;
 

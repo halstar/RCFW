@@ -49,6 +49,8 @@
 /* Private macro -------------------------------------------------------------*/
 /* USER CODE BEGIN PM */
 
+#define MAIN_MIN_BATTERY_LEVEL 10000
+
 /* USER CODE END PM */
 
 /* Private variables ---------------------------------------------------------*/
@@ -87,8 +89,8 @@ static void MX_TIM4_Init(void);
 static void MX_TIM5_Init(void);
 /* USER CODE BEGIN PFP */
 
-static void MAIN_displayRcfwBanner(void            );
-static void MAIN_updateLedMode    (T_BLU_Data *data);
+static void MAIN_displayRcfwBanner(void                                      );
+static void MAIN_updateLedMode    (T_BLU_Data *p_data, uint32_t p_voltageInMv);
 
 /* USER CODE END PFP */
 
@@ -114,6 +116,7 @@ int main(void)
   /* USART2 UART  is used  to get control from master board - PA2 / PA3  */
 
   T_BLU_Data l_bluetoothData;
+  uint32_t   l_voltageInMv;
 
   /* USER CODE END 1 */
 
@@ -207,12 +210,12 @@ int main(void)
   /* USER CODE BEGIN WHILE */
   while (1)
   {
-    BAT_update        (                );
-    CON_receiveData   (                );
-    BLU_receiveData   (&l_bluetoothData);
-    DRV_update        (&l_bluetoothData);
-    MAIN_updateLedMode(&l_bluetoothData);
-    UTI_delayUs       (10000           );
+    BAT_update        (&l_voltageInMv                 );
+    CON_receiveData   (                               );
+    BLU_receiveData   (&l_bluetoothData               );
+    DRV_update        (&l_bluetoothData               );
+    MAIN_updateLedMode(&l_bluetoothData, l_voltageInMv);
+    UTI_delayUs       (10000                          );
 
     /* USER CODE END WHILE */
 
@@ -877,6 +880,7 @@ static void MX_GPIO_Init(void)
 
 static void MAIN_displayRcfwBanner(void)
 {
+  /* Used ASCII art generator from https://patorjk.com with font called "Colossal" */
   (void)printf("\n\r");
   (void)printf("    8888888b.        .d8888b.       8888888888      888       888\n\r");
   (void)printf("    888   Y88b      d88P  Y88b      888             888   o   888\n\r");
@@ -891,34 +895,45 @@ static void MAIN_displayRcfwBanner(void)
   return;
 }
 
-static void MAIN_updateLedMode(T_BLU_Data *data)
+static void MAIN_updateLedMode(T_BLU_Data *p_data, uint32_t p_voltageInMv)
 {
   T_LED_MODE currentLedMode;
   T_LED_MODE requestLedMode;
 
   currentLedMode = LED_getMode();
 
-    switch (data->button)
+  /* Regarding LED mode, battery check is prioritary on user requests. */
+  /* Ignore 0 value as we could get it at startup or while debugging.  */
+  if ((p_voltageInMv != 0) && (p_voltageInMv < MAIN_MIN_BATTERY_LEVEL))
   {
-    case BLU_BUTTON_PAD_UP:
-      requestLedMode = LED_MODE_FORCED_ON;
-      break;
+    LOG_warning("Battery is getting low: %u mV", p_voltageInMv);
 
-    case BLU_BUTTON_PAD_DOWN:
-      requestLedMode = LED_MODE_FORCED_OFF;
-      break;
+    requestLedMode = LED_MODE_BATTERY_LOW;
+  }
+  else
+  {
+    switch (p_data->button)
+    {
+      case BLU_BUTTON_PAD_UP:
+        requestLedMode = LED_MODE_FORCED_ON;
+        break;
 
-    case BLU_BUTTON_PAD_LEFT:
-      requestLedMode = LED_MODE_BLINK_SLOW;
-      break;
+      case BLU_BUTTON_PAD_DOWN:
+        requestLedMode = LED_MODE_FORCED_OFF;
+        break;
 
-    case BLU_BUTTON_PAD_RIGHT:
-      requestLedMode = LED_MODE_BLINK_FAST;
-      break;
+      case BLU_BUTTON_PAD_LEFT:
+        requestLedMode = LED_MODE_BLINK_SLOW;
+        break;
 
-    default:
-      requestLedMode = currentLedMode;
-      break;
+      case BLU_BUTTON_PAD_RIGHT:
+        requestLedMode = LED_MODE_BLINK_FAST;
+        break;
+
+      default:
+        requestLedMode = currentLedMode;
+        break;
+    }
   }
 
   if (requestLedMode != currentLedMode)
