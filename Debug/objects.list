@@ -27,6 +27,7 @@
 "Rcfw/Src/bluetooth_control.o"
 "Rcfw/Src/console.o"
 "Rcfw/Src/drive.o"
+"Rcfw/Src/encoder.o"
 "Rcfw/Src/led.o"
 "Rcfw/Src/log.o"
 "Rcfw/Src/master_control.o"

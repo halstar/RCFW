@@ -9,6 +9,7 @@ C_SRCS += \
 ../Rcfw/Src/bluetooth_control.c \
 ../Rcfw/Src/console.c \
 ../Rcfw/Src/drive.c \
+../Rcfw/Src/encoder.c \
 ../Rcfw/Src/led.c \
 ../Rcfw/Src/log.c \
 ../Rcfw/Src/master_control.c \
@@ -21,6 +22,7 @@ OBJS += \
 ./Rcfw/Src/bluetooth_control.o \
 ./Rcfw/Src/console.o \
 ./Rcfw/Src/drive.o \
+./Rcfw/Src/encoder.o \
 ./Rcfw/Src/led.o \
 ./Rcfw/Src/log.o \
 ./Rcfw/Src/master_control.o \
@@ -33,6 +35,7 @@ C_DEPS += \
 ./Rcfw/Src/bluetooth_control.d \
 ./Rcfw/Src/console.d \
 ./Rcfw/Src/drive.d \
+./Rcfw/Src/encoder.d \
 ./Rcfw/Src/led.d \
 ./Rcfw/Src/log.d \
 ./Rcfw/Src/master_control.d \
@@ -50,6 +53,8 @@ Rcfw/Src/console.o: ../Rcfw/Src/console.c Rcfw/Src/subdir.mk
 	arm-none-eabi-gcc "$<" -mcpu=cortex-m3 -std=gnu11 -g3 -DDEBUG -DUSE_HAL_DRIVER -DSTM32F103xE -c -I../Core/Inc -I../Drivers/STM32F1xx_HAL_Driver/Inc -I../Drivers/STM32F1xx_HAL_Driver/Inc/Legacy -I../Drivers/CMSIS/Device/ST/STM32F1xx/Include -I../Drivers/CMSIS/Include -I../Rcfw/Inc -O0 -ffunction-sections -fdata-sections -Wall -fstack-usage -MMD -MP -MF"Rcfw/Src/console.d" -MT"$@" --specs=nano.specs -mfloat-abi=soft -mthumb -o "$@"
 Rcfw/Src/drive.o: ../Rcfw/Src/drive.c Rcfw/Src/subdir.mk
 	arm-none-eabi-gcc "$<" -mcpu=cortex-m3 -std=gnu11 -g3 -DDEBUG -DUSE_HAL_DRIVER -DSTM32F103xE -c -I../Core/Inc -I../Drivers/STM32F1xx_HAL_Driver/Inc -I../Drivers/STM32F1xx_HAL_Driver/Inc/Legacy -I../Drivers/CMSIS/Device/ST/STM32F1xx/Include -I../Drivers/CMSIS/Include -I../Rcfw/Inc -O0 -ffunction-sections -fdata-sections -Wall -fstack-usage -MMD -MP -MF"Rcfw/Src/drive.d" -MT"$@" --specs=nano.specs -mfloat-abi=soft -mthumb -o "$@"
+Rcfw/Src/encoder.o: ../Rcfw/Src/encoder.c Rcfw/Src/subdir.mk
+	arm-none-eabi-gcc "$<" -mcpu=cortex-m3 -std=gnu11 -g3 -DDEBUG -DUSE_HAL_DRIVER -DSTM32F103xE -c -I../Core/Inc -I../Drivers/STM32F1xx_HAL_Driver/Inc -I../Drivers/STM32F1xx_HAL_Driver/Inc/Legacy -I../Drivers/CMSIS/Device/ST/STM32F1xx/Include -I../Drivers/CMSIS/Include -I../Rcfw/Inc -O0 -ffunction-sections -fdata-sections -Wall -fstack-usage -MMD -MP -MF"Rcfw/Src/encoder.d" -MT"$@" --specs=nano.specs -mfloat-abi=soft -mthumb -o "$@"
 Rcfw/Src/led.o: ../Rcfw/Src/led.c Rcfw/Src/subdir.mk
 	arm-none-eabi-gcc "$<" -mcpu=cortex-m3 -std=gnu11 -g3 -DDEBUG -DUSE_HAL_DRIVER -DSTM32F103xE -c -I../Core/Inc -I../Drivers/STM32F1xx_HAL_Driver/Inc -I../Drivers/STM32F1xx_HAL_Driver/Inc/Legacy -I../Drivers/CMSIS/Device/ST/STM32F1xx/Include -I../Drivers/CMSIS/Include -I../Rcfw/Inc -O0 -ffunction-sections -fdata-sections -Wall -fstack-usage -MMD -MP -MF"Rcfw/Src/led.d" -MT"$@" --specs=nano.specs -mfloat-abi=soft -mthumb -o "$@"
 Rcfw/Src/log.o: ../Rcfw/Src/log.c Rcfw/Src/subdir.mk
