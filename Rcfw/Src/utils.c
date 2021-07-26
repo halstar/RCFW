@@ -17,7 +17,7 @@ void UTI_init(TIM_HandleTypeDef *p_delayTimerHandle)
 void UTI_delayUs(uint16_t p_delay)
 {
   /* Reset the micro-seconds counter */
-  __HAL_TIM_SET_COUNTER(g_UTI_delayTimerHandle,0);
+  __HAL_TIM_SET_COUNTER(g_UTI_delayTimerHandle, 0);
 
   /* Wait for the counter to reach the input micro-seconds number */
   while (__HAL_TIM_GET_COUNTER(g_UTI_delayTimerHandle) < p_delay)

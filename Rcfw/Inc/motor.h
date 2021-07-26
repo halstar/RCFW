@@ -10,7 +10,7 @@
 
 typedef struct
 {
-  uint8_t            name[MTR_NAME_MAX_LENGTH];
+  char              *name;
   GPIO_TypeDef      *dirPin1Port;
   GPIO_TypeDef      *dirPin2Port;
   uint32_t           dirPin1;

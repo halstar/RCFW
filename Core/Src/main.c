@@ -49,7 +49,8 @@
 /* Private macro -------------------------------------------------------------*/
 /* USER CODE BEGIN PM */
 
-#define MAIN_MIN_BATTERY_LEVEL 10000
+#define MAIN_MIN_BATTERY_LEVEL_IN_MV 10000
+#define MAIN_LOOP_DELAY_IN_MS        10000
 
 /* USER CODE END PM */
 
@@ -96,6 +97,77 @@ static void MAIN_updateLedMode    (T_BLU_Data *p_data, uint32_t p_voltageInMv);
 
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
+
+static void MAIN_displayRcfwBanner(void)
+{
+  /* Used ASCII art generator from https://patorjk.com with font called "Colossal" */
+  (void)printf("\n\r");
+  (void)printf("    8888888b.        .d8888b.       8888888888      888       888\n\r");
+  (void)printf("    888   Y88b      d88P  Y88b      888             888   o   888\n\r");
+  (void)printf("    888    888      888    888      888             888  d8b  888\n\r");
+  (void)printf("    888   d88P      888             8888888         888 d888b 888\n\r");
+  (void)printf("    8888888P\"       888             888             888d88888b888\n\r");
+  (void)printf("    888 T88b        888    888      888             88888P Y88888\n\r");
+  (void)printf("    888  T88b       Y88b  d88P      888             8888P   Y8888\n\r");
+  (void)printf("    888   T88b       \"Y8888P\"       888             888P     Y888\n\r");
+  (void)printf("\n\r");
+
+  return;
+}
+
+static void MAIN_updateLedMode(T_BLU_Data *p_data, uint32_t p_voltageInMv)
+{
+  T_LED_MODE l_currentLedMode;
+  T_LED_MODE l_requestLedMode;
+
+  l_currentLedMode = LED_getMode();
+
+  /* Regarding LED mode, battery check is prioritary on user requests. */
+  /* Ignore 0 value as we could get it at startup or while debugging.  */
+  if ((p_voltageInMv != 0) && (p_voltageInMv < MAIN_MIN_BATTERY_LEVEL_IN_MV))
+  {
+    LOG_warning("Battery is getting low: %u mV", p_voltageInMv);
+
+    l_requestLedMode = LED_MODE_BATTERY_LOW;
+  }
+  else
+  {
+    switch (p_data->button)
+    {
+      case BLU_BUTTON_PAD_UP:
+        l_requestLedMode = LED_MODE_FORCED_ON;
+        break;
+
+      case BLU_BUTTON_PAD_DOWN:
+        l_requestLedMode = LED_MODE_FORCED_OFF;
+        break;
+
+      case BLU_BUTTON_PAD_LEFT:
+        l_requestLedMode = LED_MODE_BLINK_SLOW;
+        break;
+
+      case BLU_BUTTON_PAD_RIGHT:
+        l_requestLedMode = LED_MODE_BLINK_FAST;
+        break;
+
+      default:
+        l_requestLedMode = l_currentLedMode;
+        break;
+    }
+  }
+
+  if (l_requestLedMode != l_currentLedMode)
+  {
+    LED_setMode(l_requestLedMode);
+  }
+  else
+  {
+    ; /* Nothing to do */
+  }
+
+  return;
+}
+
 /* USER CODE END 0 */
 
 /**
@@ -175,10 +247,10 @@ int main(void)
   LOG_debug("Started TIMER 1 (blue LED)");
 
   /* Initialize Timers 2, 3, 4 & 5 */
-  HAL_TIM_Encoder_Start(&htim2, TIM_CHANNEL_ALL);
-  HAL_TIM_Encoder_Start(&htim3, TIM_CHANNEL_ALL);
-  HAL_TIM_Encoder_Start(&htim4, TIM_CHANNEL_ALL);
-  HAL_TIM_Encoder_Start(&htim5, TIM_CHANNEL_ALL);
+  HAL_TIM_Encoder_Start_IT(&htim2, TIM_CHANNEL_ALL);
+  HAL_TIM_Encoder_Start_IT(&htim3, TIM_CHANNEL_ALL);
+  HAL_TIM_Encoder_Start_IT(&htim4, TIM_CHANNEL_ALL);
+  HAL_TIM_Encoder_Start_IT(&htim5, TIM_CHANNEL_ALL);
 
   LOG_debug("Started TIMER 2, 3, 4, 5 (encoders)");
 
@@ -202,7 +274,7 @@ int main(void)
   BLU_init(DRV_MAXIMUM_SPEED);
 
   /* Initialize driving module */
-  DRV_init(&htim8);
+  DRV_init(&htim8, &htim2, &htim3, &htim4, &htim5);
 
   /* USER CODE END 2 */
 
@@ -210,12 +282,12 @@ int main(void)
   /* USER CODE BEGIN WHILE */
   while (1)
   {
-    BAT_update        (&l_voltageInMv                 );
-    CON_receiveData   (                               );
-    BLU_receiveData   (&l_bluetoothData               );
-    DRV_update        (&l_bluetoothData               );
-    MAIN_updateLedMode(&l_bluetoothData, l_voltageInMv);
-    UTI_delayUs       (10000                          );
+    BAT_update           (&l_voltageInMv                 );
+    CON_receiveData      (                               );
+    BLU_receiveData      (&l_bluetoothData               );
+    DRV_updateOnBluetooth(&l_bluetoothData               );
+    MAIN_updateLedMode   (&l_bluetoothData, l_voltageInMv);
+    UTI_delayUs          (MAIN_LOOP_DELAY_IN_MS          );
 
     /* USER CODE END WHILE */
 
@@ -878,67 +950,11 @@ static void MX_GPIO_Init(void)
 
 /* USER CODE BEGIN 4 */
 
-static void MAIN_displayRcfwBanner(void)
+void HAL_TIM_IC_CaptureCallback(TIM_HandleTypeDef *htim)
 {
-  /* Used ASCII art generator from https://patorjk.com with font called "Colossal" */
-  (void)printf("\n\r");
-  (void)printf("    8888888b.        .d8888b.       8888888888      888       888\n\r");
-  (void)printf("    888   Y88b      d88P  Y88b      888             888   o   888\n\r");
-  (void)printf("    888    888      888    888      888             888  d8b  888\n\r");
-  (void)printf("    888   d88P      888             8888888         888 d888b 888\n\r");
-  (void)printf("    8888888P\"       888             888             888d88888b888\n\r");
-  (void)printf("    888 T88b        888    888      888             88888P Y88888\n\r");
-  (void)printf("    888  T88b       Y88b  d88P      888             8888P   Y8888\n\r");
-  (void)printf("    888   T88b       \"Y8888P\"       888             888P     Y888\n\r");
-  (void)printf("\n\r");
-
-  return;
-}
-
-static void MAIN_updateLedMode(T_BLU_Data *p_data, uint32_t p_voltageInMv)
-{
-  T_LED_MODE currentLedMode;
-  T_LED_MODE requestLedMode;
-
-  currentLedMode = LED_getMode();
-
-  /* Regarding LED mode, battery check is prioritary on user requests. */
-  /* Ignore 0 value as we could get it at startup or while debugging.  */
-  if ((p_voltageInMv != 0) && (p_voltageInMv < MAIN_MIN_BATTERY_LEVEL))
+  if ((htim == &htim2) || (htim == &htim3) || (htim == &htim4) || (htim == &htim5))
   {
-    LOG_warning("Battery is getting low: %u mV", p_voltageInMv);
-
-    requestLedMode = LED_MODE_BATTERY_LOW;
-  }
-  else
-  {
-    switch (p_data->button)
-    {
-      case BLU_BUTTON_PAD_UP:
-        requestLedMode = LED_MODE_FORCED_ON;
-        break;
-
-      case BLU_BUTTON_PAD_DOWN:
-        requestLedMode = LED_MODE_FORCED_OFF;
-        break;
-
-      case BLU_BUTTON_PAD_LEFT:
-        requestLedMode = LED_MODE_BLINK_SLOW;
-        break;
-
-      case BLU_BUTTON_PAD_RIGHT:
-        requestLedMode = LED_MODE_BLINK_FAST;
-        break;
-
-      default:
-        requestLedMode = currentLedMode;
-        break;
-    }
-  }
-
-  if (requestLedMode != currentLedMode)
-  {
-    LED_setMode(requestLedMode);
+    DRV_updateOnEncoder(htim);
   }
   else
   {
@@ -989,6 +1005,9 @@ void Error_Handler(void)
   /* USER CODE BEGIN Error_Handler_Debug */
   /* User can add his own implementation to report the HAL error return state */
   __disable_irq();
+
+  LOG_error("Error handler triggered - Stopping RCFW");
+
   while (1)
   {
   }

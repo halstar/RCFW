@@ -161,7 +161,6 @@ void BLU_init(uint32_t p_maxDataValue)
   return;
 }
 
-
 void BLU_receiveData(T_BLU_Data *p_data)
 {
   uint8_t      l_buffer[BLU_DATA_BUFFER_LENGTH];

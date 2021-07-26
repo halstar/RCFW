@@ -1,1 +1,43 @@
 #include "encoder.h"
+
+#include "log.h"
+
+void ENC_init(T_ENC_Handle *p_handle, char *p_name, bool p_invertOnUpdate, TIM_HandleTypeDef *p_encoderTimerHandle)
+{
+  LOG_info("Initializing Encoder module for %s", p_name);
+
+  p_handle->name           = p_name;
+  p_handle->invertOnUpdate = p_invertOnUpdate;
+  p_handle->timerHandle    = p_encoderTimerHandle;
+
+  ENC_reset(p_handle);
+
+  return;
+}
+
+void ENC_reset(T_ENC_Handle *p_handle)
+{
+  p_handle->value = 0;
+
+  return;
+}
+
+void ENC_update(T_ENC_Handle *p_handle, int16_t p_value)
+{
+  if (p_handle->invertOnUpdate == false)
+  {
+    p_handle->value = p_value;
+  }
+  else
+  {
+    p_handle->value = -p_value;
+  }
+
+  return;
+}
+
+int16_t ENC_getCount(T_ENC_Handle *p_handle)
+{
+  return p_handle->value;
+}
+

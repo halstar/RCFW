@@ -1,5 +1,3 @@
-#include <string.h>
-
 #include "motor.h"
 
 #include "stm32f1xx_hal.h"
@@ -9,7 +7,7 @@ void MTR_init(T_MTR_Handle *p_handle, char *p_name)
 {
   LOG_info("Initializing Motor module for %s", p_name);
 
-  (void)strncpy((char *)p_handle->name, p_name, MTR_NAME_MAX_LENGTH);
+  p_handle->name = p_name;
 
   MTR_setSpeed(p_handle, 0);
   MTR_stop    (p_handle   );

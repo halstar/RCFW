@@ -2,7 +2,9 @@
 
 #include "drive.h"
 
+#include "pid.h"
 #include "motor.h"
+#include "encoder.h"
 #include "main.h"
 #include "log.h"
 #include "utils.h"
@@ -15,6 +17,11 @@ typedef enum
   DRV_MODE_MASTER_BOARD_CONTROLLED_SPEED
 } T_DRV_MODE;
 
+#define DRV_FRONT_RIGHT_MOTOR_NAME "FRONT_RIGHT"
+#define DRV_FRONT_LEFT_MOTOR_NAME  "FRONT_LEFT "
+#define DRV_REAR_LEFT_MOTOR_NAME   "REAR_LEFT  "
+#define DRV_REAR_RIGHT_MOTOR_NAME  "REAR_RIGHT "
+
 #define DRV_JOYSTICKS_THRESHOLD   10
 #define DRV_JOYSTICKS_FIXED_SPEED 25
 /* Double buttons fixed speed at it concerns forward/backward + left/right movements, */
@@ -24,7 +31,9 @@ typedef enum
 static bool         g_DRV_isDebugOn;
 static bool         g_DRV_isActive;
 static T_DRV_MODE   g_DRV_mode;
-static T_MTR_Handle g_DRV_motorFrontRight, g_DRV_motorFrontLeft, g_DRV_motorRearLeft, g_DRV_motorRearRight;
+static T_PID_Handle g_DRV_pidFrontRight    , g_DRV_pidFrontLeft    , g_DRV_pidRearLeft    , g_DRV_pidRearRight    ;
+static T_MTR_Handle g_DRV_motorFrontRight  , g_DRV_motorFrontLeft  , g_DRV_motorRearLeft  , g_DRV_motorRearRight  ;
+static T_ENC_Handle g_DRV_encoderFrontRight, g_DRV_encoderFrontLeft, g_DRV_encoderRearLeft, g_DRV_encoderRearRight;
 
 static void DRV_sleep            (void            );
 static void DRV_moveForward      (uint32_t p_speed);
@@ -38,10 +47,21 @@ static void DRV_turnRight        (uint32_t p_speed);
 static void DRV_translateLeft    (uint32_t p_speed);
 static void DRV_translateRight   (uint32_t p_speed);
 
-void DRV_init(TIM_HandleTypeDef *p_pwmTimerHandle)
+void DRV_init(TIM_HandleTypeDef *p_pwmTimerHandle,
+              TIM_HandleTypeDef *p_rearLeftEncoderTimerHandle,
+              TIM_HandleTypeDef *p_rearRightEncoderTimerHandle,
+              TIM_HandleTypeDef *p_frontRightEncoderTimerHandle,
+              TIM_HandleTypeDef *p_frontLeftEncoderTimerHandle)
 {
   LOG_info("Initializing Drive module");
 
+  /* Setup PIDs */
+  PID_init(&g_DRV_pidFrontRight, 1, 1, 1, 0, -100, 100, 0.5);
+  PID_init(&g_DRV_pidFrontLeft , 1, 1, 1, 0, -100, 100, 0.5);
+  PID_init(&g_DRV_pidRearLeft  , 1, 1, 1, 0, -100, 100, 0.5);
+  PID_init(&g_DRV_pidRearRight , 1, 1, 1, 0, -100, 100, 0.5);
+
+  /* Setup motors */
   g_DRV_motorFrontRight.dirPin1Port    = MOTOR_FRONT_RIGHT_IN_1_GPIO_Port;
   g_DRV_motorFrontRight.dirPin1        = MOTOR_FRONT_RIGHT_IN_1_Pin;
   g_DRV_motorFrontRight.dirPin2Port    = MOTOR_FRONT_RIGHT_IN_2_GPIO_Port;
@@ -70,10 +90,16 @@ void DRV_init(TIM_HandleTypeDef *p_pwmTimerHandle)
   g_DRV_motorRearRight.pwmTimerHandle  = p_pwmTimerHandle;
   g_DRV_motorRearRight.pwmChannel      = TIM_CHANNEL_3;
 
-  MTR_init(&g_DRV_motorFrontRight, "FRONT_RIGHT");
-  MTR_init(&g_DRV_motorFrontLeft , "FRONT_LEFT ");
-  MTR_init(&g_DRV_motorRearLeft  , "REAR_LEFT  ");
-  MTR_init(&g_DRV_motorRearRight , "REAR_RIGHT ");
+  MTR_init(&g_DRV_motorFrontRight, DRV_FRONT_RIGHT_MOTOR_NAME);
+  MTR_init(&g_DRV_motorFrontLeft , DRV_FRONT_LEFT_MOTOR_NAME );
+  MTR_init(&g_DRV_motorRearLeft  , DRV_REAR_LEFT_MOTOR_NAME  );
+  MTR_init(&g_DRV_motorRearRight , DRV_REAR_RIGHT_MOTOR_NAME );
+
+  /* Setup encoders */
+  ENC_init(&g_DRV_encoderFrontRight, DRV_FRONT_RIGHT_MOTOR_NAME, true , p_frontRightEncoderTimerHandle);
+  ENC_init(&g_DRV_encoderFrontLeft , DRV_FRONT_LEFT_MOTOR_NAME , false, p_frontLeftEncoderTimerHandle );
+  ENC_init(&g_DRV_encoderRearLeft  , DRV_REAR_LEFT_MOTOR_NAME  , false, p_rearLeftEncoderTimerHandle  );
+  ENC_init(&g_DRV_encoderRearRight , DRV_REAR_RIGHT_MOTOR_NAME , true , p_rearRightEncoderTimerHandle );
 
   /* Start motors (but with a 0 speed at this point) */
   MTR_start(&g_DRV_motorFrontRight);
@@ -93,7 +119,7 @@ void DRV_init(TIM_HandleTypeDef *p_pwmTimerHandle)
   return;
 }
 
-void DRV_update(T_BLU_Data *p_bluetoothData)
+void DRV_updateOnBluetooth(T_BLU_Data *p_bluetoothData)
 {
   uint32_t l_speed;
 
@@ -550,4 +576,47 @@ static void DRV_translateRight(uint32_t p_speed)
   }
 
   return;
+}
+
+void DRV_updateOnEncoder(TIM_HandleTypeDef *p_encoderTimerHandle)
+{
+  int16_t l_count;
+
+  /* Check the handle of the triggering timer and update encoder accordingly */
+  if (p_encoderTimerHandle == g_DRV_encoderRearLeft.timerHandle)
+  {
+    l_count = __HAL_TIM_GET_COUNTER(g_DRV_encoderRearLeft.timerHandle);
+
+    ENC_update(&g_DRV_encoderRearLeft, l_count);
+
+    LOG_debug("Got encoder interrupt rear left: %d", ENC_getCount(&g_DRV_encoderRearLeft));
+  }
+  else if (p_encoderTimerHandle == g_DRV_encoderRearRight.timerHandle)
+  {
+    l_count = __HAL_TIM_GET_COUNTER(g_DRV_encoderRearRight.timerHandle);
+
+    ENC_update(&g_DRV_encoderRearRight, l_count);
+
+    LOG_debug("Got encoder interrupt rear right: %d", ENC_getCount(&g_DRV_encoderRearRight));
+  }
+  else if (p_encoderTimerHandle == g_DRV_encoderFrontRight.timerHandle)
+  {
+    l_count = __HAL_TIM_GET_COUNTER(g_DRV_encoderFrontRight.timerHandle);
+
+    ENC_update(&g_DRV_encoderFrontRight, l_count);
+
+    LOG_debug("Got encoder interrupt front right: %d", ENC_getCount(&g_DRV_encoderFrontRight));
+  }
+  else if (p_encoderTimerHandle == g_DRV_encoderFrontLeft.timerHandle)
+  {
+    l_count = __HAL_TIM_GET_COUNTER(g_DRV_encoderFrontLeft.timerHandle);
+
+    ENC_update(&g_DRV_encoderFrontLeft, l_count);
+
+    LOG_debug("Got encoder interrupt front left: %d", ENC_getCount(&g_DRV_encoderFrontLeft));
+  }
+  else
+  {
+    ; /* Nothing to do */
+  }
 }
