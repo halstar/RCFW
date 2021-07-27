@@ -64,6 +64,7 @@ TIM_HandleTypeDef htim2;
 TIM_HandleTypeDef htim3;
 TIM_HandleTypeDef htim4;
 TIM_HandleTypeDef htim5;
+TIM_HandleTypeDef htim6;
 TIM_HandleTypeDef htim7;
 TIM_HandleTypeDef htim8;
 
@@ -88,6 +89,7 @@ static void MX_TIM2_Init(void);
 static void MX_TIM3_Init(void);
 static void MX_TIM4_Init(void);
 static void MX_TIM5_Init(void);
+static void MX_TIM6_Init(void);
 /* USER CODE BEGIN PFP */
 
 static void MAIN_displayRcfwBanner(void                                      );
@@ -178,17 +180,21 @@ int main(void)
 {
   /* USER CODE BEGIN 1 */
 
-  /* RTC  clock   is used  as a calendar base (e.g. for logs)            */
-  /* TIM1 timer   is used  to update green LED              - PC13       */
-  /* TIM2 to TIM5 are used as input for motor's encoders                 */
-  /* TIM7 timer   is used  to produce a micro-second base                */
-  /* TIM8 timer   is used  to produce motors' PWM    base                */
-  /* ADC1 ADC     is used  to monitor battery level         - PA5        */
-  /* USART1 UART  is used  for USB/serial console           - PA9 / PA10 */
-  /* USART2 UART  is used  to get control from master board - PA2 / PA3  */
+  /* RTC  clock   is used  as a calendar base (e.g. for logs)                    */
+  /* TIM1 timer   is used  to update green LED              - PC13               */
+  /* TIM2 to TIM5 are used as input for motor's encoders                         */
+  /* TIM6 timer   is used  to produce a micro-second base for time measurement   */
+  /* TIM7 timer   is used  to produce a micro-second base for utilies/delay      */
+  /* TIM8 timer   is used  to produce motors' PWM    base                        */
+  /* ADC1 ADC     is used  to monitor battery level         - PA5                */
+  /* USART1 UART  is used  for USB/serial console           - PA9 / PA10         */
+  /* USART2 UART  is used  to get control from master board - PA2 / PA3          */
 
   T_BLU_Data l_bluetoothData;
   uint32_t   l_voltageInMv;
+  uint16_t   l_lastTime;
+  uint16_t   l_currentTime;
+  uint16_t   l_deltaTime;
 
   /* USER CODE END 1 */
 
@@ -221,6 +227,7 @@ int main(void)
   MX_TIM3_Init();
   MX_TIM4_Init();
   MX_TIM5_Init();
+  MX_TIM6_Init();
   /* USER CODE BEGIN 2 */
 
   /* Setup console */
@@ -234,11 +241,16 @@ int main(void)
   LOG_setLevel(LOG_LEVEL_DEBUG);
   LOG_info    ("Starting RCFW");
 
+  /* Initialize Timer 6 */
+  HAL_TIM_Base_Start(&htim6);
+
+  LOG_debug("Started TIMER 6 (time measurement)");
+
   /* Initialize Timer 7 and delay function in utilities */
   HAL_TIM_Base_Start_IT(&htim7);
   UTI_init             (&htim7);
 
-  LOG_debug("Started TIMER 7 (utilities)");
+  LOG_debug("Started TIMER 7 (utilities/delay)");
 
   /* Initialize Timer 1 and green LED */
   HAL_TIM_Base_Start_IT(&htim1);
@@ -282,12 +294,20 @@ int main(void)
   /* USER CODE BEGIN WHILE */
   while (1)
   {
-    BAT_update           (&l_voltageInMv                 );
-    CON_receiveData      (                               );
-    BLU_receiveData      (&l_bluetoothData               );
-    DRV_updateOnBluetooth(&l_bluetoothData               );
-    MAIN_updateLedMode   (&l_bluetoothData, l_voltageInMv);
-    UTI_delayUs          (MAIN_LOOP_DELAY_IN_MS          );
+    BAT_update             (&l_voltageInMv                 );
+    CON_receiveData        (                               );
+    BLU_receiveData        (&l_bluetoothData               );
+    DRV_updateFromBluetooth(&l_bluetoothData               );
+    MAIN_updateLedMode     (&l_bluetoothData, l_voltageInMv);
+    UTI_delayUs            (MAIN_LOOP_DELAY_IN_MS          );
+
+    l_currentTime = __HAL_TIM_GET_COUNTER(&htim6);
+    l_deltaTime   = l_lastTime - l_currentTime;
+    l_lastTime    = l_currentTime;
+
+    //LOG_debug("%d\r\n", l_deltaTime);
+
+    DRV_updateFromMaster(l_deltaTime);
 
     /* USER CODE END WHILE */
 
@@ -685,6 +705,44 @@ static void MX_TIM5_Init(void)
 }
 
 /**
+  * @brief TIM6 Initialization Function
+  * @param None
+  * @retval None
+  */
+static void MX_TIM6_Init(void)
+{
+
+  /* USER CODE BEGIN TIM6_Init 0 */
+
+  /* USER CODE END TIM6_Init 0 */
+
+  TIM_MasterConfigTypeDef sMasterConfig = {0};
+
+  /* USER CODE BEGIN TIM6_Init 1 */
+
+  /* USER CODE END TIM6_Init 1 */
+  htim6.Instance = TIM6;
+  htim6.Init.Prescaler = 7;
+  htim6.Init.CounterMode = TIM_COUNTERMODE_UP;
+  htim6.Init.Period = 65535;
+  htim6.Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_ENABLE;
+  if (HAL_TIM_Base_Init(&htim6) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  sMasterConfig.MasterOutputTrigger = TIM_TRGO_RESET;
+  sMasterConfig.MasterSlaveMode = TIM_MASTERSLAVEMODE_DISABLE;
+  if (HAL_TIMEx_MasterConfigSynchronization(&htim6, &sMasterConfig) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  /* USER CODE BEGIN TIM6_Init 2 */
+
+  /* USER CODE END TIM6_Init 2 */
+
+}
+
+/**
   * @brief TIM7 Initialization Function
   * @param None
   * @retval None
@@ -954,7 +1012,7 @@ void HAL_TIM_IC_CaptureCallback(TIM_HandleTypeDef *htim)
 {
   if ((htim == &htim2) || (htim == &htim3) || (htim == &htim4) || (htim == &htim5))
   {
-    DRV_updateOnEncoder(htim);
+    DRV_updateEncoder(htim);
   }
   else
   {

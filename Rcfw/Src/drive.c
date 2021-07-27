@@ -13,14 +13,13 @@ typedef enum
 {
   DRV_MODE_MANUAL_FIXED_SPEED = 0,
   DRV_MODE_MANUAL_VARIABLE_SPEED,
-  DRV_MODE_MANUAL_CONTROLLED_SPEED,
   DRV_MODE_MASTER_BOARD_CONTROLLED_SPEED
 } T_DRV_MODE;
 
-#define DRV_FRONT_RIGHT_MOTOR_NAME "FRONT_RIGHT"
-#define DRV_FRONT_LEFT_MOTOR_NAME  "FRONT_LEFT "
-#define DRV_REAR_LEFT_MOTOR_NAME   "REAR_LEFT  "
-#define DRV_REAR_RIGHT_MOTOR_NAME  "REAR_RIGHT "
+#define DRV_FRONT_RIGHT_MOTOR_NAME "FRONT RIGHT"
+#define DRV_FRONT_LEFT_MOTOR_NAME  "FRONT LEFT "
+#define DRV_REAR_LEFT_MOTOR_NAME   "REAR LEFT  "
+#define DRV_REAR_RIGHT_MOTOR_NAME  "REAR RIGHT "
 
 #define DRV_JOYSTICKS_THRESHOLD   10
 #define DRV_JOYSTICKS_FIXED_SPEED 25
@@ -28,7 +27,7 @@ typedef enum
 /* the latter actually using only 2 motors, while the other movements use 4 motors.   */
 #define DRV_BUTTONS_FIXED_SPEED   (DRV_JOYSTICKS_FIXED_SPEED * 2)
 
-static bool         g_DRV_isDebugOn;
+static bool         g_DRV_areMotorsOn;
 static bool         g_DRV_isActive;
 static T_DRV_MODE   g_DRV_mode;
 static T_PID_Handle g_DRV_pidFrontRight    , g_DRV_pidFrontLeft    , g_DRV_pidRearLeft    , g_DRV_pidRearRight    ;
@@ -62,38 +61,41 @@ void DRV_init(TIM_HandleTypeDef *p_pwmTimerHandle,
   PID_init(&g_DRV_pidRearRight , 1, 1, 1, 0, -100, 100, 0.5);
 
   /* Setup motors */
-  g_DRV_motorFrontRight.dirPin1Port    = MOTOR_FRONT_RIGHT_IN_1_GPIO_Port;
-  g_DRV_motorFrontRight.dirPin1        = MOTOR_FRONT_RIGHT_IN_1_Pin;
-  g_DRV_motorFrontRight.dirPin2Port    = MOTOR_FRONT_RIGHT_IN_2_GPIO_Port;
-  g_DRV_motorFrontRight.dirPin2        = MOTOR_FRONT_RIGHT_IN_2_Pin;
-  g_DRV_motorFrontRight.pwmTimerHandle = p_pwmTimerHandle;
-  g_DRV_motorFrontRight.pwmChannel     = TIM_CHANNEL_2;
+  MTR_init(&g_DRV_motorFrontRight,
+           DRV_FRONT_RIGHT_MOTOR_NAME,
+           MOTOR_FRONT_RIGHT_IN_1_GPIO_Port,
+           MOTOR_FRONT_RIGHT_IN_1_Pin,
+           MOTOR_FRONT_RIGHT_IN_2_GPIO_Port,
+           MOTOR_FRONT_RIGHT_IN_2_Pin,
+           p_pwmTimerHandle,
+           TIM_CHANNEL_2);
 
-  g_DRV_motorFrontLeft.dirPin1Port     = MOTOR_FRONT_LEFT_IN_1_GPIO_Port;
-  g_DRV_motorFrontLeft.dirPin1         = MOTOR_FRONT_LEFT_IN_1_Pin;
-  g_DRV_motorFrontLeft.dirPin2Port     = MOTOR_FRONT_LEFT_IN_2_GPIO_Port;
-  g_DRV_motorFrontLeft.dirPin2         = MOTOR_FRONT_LEFT_IN_2_Pin;
-  g_DRV_motorFrontLeft.pwmTimerHandle  = p_pwmTimerHandle;
-  g_DRV_motorFrontLeft.pwmChannel      = TIM_CHANNEL_1;
+  MTR_init(&g_DRV_motorFrontLeft,
+           DRV_FRONT_LEFT_MOTOR_NAME,
+           MOTOR_FRONT_LEFT_IN_1_GPIO_Port,
+           MOTOR_FRONT_LEFT_IN_1_Pin,
+           MOTOR_FRONT_LEFT_IN_2_GPIO_Port,
+           MOTOR_FRONT_LEFT_IN_2_Pin,
+           p_pwmTimerHandle,
+           TIM_CHANNEL_1);
 
-  g_DRV_motorRearLeft.dirPin1Port      = MOTOR_REAR_LEFT_IN_1_GPIO_Port;
-  g_DRV_motorRearLeft.dirPin1          = MOTOR_REAR_LEFT_IN_1_Pin;
-  g_DRV_motorRearLeft.dirPin2Port      = MOTOR_REAR_LEFT_IN_2_GPIO_Port;
-  g_DRV_motorRearLeft.dirPin2          = MOTOR_REAR_LEFT_IN_2_Pin;
-  g_DRV_motorRearLeft.pwmTimerHandle   = p_pwmTimerHandle;
-  g_DRV_motorRearLeft.pwmChannel       = TIM_CHANNEL_4;
+  MTR_init(&g_DRV_motorRearLeft,
+           DRV_REAR_LEFT_MOTOR_NAME,
+           MOTOR_REAR_LEFT_IN_1_GPIO_Port,
+           MOTOR_REAR_LEFT_IN_1_Pin,
+           MOTOR_REAR_LEFT_IN_2_GPIO_Port,
+           MOTOR_REAR_LEFT_IN_2_Pin,
+           p_pwmTimerHandle,
+           TIM_CHANNEL_4);
 
-  g_DRV_motorRearRight.dirPin1Port     = MOTOR_REAR_RIGHT_IN_1_GPIO_Port;
-  g_DRV_motorRearRight.dirPin1         = MOTOR_REAR_RIGHT_IN_1_Pin;
-  g_DRV_motorRearRight.dirPin2Port     = MOTOR_REAR_RIGHT_IN_2_GPIO_Port;
-  g_DRV_motorRearRight.dirPin2         = MOTOR_REAR_RIGHT_IN_2_Pin;
-  g_DRV_motorRearRight.pwmTimerHandle  = p_pwmTimerHandle;
-  g_DRV_motorRearRight.pwmChannel      = TIM_CHANNEL_3;
-
-  MTR_init(&g_DRV_motorFrontRight, DRV_FRONT_RIGHT_MOTOR_NAME);
-  MTR_init(&g_DRV_motorFrontLeft , DRV_FRONT_LEFT_MOTOR_NAME );
-  MTR_init(&g_DRV_motorRearLeft  , DRV_REAR_LEFT_MOTOR_NAME  );
-  MTR_init(&g_DRV_motorRearRight , DRV_REAR_RIGHT_MOTOR_NAME );
+  MTR_init(&g_DRV_motorRearRight,
+           DRV_REAR_RIGHT_MOTOR_NAME,
+           MOTOR_REAR_RIGHT_IN_1_GPIO_Port,
+           MOTOR_REAR_RIGHT_IN_1_Pin,
+           MOTOR_REAR_RIGHT_IN_2_GPIO_Port,
+           MOTOR_REAR_RIGHT_IN_2_Pin,
+           p_pwmTimerHandle,
+           TIM_CHANNEL_3);
 
   /* Setup encoders */
   ENC_init(&g_DRV_encoderFrontRight, DRV_FRONT_RIGHT_MOTOR_NAME, true , p_frontRightEncoderTimerHandle);
@@ -107,8 +109,8 @@ void DRV_init(TIM_HandleTypeDef *p_pwmTimerHandle,
   MTR_start(&g_DRV_motorRearRight );
   MTR_start(&g_DRV_motorRearLeft  );
 
-  /* De-activate debug mode: motors will make the car move */
-  g_DRV_isDebugOn = false;
+  /* Activate motors by default (de-activating them is used for debug  */
+  g_DRV_areMotorsOn = true;
 
   /* Considered that drive is inactive when the code starts */
   g_DRV_isActive = false;
@@ -119,7 +121,46 @@ void DRV_init(TIM_HandleTypeDef *p_pwmTimerHandle,
   return;
 }
 
-void DRV_updateOnBluetooth(T_BLU_Data *p_bluetoothData)
+void DRV_updateEncoder(TIM_HandleTypeDef *p_encoderTimerHandle)
+{
+  int16_t l_count;
+
+  l_count = __HAL_TIM_GET_COUNTER(p_encoderTimerHandle);
+
+  /* Check the handle of the triggering timer and update encoder accordingly */
+  if (p_encoderTimerHandle == g_DRV_encoderRearLeft.timerHandle)
+  {
+    ENC_update(&g_DRV_encoderRearLeft, l_count);
+
+//    LOG_debug("Got %s encoder interrupt: %d", DRV_REAR_LEFT_MOTOR_NAME, ENC_getCount(&g_DRV_encoderRearLeft));
+  }
+  else if (p_encoderTimerHandle == g_DRV_encoderRearRight.timerHandle)
+  {
+    ENC_update(&g_DRV_encoderRearRight, l_count);
+
+//    LOG_debug("Got %s encoder interrupt: %d", DRV_REAR_RIGHT_MOTOR_NAME, ENC_getCount(&g_DRV_encoderRearRight));
+  }
+  else if (p_encoderTimerHandle == g_DRV_encoderFrontRight.timerHandle)
+  {
+    ENC_update(&g_DRV_encoderFrontRight, l_count);
+
+//    LOG_debug("Got %s encoder interrupt: %d", DRV_FRONT_RIGHT_MOTOR_NAME, ENC_getCount(&g_DRV_encoderFrontRight));
+  }
+  else if (p_encoderTimerHandle == g_DRV_encoderFrontLeft.timerHandle)
+  {
+    ENC_update(&g_DRV_encoderFrontLeft, l_count);
+
+//    LOG_debug("Got %s encoder interrupt: %d", DRV_FRONT_LEFT_MOTOR_NAME, ENC_getCount(&g_DRV_encoderFrontLeft));
+  }
+  else
+  {
+    ; /* Nothing to do */
+  }
+
+  return;
+}
+
+void DRV_updateFromBluetooth(T_BLU_Data *p_bluetoothData)
 {
   uint32_t l_speed;
 
@@ -151,18 +192,6 @@ void DRV_updateOnBluetooth(T_BLU_Data *p_bluetoothData)
       break;
 
     case BLU_BUTTON_RED_CIRCLE:
-      if (g_DRV_mode != DRV_MODE_MANUAL_CONTROLLED_SPEED)
-      {
-        LOG_info("Drive mode now DRV_MODE_MANUAL_CONTROLLED_SPEED");
-        g_DRV_mode = DRV_MODE_MANUAL_CONTROLLED_SPEED;
-      }
-      else
-      {
-        ; /* Nothing to do */
-      }
-      break;
-
-    case BLU_BUTTON_GREEN_TRIANGLE:
       if (g_DRV_mode != DRV_MODE_MASTER_BOARD_CONTROLLED_SPEED)
       {
         LOG_info("Drive mode now DRV_MODE_MASTER_BOARD_CONTROLLED_SPEED");
@@ -175,10 +204,10 @@ void DRV_updateOnBluetooth(T_BLU_Data *p_bluetoothData)
       break;
 
     case BLU_BUTTON_SELECT:
-      if (g_DRV_isDebugOn == false)
+      if (g_DRV_areMotorsOn == true)
       {
-        LOG_info("Drive debug mode turned ON  - Motors now OFF");
-        g_DRV_isDebugOn = true;
+        LOG_info("Drive turning motor OFF");
+        g_DRV_areMotorsOn = false;
       }
       else
       {
@@ -187,10 +216,10 @@ void DRV_updateOnBluetooth(T_BLU_Data *p_bluetoothData)
       break;
 
     case BLU_BUTTON_START:
-      if (g_DRV_isDebugOn == true)
+      if (g_DRV_areMotorsOn == false)
       {
-        LOG_info("Drive debug mode turned OFF - Motors now ON");
-        g_DRV_isDebugOn = false;
+        LOG_info("Drive turning motors ON");
+        g_DRV_areMotorsOn = true;
       }
       else
       {
@@ -278,8 +307,33 @@ void DRV_updateOnBluetooth(T_BLU_Data *p_bluetoothData)
     }
     else
     {
+      /* Most of the time, we will get here */
       DRV_sleep();
     }
+  }
+
+  return;
+}
+
+void DRV_updateFromMaster(uint16_t p_deltaTime)
+{
+  int32_t l_pidSpeedFrontRight;
+  int32_t l_pidSpeedFrontLeft;
+  int32_t l_pidSpeedRearLeft;
+  int32_t l_pidSpeedRearRight;
+
+  /* Ignore master board data only whenever a manual mode is selected */
+  if (g_DRV_mode != DRV_MODE_MASTER_BOARD_CONTROLLED_SPEED)
+  {
+    ; /* Nothing to do */
+  }
+  else
+  {
+    /* Update PIDs */
+    l_pidSpeedFrontRight = PID_update(&g_DRV_pidFrontRight, 0, p_deltaTime);
+    l_pidSpeedFrontLeft  = PID_update(&g_DRV_pidFrontLeft , 0, p_deltaTime);
+    l_pidSpeedRearLeft   = PID_update(&g_DRV_pidRearLeft  , 0, p_deltaTime);
+    l_pidSpeedRearRight  = PID_update(&g_DRV_pidRearRight , 0, p_deltaTime);
   }
 
   return;
@@ -319,7 +373,7 @@ static void DRV_moveForward(uint32_t p_speed)
   MTR_setDirection(&g_DRV_motorRearRight , MTR_DIRECTION_FORWARD);
   MTR_setDirection(&g_DRV_motorRearLeft  , MTR_DIRECTION_FORWARD);
 
-  if (g_DRV_isDebugOn == true)
+  if (g_DRV_areMotorsOn == false)
   {
     ; /* Nothing to do */
   }
@@ -347,7 +401,7 @@ static void DRV_moveBackward(uint32_t p_speed)
   MTR_setDirection(&g_DRV_motorRearRight , MTR_DIRECTION_BACKWARD);
   MTR_setDirection(&g_DRV_motorRearLeft  , MTR_DIRECTION_BACKWARD);
 
-  if (g_DRV_isDebugOn == true)
+  if (g_DRV_areMotorsOn == false)
   {
     ; /* Nothing to do */
   }
@@ -373,7 +427,7 @@ static void DRV_moveForwardRight (uint32_t p_speed)
   MTR_setDirection(&g_DRV_motorFrontLeft, MTR_DIRECTION_FORWARD);
   MTR_setDirection(&g_DRV_motorRearRight, MTR_DIRECTION_FORWARD);
 
-  if (g_DRV_isDebugOn == true)
+  if (g_DRV_areMotorsOn == false)
   {
     ; /* Nothing to do */
   }
@@ -399,7 +453,7 @@ static void DRV_moveForwardLeft  (uint32_t p_speed)
   MTR_setDirection(&g_DRV_motorFrontRight, MTR_DIRECTION_FORWARD);
   MTR_setDirection(&g_DRV_motorRearLeft  , MTR_DIRECTION_FORWARD);
 
-  if (g_DRV_isDebugOn == true)
+  if (g_DRV_areMotorsOn == false)
   {
     ; /* Nothing to do */
   }
@@ -425,7 +479,7 @@ static void DRV_moveBackwardRight(uint32_t p_speed)
   MTR_setDirection(&g_DRV_motorFrontRight, MTR_DIRECTION_BACKWARD);
   MTR_setDirection(&g_DRV_motorRearLeft  , MTR_DIRECTION_BACKWARD);
 
-  if (g_DRV_isDebugOn == true)
+  if (g_DRV_areMotorsOn == false)
   {
     ; /* Nothing to do */
   }
@@ -451,7 +505,7 @@ static void DRV_moveBackwardLeft (uint32_t p_speed)
   MTR_setDirection(&g_DRV_motorFrontLeft, MTR_DIRECTION_BACKWARD);
   MTR_setDirection(&g_DRV_motorRearRight, MTR_DIRECTION_BACKWARD);
 
-  if (g_DRV_isDebugOn == true)
+  if (g_DRV_areMotorsOn == false)
   {
     ; /* Nothing to do */
   }
@@ -479,7 +533,7 @@ static void DRV_turnLeft(uint32_t p_speed)
   MTR_setDirection(&g_DRV_motorRearRight , MTR_DIRECTION_FORWARD );
   MTR_setDirection(&g_DRV_motorRearLeft  , MTR_DIRECTION_BACKWARD);
 
-  if (g_DRV_isDebugOn == true)
+  if (g_DRV_areMotorsOn == false)
   {
     ; /* Nothing to do */
   }
@@ -507,7 +561,7 @@ static void DRV_turnRight(uint32_t p_speed)
   MTR_setDirection(&g_DRV_motorRearRight , MTR_DIRECTION_BACKWARD);
   MTR_setDirection(&g_DRV_motorRearLeft  , MTR_DIRECTION_FORWARD );
 
-  if (g_DRV_isDebugOn == true)
+  if (g_DRV_areMotorsOn == false)
   {
     ; /* Nothing to do */
   }
@@ -535,7 +589,7 @@ static void DRV_translateLeft(uint32_t p_speed)
   MTR_setDirection(&g_DRV_motorRearRight , MTR_DIRECTION_BACKWARD);
   MTR_setDirection(&g_DRV_motorRearLeft  , MTR_DIRECTION_FORWARD );
 
-  if (g_DRV_isDebugOn == true)
+  if (g_DRV_areMotorsOn == false)
   {
     ; /* Nothing to do */
   }
@@ -563,7 +617,7 @@ static void DRV_translateRight(uint32_t p_speed)
   MTR_setDirection(&g_DRV_motorRearRight , MTR_DIRECTION_FORWARD );
   MTR_setDirection(&g_DRV_motorRearLeft  , MTR_DIRECTION_BACKWARD);
 
-  if (g_DRV_isDebugOn == true)
+  if (g_DRV_areMotorsOn == false)
   {
     ; /* Nothing to do */
   }
@@ -576,47 +630,4 @@ static void DRV_translateRight(uint32_t p_speed)
   }
 
   return;
-}
-
-void DRV_updateOnEncoder(TIM_HandleTypeDef *p_encoderTimerHandle)
-{
-  int16_t l_count;
-
-  /* Check the handle of the triggering timer and update encoder accordingly */
-  if (p_encoderTimerHandle == g_DRV_encoderRearLeft.timerHandle)
-  {
-    l_count = __HAL_TIM_GET_COUNTER(g_DRV_encoderRearLeft.timerHandle);
-
-    ENC_update(&g_DRV_encoderRearLeft, l_count);
-
-    LOG_debug("Got encoder interrupt rear left: %d", ENC_getCount(&g_DRV_encoderRearLeft));
-  }
-  else if (p_encoderTimerHandle == g_DRV_encoderRearRight.timerHandle)
-  {
-    l_count = __HAL_TIM_GET_COUNTER(g_DRV_encoderRearRight.timerHandle);
-
-    ENC_update(&g_DRV_encoderRearRight, l_count);
-
-    LOG_debug("Got encoder interrupt rear right: %d", ENC_getCount(&g_DRV_encoderRearRight));
-  }
-  else if (p_encoderTimerHandle == g_DRV_encoderFrontRight.timerHandle)
-  {
-    l_count = __HAL_TIM_GET_COUNTER(g_DRV_encoderFrontRight.timerHandle);
-
-    ENC_update(&g_DRV_encoderFrontRight, l_count);
-
-    LOG_debug("Got encoder interrupt front right: %d", ENC_getCount(&g_DRV_encoderFrontRight));
-  }
-  else if (p_encoderTimerHandle == g_DRV_encoderFrontLeft.timerHandle)
-  {
-    l_count = __HAL_TIM_GET_COUNTER(g_DRV_encoderFrontLeft.timerHandle);
-
-    ENC_update(&g_DRV_encoderFrontLeft, l_count);
-
-    LOG_debug("Got encoder interrupt front left: %d", ENC_getCount(&g_DRV_encoderFrontLeft));
-  }
-  else
-  {
-    ; /* Nothing to do */
-  }
 }

@@ -3,19 +3,33 @@
 #include "stm32f1xx_hal.h"
 #include "log.h"
 
-void MTR_init(T_MTR_Handle *p_handle, char *p_name)
+void MTR_init(T_MTR_Handle      *p_handle,
+              char              *p_name,
+              GPIO_TypeDef      *p_dirPin1Port,
+              uint32_t           p_dirPin1,
+              GPIO_TypeDef      *p_dirPin2Port,
+              uint32_t           p_dirPin2,
+              TIM_HandleTypeDef *p_pwmTimerHandle,
+              uint32_t           p_pwmChannel)
 {
   LOG_info("Initializing Motor module for %s", p_name);
 
-  p_handle->name = p_name;
+  p_handle->name           = p_name;
+  p_handle->dirPin1Port    = p_dirPin1Port;
+  p_handle->dirPin1        = p_dirPin1;
+  p_handle->dirPin2Port    = p_dirPin2Port;
+  p_handle->dirPin2        = p_dirPin2;
+  p_handle->pwmTimerHandle = p_pwmTimerHandle;
+  p_handle->pwmChannel     = p_pwmChannel;
 
-  MTR_setSpeed(p_handle, 0);
-  MTR_stop    (p_handle   );
+  MTR_setDirection(p_handle, MTR_DIRECTION_FORWARD);
+  MTR_setSpeed    (p_handle, 0                    );
+  MTR_stop        (p_handle                       );
 
   return;
 }
 
-void MTR_setDirection(T_MTR_Handle *p_handle, uint32_t p_direction)
+void MTR_setDirection(T_MTR_Handle *p_handle, T_MTR_DIRECTION p_direction)
 {
   if (p_direction == p_handle->direction)
   {

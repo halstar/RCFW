@@ -13,7 +13,8 @@ void DRV_init(TIM_HandleTypeDef *p_pwmTimerHandle,
               TIM_HandleTypeDef *p_frontRightEncoderTimerHandle,
               TIM_HandleTypeDef *p_frontLeftEncoderTimerHandle);
 
-void DRV_updateOnBluetooth(T_BLU_Data        *p_bluetoothData     );
-void DRV_updateOnEncoder  (TIM_HandleTypeDef *p_encoderTimerHandle);
+void DRV_updateEncoder      (TIM_HandleTypeDef *p_encoderTimerHandle);
+void DRV_updateFromBluetooth(T_BLU_Data        *p_bluetoothData     );
+void DRV_updateFromMaster   (uint16_t           p_deltaTime         );
 
 #endif /* __DRIVE_H */
