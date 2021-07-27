@@ -132,25 +132,25 @@ void DRV_updateEncoder(TIM_HandleTypeDef *p_encoderTimerHandle)
   {
     ENC_update(&g_DRV_encoderRearLeft, l_count);
 
-//    LOG_debug("Got %s encoder interrupt: %d", DRV_REAR_LEFT_MOTOR_NAME, ENC_getCount(&g_DRV_encoderRearLeft));
+    LOG_debug("%s encoder: %d", DRV_REAR_LEFT_MOTOR_NAME, ENC_getCount(&g_DRV_encoderRearLeft));
   }
   else if (p_encoderTimerHandle == g_DRV_encoderRearRight.timerHandle)
   {
     ENC_update(&g_DRV_encoderRearRight, l_count);
 
-//    LOG_debug("Got %s encoder interrupt: %d", DRV_REAR_RIGHT_MOTOR_NAME, ENC_getCount(&g_DRV_encoderRearRight));
+    LOG_debug("%s encoder: %d", DRV_REAR_RIGHT_MOTOR_NAME, ENC_getCount(&g_DRV_encoderRearRight));
   }
   else if (p_encoderTimerHandle == g_DRV_encoderFrontRight.timerHandle)
   {
     ENC_update(&g_DRV_encoderFrontRight, l_count);
 
-//    LOG_debug("Got %s encoder interrupt: %d", DRV_FRONT_RIGHT_MOTOR_NAME, ENC_getCount(&g_DRV_encoderFrontRight));
+    LOG_debug("%s encoder: %d", DRV_FRONT_RIGHT_MOTOR_NAME, ENC_getCount(&g_DRV_encoderFrontRight));
   }
   else if (p_encoderTimerHandle == g_DRV_encoderFrontLeft.timerHandle)
   {
     ENC_update(&g_DRV_encoderFrontLeft, l_count);
 
-//    LOG_debug("Got %s encoder interrupt: %d", DRV_FRONT_LEFT_MOTOR_NAME, ENC_getCount(&g_DRV_encoderFrontLeft));
+    LOG_debug("%s encoder: %d", DRV_FRONT_LEFT_MOTOR_NAME, ENC_getCount(&g_DRV_encoderFrontLeft));
   }
   else
   {
@@ -317,10 +317,15 @@ void DRV_updateFromBluetooth(T_BLU_Data *p_bluetoothData)
 
 void DRV_updateFromMaster(uint16_t p_deltaTime)
 {
+  int32_t l_measuredSpeedFrontRight;
+  int32_t l_measuredSpeedFrontLeft;
+  int32_t l_measuredSpeedRearRight;
+  int32_t l_measuredSpeedRearLeft;
+
   int32_t l_pidSpeedFrontRight;
   int32_t l_pidSpeedFrontLeft;
-  int32_t l_pidSpeedRearLeft;
   int32_t l_pidSpeedRearRight;
+  int32_t l_pidSpeedRearLeft;
 
   /* Ignore master board data only whenever a manual mode is selected */
   if (g_DRV_mode != DRV_MODE_MASTER_BOARD_CONTROLLED_SPEED)
@@ -329,11 +334,23 @@ void DRV_updateFromMaster(uint16_t p_deltaTime)
   }
   else
   {
+    /* Get measurements */
+    l_measuredSpeedFrontRight = ENC_getCount(&g_DRV_encoderFrontRight);
+    l_measuredSpeedFrontLeft  = ENC_getCount(&g_DRV_encoderFrontLeft );
+    l_measuredSpeedRearRight  = ENC_getCount(&g_DRV_encoderRearRight );
+    l_measuredSpeedRearLeft   = ENC_getCount(&g_DRV_encoderRearLeft  );
+
     /* Update PIDs */
-    l_pidSpeedFrontRight = PID_update(&g_DRV_pidFrontRight, 0, p_deltaTime);
-    l_pidSpeedFrontLeft  = PID_update(&g_DRV_pidFrontLeft , 0, p_deltaTime);
-    l_pidSpeedRearLeft   = PID_update(&g_DRV_pidRearLeft  , 0, p_deltaTime);
-    l_pidSpeedRearRight  = PID_update(&g_DRV_pidRearRight , 0, p_deltaTime);
+    l_pidSpeedFrontRight = PID_update(&g_DRV_pidFrontRight, l_measuredSpeedFrontRight, p_deltaTime);
+    l_pidSpeedFrontLeft  = PID_update(&g_DRV_pidFrontLeft , l_measuredSpeedFrontLeft , p_deltaTime);
+    l_pidSpeedRearRight  = PID_update(&g_DRV_pidRearRight , l_measuredSpeedRearRight , p_deltaTime);
+    l_pidSpeedRearLeft   = PID_update(&g_DRV_pidRearLeft  , l_measuredSpeedRearLeft  , p_deltaTime);
+
+    /* Update motors */
+    MTR_setSpeed(&g_DRV_motorFrontRight, l_pidSpeedFrontRight);
+    MTR_setSpeed(&g_DRV_motorFrontLeft , l_pidSpeedFrontLeft );
+    MTR_setSpeed(&g_DRV_motorRearRight , l_pidSpeedRearRight );
+    MTR_setSpeed(&g_DRV_motorRearLeft  , l_pidSpeedRearLeft  );
   }
 
   return;
@@ -364,7 +381,7 @@ static void DRV_moveForward(uint32_t p_speed)
 {
   uint32_t l_speed = p_speed;
 
-  LOG_info("Moving forward @%u", l_speed);
+  LOG_debug("Moving forward @%u", l_speed);
 
   g_DRV_isActive = true;
 
@@ -392,7 +409,7 @@ static void DRV_moveBackward(uint32_t p_speed)
 {
   uint32_t l_speed = p_speed;
 
-  LOG_info("Moving backward @%u", l_speed);
+  LOG_debug("Moving backward @%u", l_speed);
 
   g_DRV_isActive = true;
 
@@ -420,7 +437,7 @@ static void DRV_moveForwardRight (uint32_t p_speed)
 {
   uint32_t l_speed = p_speed;
 
-  LOG_info("Moving forward-right @%u", l_speed);
+  LOG_debug("Moving forward-right @%u", l_speed);
 
   g_DRV_isActive = true;
 
@@ -446,7 +463,7 @@ static void DRV_moveForwardLeft  (uint32_t p_speed)
 {
   uint32_t l_speed = p_speed;
 
-  LOG_info("Moving forward-left @%u", l_speed);
+  LOG_debug("Moving forward-left @%u", l_speed);
 
   g_DRV_isActive = true;
 
@@ -472,7 +489,7 @@ static void DRV_moveBackwardRight(uint32_t p_speed)
 {
   uint32_t l_speed = p_speed;
 
-  LOG_info("Moving backward-right @%u", l_speed);
+  LOG_debug("Moving backward-right @%u", l_speed);
 
   g_DRV_isActive = true;
 
@@ -498,7 +515,7 @@ static void DRV_moveBackwardLeft (uint32_t p_speed)
 {
   uint32_t l_speed = p_speed;
 
-  LOG_info("Moving backward-left @%u", l_speed);
+  LOG_debug("Moving backward-left @%u", l_speed);
 
   g_DRV_isActive = true;
 
@@ -524,7 +541,7 @@ static void DRV_turnLeft(uint32_t p_speed)
 {
   uint32_t l_speed = p_speed;
 
-  LOG_info("Turning left @%u", l_speed);
+  LOG_debug("Turning left @%u", l_speed);
 
   g_DRV_isActive = true;
 
@@ -552,7 +569,7 @@ static void DRV_turnRight(uint32_t p_speed)
 {
   uint32_t l_speed = p_speed;
 
-  LOG_info("Turning right @%u", l_speed);
+  LOG_debug("Turning right @%u", l_speed);
 
   g_DRV_isActive = true;
 
@@ -580,7 +597,7 @@ static void DRV_translateLeft(uint32_t p_speed)
 {
   uint32_t l_speed = p_speed;
 
-  LOG_info("Translating left @%u", l_speed);
+  LOG_debug("Translating left @%u", l_speed);
 
   g_DRV_isActive = true;
 
@@ -608,7 +625,7 @@ static void DRV_translateRight(uint32_t p_speed)
 {
   uint32_t l_speed = p_speed;
 
-  LOG_info("Translating right @%u", l_speed);
+  LOG_debug("Translating right @%u", l_speed);
 
   g_DRV_isActive = true;
 

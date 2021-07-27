@@ -244,19 +244,19 @@ int main(void)
   /* Initialize Timer 6 */
   HAL_TIM_Base_Start(&htim6);
 
-  LOG_debug("Started TIMER 6 (time measurement)");
+  LOG_info("Started TIMER 6 (time measurement)");
 
   /* Initialize Timer 7 and delay function in utilities */
   HAL_TIM_Base_Start_IT(&htim7);
   UTI_init             (&htim7);
 
-  LOG_debug("Started TIMER 7 (utilities/delay)");
+  LOG_info("Started TIMER 7 (utilities/delay)");
 
   /* Initialize Timer 1 and green LED */
   HAL_TIM_Base_Start_IT(&htim1);
   LED_setMode(LED_MODE_BLINK_SLOW);
 
-  LOG_debug("Started TIMER 1 (blue LED)");
+  LOG_info("Started TIMER 1 (blue LED)");
 
   /* Initialize Timers 2, 3, 4 & 5 */
   HAL_TIM_Encoder_Start_IT(&htim2, TIM_CHANNEL_ALL);
@@ -264,12 +264,12 @@ int main(void)
   HAL_TIM_Encoder_Start_IT(&htim4, TIM_CHANNEL_ALL);
   HAL_TIM_Encoder_Start_IT(&htim5, TIM_CHANNEL_ALL);
 
-  LOG_debug("Started TIMER 2, 3, 4, 5 (encoders)");
+  LOG_info("Started TIMER 2, 3, 4, 5 (encoders)");
 
   /* Initialize Timer 8 */
   HAL_TIM_Base_Start(&htim8);
 
-  LOG_debug("Started TIMER 8 (PWM channels)");
+  LOG_info("Started TIMER 8 (PWM channels)");
 
   /* Initialize battery monitor */
   BAT_init(&hadc1, &hrtc);
@@ -292,6 +292,10 @@ int main(void)
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
+
+  /* Initialize ime measurement for master board control */
+  l_lastTime = __HAL_TIM_GET_COUNTER(&htim6);
+
   while (1)
   {
     BAT_update             (&l_voltageInMv                 );
@@ -305,7 +309,7 @@ int main(void)
     l_deltaTime   = l_lastTime - l_currentTime;
     l_lastTime    = l_currentTime;
 
-    //LOG_debug("%d\r\n", l_deltaTime);
+    //LOG_debug("%d", l_deltaTime);
 
     DRV_updateFromMaster(l_deltaTime);
 
@@ -1064,7 +1068,7 @@ void Error_Handler(void)
   /* User can add his own implementation to report the HAL error return state */
   __disable_irq();
 
-  LOG_error("Error handler triggered - Stopping RCFW");
+  LOG_error("Error_Handler() triggered");
 
   while (1)
   {
@@ -1083,8 +1087,9 @@ void Error_Handler(void)
 void assert_failed(uint8_t *file, uint32_t line)
 {
   /* USER CODE BEGIN 6 */
-  /* User can add his own implementation to report the file name and line number,
-     ex: printf("Wrong parameters value: file %s on line %d\r\n", file, line) */
+     LOG_error("Wrong parameters: %s@%d", file, line);
+
+    return;
   /* USER CODE END 6 */
 }
 #endif /* USE_FULL_ASSERT */
