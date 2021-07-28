@@ -5,7 +5,8 @@
 
 typedef enum
 {
-  MTR_DIRECTION_FORWARD = 0,
+  MTR_DIRECTION_STOP = 0,
+  MTR_DIRECTION_FORWARD,
   MTR_DIRECTION_BACKWARD
 } T_MTR_DIRECTION;
 
@@ -33,7 +34,5 @@ void MTR_init(T_MTR_Handle      *p_handle,
 
 void MTR_setDirection(T_MTR_Handle *p_handle, T_MTR_DIRECTION p_direction);
 void MTR_setSpeed    (T_MTR_Handle *p_handle, uint32_t        p_speed    );
-void MTR_start       (T_MTR_Handle *p_handle                             );
-void MTR_stop        (T_MTR_Handle *p_handle                             );
 
 #endif /* __MOTOR_H */

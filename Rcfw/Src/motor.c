@@ -22,9 +22,8 @@ void MTR_init(T_MTR_Handle      *p_handle,
   p_handle->pwmTimerHandle = p_pwmTimerHandle;
   p_handle->pwmChannel     = p_pwmChannel;
 
-  MTR_setDirection(p_handle, MTR_DIRECTION_FORWARD);
-  MTR_setSpeed    (p_handle, 0                    );
-  MTR_stop        (p_handle                       );
+  MTR_setDirection(p_handle, MTR_DIRECTION_STOP);
+  MTR_setSpeed    (p_handle, 0                 );
 
   return;
 }
@@ -37,7 +36,14 @@ void MTR_setDirection(T_MTR_Handle *p_handle, T_MTR_DIRECTION p_direction)
   }
   else
   {
-    if (p_direction == MTR_DIRECTION_FORWARD)
+    if (p_direction == MTR_DIRECTION_STOP)
+    {
+      LOG_debug("%s motor STOP", p_handle->name);
+
+      HAL_GPIO_WritePin(p_handle->dirPin1Port, p_handle->dirPin1, GPIO_PIN_RESET);
+      HAL_GPIO_WritePin(p_handle->dirPin2Port, p_handle->dirPin2, GPIO_PIN_RESET);
+    }
+    else if (p_direction == MTR_DIRECTION_FORWARD)
     {
       LOG_debug("%s motor go FORWARD", p_handle->name);
 
@@ -72,25 +78,6 @@ void MTR_setSpeed(T_MTR_Handle *p_handle, uint32_t p_speed)
 
     p_handle->speed = p_speed;
   }
-
-  return;
-}
-
-void MTR_start(T_MTR_Handle *p_handle)
-{
-  LOG_info("Starting %s motor", p_handle->name);
-
-  MTR_setDirection(p_handle, p_handle->direction);
-
-  return;
-}
-
-void MTR_stop(T_MTR_Handle *p_handle)
-{
-  LOG_info("Stopping %s", p_handle->name);
-
-  HAL_GPIO_WritePin(p_handle->dirPin1Port, p_handle->dirPin1, GPIO_PIN_RESET);
-  HAL_GPIO_WritePin(p_handle->dirPin2Port, p_handle->dirPin2, GPIO_PIN_RESET);
 
   return;
 }

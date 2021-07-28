@@ -15,7 +15,7 @@
 #define DRV_REAR_RIGHT_MOTOR_NAME  "REAR RIGHT "
 
 #define DRV_JOYSTICKS_THRESHOLD   10
-#define DRV_JOYSTICKS_FIXED_SPEED 25
+#define DRV_JOYSTICKS_FIXED_SPEED 20
 /* Double buttons fixed speed at it concerns forward/backward + left/right movements, */
 /* the latter actually using only 2 motors, while the other movements use 4 motors.   */
 #define DRV_BUTTONS_FIXED_SPEED   (DRV_JOYSTICKS_FIXED_SPEED * 2)
@@ -53,7 +53,7 @@ void DRV_init(TIM_HandleTypeDef *p_pwmTimerHandle,
   PID_init(&g_DRV_pidRearLeft  , 1, 1, 1, 0, -100, 100, 0.5);
   PID_init(&g_DRV_pidRearRight , 1, 1, 1, 0, -100, 100, 0.5);
 
-  /* Setup motors */
+  /* Setup motors (with a 0 speed & stopped direction, at this point) */
   MTR_init(&g_DRV_motorFrontRight,
            DRV_FRONT_RIGHT_MOTOR_NAME,
            MOTOR_FRONT_RIGHT_IN_1_GPIO_Port,
@@ -96,12 +96,6 @@ void DRV_init(TIM_HandleTypeDef *p_pwmTimerHandle,
   ENC_init(&g_DRV_encoderRearLeft  , DRV_REAR_LEFT_MOTOR_NAME  , false, p_rearLeftEncoderTimerHandle  );
   ENC_init(&g_DRV_encoderRearRight , DRV_REAR_RIGHT_MOTOR_NAME , true , p_rearRightEncoderTimerHandle );
 
-  /* Start motors (but with a 0 speed at this point) */
-  MTR_start(&g_DRV_motorFrontRight);
-  MTR_start(&g_DRV_motorFrontLeft );
-  MTR_start(&g_DRV_motorRearRight );
-  MTR_start(&g_DRV_motorRearLeft  );
-
   /* Activate motors by default (de-activating them is used for debug  */
   g_DRV_areMotorsOn = true;
 
@@ -109,7 +103,7 @@ void DRV_init(TIM_HandleTypeDef *p_pwmTimerHandle,
   g_DRV_isActive = false;
 
   /* Start with master board control mode. BLink green LED accordingly */
-  g_DRV_mode = DRV_MODE_MASTER_BOARD_CONTROLLED_SPEED;
+  g_DRV_mode = DRV_MODE_MASTER_BOARD_CONTROL;
 
   return;
 }
@@ -185,10 +179,10 @@ void DRV_updateFromBluetooth(T_BLU_Data *p_bluetoothData)
       break;
 
     case BLU_BUTTON_RED_CIRCLE:
-      if (g_DRV_mode != DRV_MODE_MASTER_BOARD_CONTROLLED_SPEED)
+      if (g_DRV_mode != DRV_MODE_MASTER_BOARD_CONTROL)
       {
-        LOG_info("Drive mode now DRV_MODE_MASTER_BOARD_CONTROLLED_SPEED");
-        g_DRV_mode = DRV_MODE_MASTER_BOARD_CONTROLLED_SPEED;
+        LOG_info("Drive mode now DRV_MODE_MASTER_BOARD_CONTROL");
+        g_DRV_mode = DRV_MODE_MASTER_BOARD_CONTROL;
       }
       else
       {
@@ -227,7 +221,7 @@ void DRV_updateFromBluetooth(T_BLU_Data *p_bluetoothData)
 
   /* Master board control mode is an automated mode, so that we will */
   /* ignore any direction/button press received via bluetooth.       */
-  if (g_DRV_mode == DRV_MODE_MASTER_BOARD_CONTROLLED_SPEED)
+  if (g_DRV_mode == DRV_MODE_MASTER_BOARD_CONTROL)
   {
     ; /* Nothing to do */
   }
@@ -321,7 +315,7 @@ void DRV_updateFromMaster(uint16_t p_deltaTime)
   int32_t l_pidSpeedRearLeft;
 
   /* Ignore master board data only whenever a manual mode is selected */
-  if (g_DRV_mode != DRV_MODE_MASTER_BOARD_CONTROLLED_SPEED)
+  if (g_DRV_mode != DRV_MODE_MASTER_BOARD_CONTROL)
   {
     ; /* Nothing to do */
   }
@@ -358,7 +352,7 @@ static void DRV_sleep(void)
 {
   if (g_DRV_isActive == true)
   {
-    LOG_info("Drive going to sleep");
+    LOG_debug("Drive going to sleep");
 
     MTR_setSpeed(&g_DRV_motorFrontRight, 0);
     MTR_setSpeed(&g_DRV_motorFrontLeft , 0);

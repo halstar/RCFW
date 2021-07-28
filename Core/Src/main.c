@@ -214,7 +214,7 @@ static void MAIN_updateLedMode(T_DRV_MODE p_driveMode, uint32_t p_voltageInMv)
         LED_setMode(LED_MODE_BLINK_MEDIUM);
         break;
 
-      case DRV_MODE_MASTER_BOARD_CONTROLLED_SPEED:
+      case DRV_MODE_MASTER_BOARD_CONTROL:
         LED_setMode(LED_MODE_BLINK_FAST);
         break;
 
@@ -343,7 +343,7 @@ int main(void)
   HAL_TIM_PWM_Start(&htim8, TIM_CHANNEL_3);
   HAL_TIM_PWM_Start(&htim8, TIM_CHANNEL_4);
 
-  LOG_debug("Started PWM channels");
+  LOG_info("Started PWM channels");
 
   /* Initialize bluetooth control */
   BLU_init(DRV_MAXIMUM_SPEED);

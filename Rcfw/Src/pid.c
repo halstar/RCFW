@@ -138,10 +138,10 @@ int32_t PID_update(T_PID_Handle *p_handle, int32_t p_currentValue, uint32_t p_ti
 
 void PID_logInfo(T_PID_Handle *p_handle)
 {
-  LOG_info(" kp = %6.2f -  ki = %6.2f -     kd = %6.2f", p_handle->kp         , p_handle->ki      , p_handle->kd             );
-  LOG_info("  p = %6.2f -   i = %6.2f -      d = %6.2f", p_handle->pValue     , p_handle->iValue  , p_handle->dValue         );
-  LOG_info("min = %6.1f - max = %6.1f - a.w.up = %6.1f", p_handle->minValue   , p_handle->maxValue, p_handle->antiWindUpValue);
-  LOG_info("  t = %6.2f - val = %6.2f                 ", p_handle->targetValue, p_handle->computedValue                      );
+  LOG_info(" kp = %4d -  ki = %4d -     kd = %4d", p_handle->kp         , p_handle->ki      , p_handle->kd             );
+  LOG_info("  p = %4d -   i = %4d -      d = %4d", p_handle->pValue     , p_handle->iValue  , p_handle->dValue         );
+  LOG_info("min = %4d - max = %4d - a.w.up = %4d", p_handle->minValue   , p_handle->maxValue, p_handle->antiWindUpValue);
+  LOG_info("  t = %4d - val = %4d               ", p_handle->targetValue, p_handle->computedValue                      );
 
   return;
 }

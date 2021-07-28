@@ -5,13 +5,13 @@
 
 #include "bluetooth_control.h"
 
-#define DRV_MAXIMUM_SPEED 60
+#define DRV_MAXIMUM_SPEED 40
 
 typedef enum
 {
   DRV_MODE_MANUAL_FIXED_SPEED = 0,
   DRV_MODE_MANUAL_VARIABLE_SPEED,
-  DRV_MODE_MASTER_BOARD_CONTROLLED_SPEED
+  DRV_MODE_MASTER_BOARD_CONTROL
 } T_DRV_MODE;
 
 void DRV_init(TIM_HandleTypeDef *p_pwmTimerHandle,
