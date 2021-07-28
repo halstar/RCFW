@@ -51,6 +51,7 @@
 
 #define MAIN_MIN_BATTERY_LEVEL_IN_MV 10000
 #define MAIN_LOOP_DELAY_IN_MS        10000
+#define MAIN_PAD_BUTTON_PERIOD_IN_S      2
 
 /* USER CODE END PM */
 
@@ -73,6 +74,9 @@ UART_HandleTypeDef huart2;
 
 /* USER CODE BEGIN PV */
 
+static uint32_t g_MAIN_padUpPressedStartTime;
+static uint32_t g_MAIN_padDownPressedStartTime;
+
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -92,8 +96,9 @@ static void MX_TIM5_Init(void);
 static void MX_TIM6_Init(void);
 /* USER CODE BEGIN PFP */
 
-static void MAIN_displayRcfwBanner(void                                      );
-static void MAIN_updateLedMode    (T_BLU_Data *p_data, uint32_t p_voltageInMv);
+static void MAIN_displayRcfwBanner(void                                           );
+static void MAIN_updateLogLevel   (T_BLU_Data *p_data                             );
+static void MAIN_updateLedMode    (T_DRV_MODE  p_driveMode, uint32_t p_voltageInMv);
 
 /* USER CODE END PFP */
 
@@ -103,68 +108,120 @@ static void MAIN_updateLedMode    (T_BLU_Data *p_data, uint32_t p_voltageInMv);
 static void MAIN_displayRcfwBanner(void)
 {
   /* Used ASCII art generator from https://patorjk.com with font called "Colossal" */
-  (void)printf("\n\r");
-  (void)printf("    8888888b.        .d8888b.       8888888888      888       888\n\r");
-  (void)printf("    888   Y88b      d88P  Y88b      888             888   o   888\n\r");
-  (void)printf("    888    888      888    888      888             888  d8b  888\n\r");
-  (void)printf("    888   d88P      888             8888888         888 d888b 888\n\r");
-  (void)printf("    8888888P\"       888             888             888d88888b888\n\r");
-  (void)printf("    888 T88b        888    888      888             88888P Y88888\n\r");
-  (void)printf("    888  T88b       Y88b  d88P      888             8888P   Y8888\n\r");
-  (void)printf("    888   T88b       \"Y8888P\"       888             888P     Y888\n\r");
-  (void)printf("\n\r");
+  LOG_info("");
+  LOG_info("    8888888b.        .d8888b.       8888888888      888       888"  );
+  LOG_info("    888   Y88b      d88P  Y88b      888             888   o   888"  );
+  LOG_info("    888    888      888    888      888             888  d8b  888"  );
+  LOG_info("    888   d88P      888             8888888         888 d888b 888"  );
+  LOG_info("    8888888P\"       888             888             888d88888b888" );
+  LOG_info("    888 T88b        888    888      888             88888P Y88888"  );
+  LOG_info("    888  T88b       Y88b  d88P      888             8888P   Y8888"  );
+  LOG_info("    888   T88b       \"Y8888P\"       888             888P     Y888");
+  LOG_info("");
 
   return;
 }
 
-static void MAIN_updateLedMode(T_BLU_Data *p_data, uint32_t p_voltageInMv)
+static void MAIN_updateLogLevel(T_BLU_Data *p_data)
 {
-  T_LED_MODE l_currentLedMode;
-  T_LED_MODE l_requestLedMode;
+  RTC_TimeTypeDef l_time;
+  RTC_DateTypeDef l_date;
 
-  l_currentLedMode = LED_getMode();
+  HAL_RTC_GetTime(&hrtc, &l_time, RTC_FORMAT_BCD);
+  HAL_RTC_GetDate(&hrtc, &l_date, RTC_FORMAT_BCD);
 
+  switch (p_data->button)
+  {
+    case BLU_BUTTON_PAD_UP:
+      if (g_MAIN_padUpPressedStartTime == 0)
+      {
+        g_MAIN_padUpPressedStartTime = UTI_turnRtcTimeToSeconds(&l_time);
+
+        LOG_increaseLevel();
+      }
+      else if (UTI_turnRtcTimeToSeconds(&l_time) - g_MAIN_padUpPressedStartTime < MAIN_PAD_BUTTON_PERIOD_IN_S)
+      {
+        ; /* Nothing to do */
+      }
+      else
+      {
+        g_MAIN_padUpPressedStartTime = 0;
+      }
+      break;
+
+    case BLU_BUTTON_PAD_DOWN:
+      if (g_MAIN_padDownPressedStartTime == 0)
+      {
+        g_MAIN_padDownPressedStartTime = UTI_turnRtcTimeToSeconds(&l_time);
+
+        LOG_decreaseLevel();
+      }
+      else if (UTI_turnRtcTimeToSeconds(&l_time) - g_MAIN_padDownPressedStartTime < MAIN_PAD_BUTTON_PERIOD_IN_S)
+      {
+        ; /* Nothing to do */
+      }
+      else
+      {
+        g_MAIN_padDownPressedStartTime = 0;
+      }
+      break;
+
+    case BLU_BUTTON_PAD_LEFT:
+      LOG_turnOff();
+      break;
+
+    case BLU_BUTTON_PAD_RIGHT:
+      LOG_turnOn();
+      break;
+
+    default:
+      ; /* Nothing to do */;
+      break;
+  }
+
+  if ((p_data->button != BLU_BUTTON_PAD_UP) && (p_data->button != BLU_BUTTON_PAD_DOWN))
+  {
+    g_MAIN_padUpPressedStartTime   = 0;
+    g_MAIN_padDownPressedStartTime = 0;
+  }
+  else
+  {
+    ; /* Nothing to do */;
+  }
+
+  return;
+}
+
+static void MAIN_updateLedMode(T_DRV_MODE p_driveMode, uint32_t p_voltageInMv)
+{
   /* Regarding LED mode, battery check is prioritary on user requests. */
   /* Ignore 0 value as we could get it at startup or while debugging.  */
   if ((p_voltageInMv != 0) && (p_voltageInMv < MAIN_MIN_BATTERY_LEVEL_IN_MV))
   {
     LOG_warning("Battery is getting low: %u mV", p_voltageInMv);
 
-    l_requestLedMode = LED_MODE_BATTERY_LOW;
+    LED_setMode(LED_MODE_FORCED_OFF);
   }
   else
   {
-    switch (p_data->button)
+    switch (p_driveMode)
     {
-      case BLU_BUTTON_PAD_UP:
-        l_requestLedMode = LED_MODE_FORCED_ON;
+      case DRV_MODE_MANUAL_FIXED_SPEED:
+        LED_setMode(LED_MODE_BLINK_SLOW);
         break;
 
-      case BLU_BUTTON_PAD_DOWN:
-        l_requestLedMode = LED_MODE_FORCED_OFF;
+      case DRV_MODE_MANUAL_VARIABLE_SPEED:
+        LED_setMode(LED_MODE_BLINK_MEDIUM);
         break;
 
-      case BLU_BUTTON_PAD_LEFT:
-        l_requestLedMode = LED_MODE_BLINK_SLOW;
-        break;
-
-      case BLU_BUTTON_PAD_RIGHT:
-        l_requestLedMode = LED_MODE_BLINK_FAST;
+      case DRV_MODE_MASTER_BOARD_CONTROLLED_SPEED:
+        LED_setMode(LED_MODE_BLINK_FAST);
         break;
 
       default:
-        l_requestLedMode = l_currentLedMode;
+        ; /* Nothing to do */
         break;
     }
-  }
-
-  if (l_requestLedMode != l_currentLedMode)
-  {
-    LED_setMode(l_requestLedMode);
-  }
-  else
-  {
-    ; /* Nothing to do */
   }
 
   return;
@@ -191,6 +248,7 @@ int main(void)
   /* USART2 UART  is used  to get control from master board - PA2 / PA3          */
 
   T_BLU_Data l_bluetoothData;
+  T_DRV_MODE l_driveMode;
   uint32_t   l_voltageInMv;
   uint16_t   l_lastTime;
   uint16_t   l_currentTime;
@@ -230,16 +288,21 @@ int main(void)
   MX_TIM6_Init();
   /* USER CODE BEGIN 2 */
 
+  /* Setup global variables */
+  g_MAIN_padUpPressedStartTime   = 0;
+  g_MAIN_padDownPressedStartTime = 0;
+
   /* Setup console */
   CON_init(&huart1);
-
-  /* Display RCFW banner */
-  MAIN_displayRcfwBanner();
 
   /* Setup and start using logs */
   LOG_init    (&hrtc          );
   LOG_setLevel(LOG_LEVEL_DEBUG);
+  LOG_turnOn  (               );
   LOG_info    ("Starting RCFW");
+
+  /* Display RCFW banner */
+  MAIN_displayRcfwBanner();
 
   /* Initialize Timer 6 */
   HAL_TIM_Base_Start(&htim6);
@@ -252,11 +315,11 @@ int main(void)
 
   LOG_info("Started TIMER 7 (utilities/delay)");
 
-  /* Initialize Timer 1 and green LED */
+  /* Initialize Timer 1 & green LED */
   HAL_TIM_Base_Start_IT(&htim1);
-  LED_setMode(LED_MODE_BLINK_SLOW);
+  LED_setMode(LED_MODE_BLINK_FAST);
 
-  LOG_info("Started TIMER 1 (blue LED)");
+  LOG_info("Started TIMER 1 (green LED)");
 
   /* Initialize Timers 2, 3, 4 & 5 */
   HAL_TIM_Encoder_Start_IT(&htim2, TIM_CHANNEL_ALL);
@@ -298,18 +361,21 @@ int main(void)
 
   while (1)
   {
-    BAT_update             (&l_voltageInMv                 );
-    CON_receiveData        (                               );
-    BLU_receiveData        (&l_bluetoothData               );
-    DRV_updateFromBluetooth(&l_bluetoothData               );
-    MAIN_updateLedMode     (&l_bluetoothData, l_voltageInMv);
-    UTI_delayUs            (MAIN_LOOP_DELAY_IN_MS          );
+    CON_receiveData        (                );
+    BLU_receiveData        (&l_bluetoothData);
+    DRV_updateFromBluetooth(&l_bluetoothData);
+
+    l_driveMode = DRV_getMode();
+
+    BAT_update         (&l_voltageInMv            );
+    MAIN_updateLedMode (l_driveMode, l_voltageInMv);
+    MAIN_updateLogLevel(&l_bluetoothData          );
+
+    UTI_delayUs(MAIN_LOOP_DELAY_IN_MS);
 
     l_currentTime = __HAL_TIM_GET_COUNTER(&htim6);
     l_deltaTime   = l_lastTime - l_currentTime;
     l_lastTime    = l_currentTime;
-
-    //LOG_debug("%d", l_deltaTime);
 
     DRV_updateFromMaster(l_deltaTime);
 

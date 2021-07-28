@@ -8,8 +8,10 @@
 #define UTI_MAX(a, b) ((a) > (b) ? a : b)
 #define UTI_MIN(a, b) ((a) < (b) ? a : b)
 
-void    UTI_init         (TIM_HandleTypeDef *htim );
-void    UTI_delayUs      (uint16_t           delay);
-int32_t UTI_clampIntValue(int32_t p_value, int32_t p_minValue, int32_t p_maxValue, bool p_clampToNearest, int32_t p_clampValue);
+void     UTI_init                (TIM_HandleTypeDef *p_delayTimerHandle);
+void     UTI_delayUs             (uint16_t           p_delay           );
+void     UTI_resetRtcTime        (RTC_TimeTypeDef   *p_time            );
+uint32_t UTI_turnRtcTimeToSeconds(RTC_TimeTypeDef   *p_time            );
+int32_t  UTI_clampIntValue       (int32_t p_value, int32_t p_minValue, int32_t p_maxValue, bool p_clampToNearest, int32_t p_clampValue);
 
 #endif /* __UTILS_H */

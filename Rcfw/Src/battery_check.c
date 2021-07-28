@@ -36,8 +36,7 @@ void BAT_update(uint32_t *p_voltageInMv)
   HAL_RTC_GetTime(g_BAT_rtcHandle, &l_time, RTC_FORMAT_BCD);
   HAL_RTC_GetDate(g_BAT_rtcHandle, &l_date, RTC_FORMAT_BCD);
 
-  if ((            l_time.Hours * 3600 +             l_time.Minutes * 60 +             l_time.Seconds) -
-      (g_BAT_lastReadTime.Hours * 3600 + g_BAT_lastReadTime.Minutes * 60 + g_BAT_lastReadTime.Seconds) >= BAT_POLLING_PERIOD_IN_S)
+  if (UTI_turnRtcTimeToSeconds(&l_time) - UTI_turnRtcTimeToSeconds(&g_BAT_lastReadTime) >= BAT_POLLING_PERIOD_IN_S)
   {
     g_BAT_lastReadTime = l_time;
 

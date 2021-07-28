@@ -28,6 +28,20 @@ void UTI_delayUs(uint16_t p_delay)
   return;
 }
 
+void UTI_resetRtcTime(RTC_TimeTypeDef *p_time)
+{
+  p_time->Hours   = 0;
+  p_time->Minutes = 0;
+  p_time->Seconds = 0;
+
+  return;
+}
+
+uint32_t UTI_turnRtcTimeToSeconds(RTC_TimeTypeDef *p_time)
+{
+  return p_time->Hours * 3600 + p_time->Minutes * 60 + p_time->Seconds;
+}
+
 int32_t UTI_clampIntValue(int32_t p_value, int32_t p_minValue, int32_t p_maxValue, bool p_clampToNearest, int32_t p_clampValue)
 {
   int32_t l_returnValue;

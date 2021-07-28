@@ -9,13 +9,6 @@
 #include "log.h"
 #include "utils.h"
 
-typedef enum
-{
-  DRV_MODE_MANUAL_FIXED_SPEED = 0,
-  DRV_MODE_MANUAL_VARIABLE_SPEED,
-  DRV_MODE_MASTER_BOARD_CONTROLLED_SPEED
-} T_DRV_MODE;
-
 #define DRV_FRONT_RIGHT_MOTOR_NAME "FRONT RIGHT"
 #define DRV_FRONT_LEFT_MOTOR_NAME  "FRONT LEFT "
 #define DRV_REAR_LEFT_MOTOR_NAME   "REAR LEFT  "
@@ -115,7 +108,7 @@ void DRV_init(TIM_HandleTypeDef *p_pwmTimerHandle,
   /* Considered that drive is inactive when the code starts */
   g_DRV_isActive = false;
 
-  /* Start with master board control mode */
+  /* Start with master board control mode. BLink green LED accordingly */
   g_DRV_mode = DRV_MODE_MASTER_BOARD_CONTROLLED_SPEED;
 
   return;
@@ -132,25 +125,25 @@ void DRV_updateEncoder(TIM_HandleTypeDef *p_encoderTimerHandle)
   {
     ENC_update(&g_DRV_encoderRearLeft, l_count);
 
-    LOG_debug("%s encoder: %d", DRV_REAR_LEFT_MOTOR_NAME, ENC_getCount(&g_DRV_encoderRearLeft));
+    // LOG_debug("%s encoder: %d", DRV_REAR_LEFT_MOTOR_NAME, ENC_getCount(&g_DRV_encoderRearLeft));
   }
   else if (p_encoderTimerHandle == g_DRV_encoderRearRight.timerHandle)
   {
     ENC_update(&g_DRV_encoderRearRight, l_count);
 
-    LOG_debug("%s encoder: %d", DRV_REAR_RIGHT_MOTOR_NAME, ENC_getCount(&g_DRV_encoderRearRight));
+    // LOG_debug("%s encoder: %d", DRV_REAR_RIGHT_MOTOR_NAME, ENC_getCount(&g_DRV_encoderRearRight));
   }
   else if (p_encoderTimerHandle == g_DRV_encoderFrontRight.timerHandle)
   {
     ENC_update(&g_DRV_encoderFrontRight, l_count);
 
-    LOG_debug("%s encoder: %d", DRV_FRONT_RIGHT_MOTOR_NAME, ENC_getCount(&g_DRV_encoderFrontRight));
+    // LOG_debug("%s encoder: %d", DRV_FRONT_RIGHT_MOTOR_NAME, ENC_getCount(&g_DRV_encoderFrontRight));
   }
   else if (p_encoderTimerHandle == g_DRV_encoderFrontLeft.timerHandle)
   {
     ENC_update(&g_DRV_encoderFrontLeft, l_count);
 
-    LOG_debug("%s encoder: %d", DRV_FRONT_LEFT_MOTOR_NAME, ENC_getCount(&g_DRV_encoderFrontLeft));
+    // LOG_debug("%s encoder: %d", DRV_FRONT_LEFT_MOTOR_NAME, ENC_getCount(&g_DRV_encoderFrontLeft));
   }
   else
   {
@@ -354,6 +347,11 @@ void DRV_updateFromMaster(uint16_t p_deltaTime)
   }
 
   return;
+}
+
+T_DRV_MODE DRV_getMode(void)
+{
+  return g_DRV_mode;
 }
 
 static void DRV_sleep(void)

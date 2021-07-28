@@ -8,9 +8,41 @@ static T_LED_MODE g_LED_mode = LED_MODE_BLINK_SLOW;
 
 void LED_setMode(T_LED_MODE p_mode)
 {
-  LOG_info("Setting LED mode to %u", p_mode);
+  if (p_mode != g_LED_mode)
+  {
+    switch (p_mode)
+    {
+      case LED_MODE_FORCED_OFF:
+        LOG_info("Turning LED OFF");
+        break;
 
-  g_LED_mode = p_mode;
+      case LED_MODE_FORCED_ON:
+        LOG_info("Turning LED ON");
+        break;
+
+      case LED_MODE_BLINK_SLOW:
+        LOG_info("Setting LED to blink slow");
+        break;
+
+      case LED_MODE_BLINK_MEDIUM:
+        LOG_info("Setting LED to blink medium");
+        break;
+
+      case LED_MODE_BLINK_FAST:
+        LOG_info("Setting LED to blink fast");
+        break;
+
+      default:
+        ; /* Nothing to do */
+        break;
+    }
+
+    g_LED_mode = p_mode;
+  }
+  else
+  {
+    ; /* Nothong to do */
+  }
 
   return;
 }
@@ -46,7 +78,7 @@ void LED_update(void)
       }
       break;
 
-    case LED_MODE_BLINK_FAST:
+    case LED_MODE_BLINK_MEDIUM:
       l_blinkCounter++;
       if (l_blinkCounter % 2 == 0)
       {
@@ -58,7 +90,7 @@ void LED_update(void)
       }
       break;
 
-    case LED_MODE_BATTERY_LOW:
+    case LED_MODE_BLINK_FAST:
       HAL_GPIO_TogglePin(BLUE_LED_GPIO_Port, BLUE_LED_Pin);
       break;
 
