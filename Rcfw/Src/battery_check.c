@@ -1,5 +1,6 @@
 #include "battery_check.h"
 
+#include "utils.h"
 #include "log.h"
 
 #define BAT_POLLING_PERIOD_IN_S 10
