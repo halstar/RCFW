@@ -21,9 +21,20 @@ void LOG_increaseLevel(void                                          );
 void LOG_decreaseLevel(void                                          );
 void LOG_log          (T_LOG_LEVEL p_level, const char *p_format, ...);
 
-#define LOG_debug(...)   LOG_log(LOG_LEVEL_DEBUG, __VA_ARGS__)
-#define LOG_info(...)    LOG_log(LOG_LEVEL_INFO , __VA_ARGS__)
-#define LOG_warning(...) LOG_log(LOG_LEVEL_WARN , __VA_ARGS__)
-#define LOG_error(...)   LOG_log(LOG_LEVEL_ERROR, __VA_ARGS__)
+#ifdef DEBUG
+
+  #define LOG_debug(...)   LOG_log(LOG_LEVEL_DEBUG, __VA_ARGS__)
+  #define LOG_info(...)    LOG_log(LOG_LEVEL_INFO , __VA_ARGS__)
+  #define LOG_warning(...) LOG_log(LOG_LEVEL_WARN , __VA_ARGS__)
+  #define LOG_error(...)   LOG_log(LOG_LEVEL_ERROR, __VA_ARGS__)
+
+#else
+
+  #define LOG_debug(...)
+  #define LOG_info(...)
+  #define LOG_warning(...)
+  #define LOG_error(...)
+
+#endif
 
 #endif /* __LOG_H */

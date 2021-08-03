@@ -297,7 +297,7 @@ int main(void)
 
   /* Setup and start using logs */
   LOG_init    (&hrtc          );
-  LOG_setLevel(LOG_LEVEL_DEBUG);
+  LOG_setLevel(LOG_LEVEL_INFO);
   LOG_turnOn  (               );
   LOG_info    ("Starting RCFW");
 

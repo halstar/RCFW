@@ -70,7 +70,7 @@ int32_t UTI_clampIntValue(int32_t p_value, int32_t p_minValue, int32_t p_maxValu
   }
   else
   {
-    ; /* Nothing to do */
+    l_returnValue = p_value;
   }
 
   return l_returnValue;
