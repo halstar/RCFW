@@ -28,6 +28,17 @@ void UTI_delayUs(uint16_t p_delay)
   return;
 }
 
+void UTI_resetRtcDate(RTC_DateTypeDef *p_date)
+{
+  p_date->Date    = 0;
+  p_date->Month   = 0;
+  p_date->WeekDay = 0;
+  p_date->Year    = 0;
+
+  return;
+}
+
+
 void UTI_resetRtcTime(RTC_TimeTypeDef *p_time)
 {
   p_time->Hours   = 0;

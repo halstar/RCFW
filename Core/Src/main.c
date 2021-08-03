@@ -127,8 +127,9 @@ static void MAIN_updateLogLevel(T_BLU_Data *p_data)
   RTC_TimeTypeDef l_time;
   RTC_DateTypeDef l_date;
 
-  HAL_RTC_GetTime(&hrtc, &l_time, RTC_FORMAT_BCD);
-  HAL_RTC_GetDate(&hrtc, &l_date, RTC_FORMAT_BCD);
+  /* As this method is using for logging/debug, we will not deal with failure cases */
+  (void)HAL_RTC_GetTime(&hrtc, &l_time, RTC_FORMAT_BCD);
+  (void)HAL_RTC_GetDate(&hrtc, &l_date, RTC_FORMAT_BCD);
 
   switch (p_data->button)
   {
@@ -247,12 +248,13 @@ int main(void)
   /* USART1 UART  is used  for USB/serial console           - PA9 / PA10         */
   /* USART2 UART  is used  to get control from master board - PA2 / PA3          */
 
-  T_BLU_Data l_bluetoothData;
-  T_DRV_MODE l_driveMode;
-  uint32_t   l_voltageInMv;
-  uint16_t   l_lastTime;
-  uint16_t   l_currentTime;
-  uint16_t   l_deltaTime;
+  HAL_StatusTypeDef l_halReturnCode;
+  T_BLU_Data        l_bluetoothData;
+  T_DRV_MODE        l_driveMode;
+  uint32_t          l_voltageInMv;
+  uint16_t          l_lastTime;
+  uint16_t          l_currentTime;
+  uint16_t          l_deltaTime;
 
   /* USER CODE END 1 */
 
@@ -305,45 +307,89 @@ int main(void)
   MAIN_displayRcfwBanner();
 
   /* Initialize Timer 6 */
-  HAL_TIM_Base_Start(&htim6);
+  l_halReturnCode = HAL_TIM_Base_Start(&htim6);
 
-  LOG_info("Started TIMER 6 (time measurement)");
+  if (l_halReturnCode != HAL_OK)
+  {
+    LOG_error("HAL_TIM_Base_Start(&htim6) returned an error code: %d", l_halReturnCode);
+  }
+  else
+  {
+    LOG_info("Started TIMER 6 (time measurement)");
+  }
 
   /* Initialize Timer 7 and delay function in utilities */
-  HAL_TIM_Base_Start_IT(&htim7);
-  UTI_init             (&htim7);
+  UTI_init(&htim7);
 
-  LOG_info("Started TIMER 7 (utilities/delay)");
+  l_halReturnCode = HAL_TIM_Base_Start_IT(&htim7);
+
+  if (l_halReturnCode != HAL_OK)
+  {
+    LOG_error("HAL_TIM_Base_Start_IT(&htim7) returned an error code: %d", l_halReturnCode);
+  }
+  else
+  {
+    LOG_info("Started TIMER 7 (utilities/delay)");
+  }
 
   /* Initialize Timer 1 & green LED */
-  HAL_TIM_Base_Start_IT(&htim1);
   LED_setMode(LED_MODE_BLINK_FAST);
 
-  LOG_info("Started TIMER 1 (green LED)");
+  l_halReturnCode = HAL_TIM_Base_Start_IT(&htim1);
+
+  if (l_halReturnCode != HAL_OK)
+  {
+    LOG_error("HAL_TIM_Base_Start_IT(&htim1) returned an error code: %d", l_halReturnCode);
+  }
+  else
+  {
+    LOG_info("Started TIMER 1 (green LED)");
+  }
 
   /* Initialize Timers 2, 3, 4 & 5 */
-  HAL_TIM_Encoder_Start_IT(&htim2, TIM_CHANNEL_ALL);
-  HAL_TIM_Encoder_Start_IT(&htim3, TIM_CHANNEL_ALL);
-  HAL_TIM_Encoder_Start_IT(&htim4, TIM_CHANNEL_ALL);
-  HAL_TIM_Encoder_Start_IT(&htim5, TIM_CHANNEL_ALL);
+  l_halReturnCode  = HAL_TIM_Encoder_Start_IT(&htim2, TIM_CHANNEL_ALL);
+  l_halReturnCode |= HAL_TIM_Encoder_Start_IT(&htim3, TIM_CHANNEL_ALL);
+  l_halReturnCode |= HAL_TIM_Encoder_Start_IT(&htim4, TIM_CHANNEL_ALL);
+  l_halReturnCode |= HAL_TIM_Encoder_Start_IT(&htim5, TIM_CHANNEL_ALL);
 
-  LOG_info("Started TIMER 2, 3, 4, 5 (encoders)");
+  if (l_halReturnCode != HAL_OK)
+  {
+    LOG_error("HAL_TIM_Encoder_Start_IT(&htimX) returned error code(s): %d", l_halReturnCode);
+  }
+  else
+  {
+    LOG_info("Started TIMER 2, 3, 4, 5 (encoders)");
+  }
 
   /* Initialize Timer 8 */
-  HAL_TIM_Base_Start(&htim8);
+  l_halReturnCode = HAL_TIM_Base_Start(&htim8);
 
-  LOG_info("Started TIMER 8 (PWM channels)");
+  if (l_halReturnCode != HAL_OK)
+  {
+    LOG_error("HAL_TIM_Base_Start(&htim8) returned an error code: %d", l_halReturnCode);
+  }
+  else
+  {
+    LOG_info("Started TIMER 8 (PWM channels)");
+  }
 
   /* Initialize battery monitor */
   BAT_init(&hadc1, &hrtc);
 
   /* Initialize PWM channels */
-  HAL_TIM_PWM_Start(&htim8, TIM_CHANNEL_1);
-  HAL_TIM_PWM_Start(&htim8, TIM_CHANNEL_2);
-  HAL_TIM_PWM_Start(&htim8, TIM_CHANNEL_3);
-  HAL_TIM_PWM_Start(&htim8, TIM_CHANNEL_4);
+  l_halReturnCode  = HAL_TIM_PWM_Start(&htim8, TIM_CHANNEL_1);
+  l_halReturnCode |= HAL_TIM_PWM_Start(&htim8, TIM_CHANNEL_2);
+  l_halReturnCode |= HAL_TIM_PWM_Start(&htim8, TIM_CHANNEL_3);
+  l_halReturnCode |= HAL_TIM_PWM_Start(&htim8, TIM_CHANNEL_4);
 
-  LOG_info("Started PWM channels");
+  if (l_halReturnCode != HAL_OK)
+  {
+    LOG_error("HAL_TIM_PWM_Start(&htim8) returned error code(s): %d", l_halReturnCode);
+  }
+  else
+  {
+    LOG_info("Started PWM channels");
+  }
 
   /* Initialize bluetooth control */
   BLU_init(DRV_MAXIMUM_SPEED);

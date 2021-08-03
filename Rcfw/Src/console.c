@@ -29,7 +29,8 @@ void CON_receiveData(void)
 
 int fputc(int p_character, FILE *p_fileDescriptor)
 {
-  HAL_UART_Transmit(g_CON_uartHandle, (uint8_t *)&p_character, 1, 1000);
+  /* As this method is using for logging/debug, we will not deal with failure cases */
+  (void)HAL_UART_Transmit(g_CON_uartHandle, (uint8_t *)&p_character, 1, 1000);
 
   return p_character;
 }
