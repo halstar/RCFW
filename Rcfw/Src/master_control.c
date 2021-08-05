@@ -5,6 +5,7 @@
 
 #include "stm32f1xx_hal.h"
 #include "string_fifo.h"
+#include "const.h"
 #include "log.h"
 
 static UART_HandleTypeDef *g_MAS_uartHandle;
@@ -78,8 +79,8 @@ void MAS_sendString(char *p_string)
 
   l_halReturnCode = HAL_UART_Transmit(g_MAS_uartHandle,
                            (uint8_t *)p_string,
-                              strnlen(p_string, MAS_MAX_STRING_LENGTH),
-                                      1000);
+                              strnlen(p_string, CST_MASTER_TX_MAX_STRING_LENGTH),
+                                      CST_UART_TRANSMIT_TIMEOUT_IN_MS);
 
   if (l_halReturnCode == HAL_OK)
   {

@@ -8,7 +8,7 @@
 
 void SFO_dataInit(T_SFO_data *p_data)
 {
-  (void)memset(p_data, 0, SFO_MAX_STRING_SIZE);
+  (void)memset(p_data, 0, CST_STRING_FIFO_MAX_STRING_LENGTH);
 
   return;
 }
@@ -24,12 +24,11 @@ void SFO_init(T_SFO_Context *p_fifo)
   return;
 }
 
-
 void SFO_push(T_SFO_Context *p_fifo, T_SFO_data *p_dataIn)
 {
   T_SFO_Element *l_element;
 
-  if (p_fifo->count == SFO_MAX_ELEMENTS)
+  if (p_fifo->count == CST_STRING_FIFO_MAX_ELEMENTS)
   {
     LOG_error("SFO_push() failure - String FIFO is full (%u elements)", SFO_MAX_ELEMENTS);
   }
@@ -43,7 +42,7 @@ void SFO_push(T_SFO_Context *p_fifo, T_SFO_data *p_dataIn)
     }
     else
     {
-      (void)strncpy(l_element->data, *p_dataIn, SFO_MAX_STRING_SIZE);
+      (void)strncpy(l_element->data, *p_dataIn, CST_STRING_FIFO_MAX_STRING_LENGTH);
 
       l_element->nextElement = p_fifo->head;
       p_fifo->head           = l_element;
@@ -70,7 +69,7 @@ void SFO_pop(T_SFO_Context *p_fifo, T_SFO_data *p_dataOut)
   }
   else
   {
-    (void)strncpy(*p_dataOut, p_fifo->tail->data, SFO_MAX_STRING_SIZE);
+    (void)strncpy(*p_dataOut, p_fifo->tail->data, CST_STRING_FIFO_MAX_STRING_LENGTH);
 
     free(p_fifo->tail);
 

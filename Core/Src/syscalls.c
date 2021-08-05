@@ -33,6 +33,7 @@
 #include <sys/unistd.h>
 
 #include "stm32f1xx_hal.h"
+#include "const.h"
 
 /* Variables */
 extern int __io_putchar(int ch) __attribute__((weak));
@@ -86,9 +87,11 @@ __attribute__((weak)) int _write(int file, char *ptr, int len)
     return -1;
   }
 
-  HAL_StatusTypeDef status = HAL_UART_Transmit(&huart1, (uint8_t *)ptr, len, 1000);
+  HAL_StatusTypeDef status = HAL_UART_Transmit(&huart1,
+                                     (uint8_t *)ptr,
+                                                len,
+                                                CST_UART_TRANSMIT_TIMEOUT_IN_MS);
   return (status == HAL_OK ? len : 0);
-
 }
 
 int _close(int file)

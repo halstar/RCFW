@@ -4,11 +4,9 @@
 #include <stdbool.h>
 
 #include "stm32f1xx_hal.h"
+#include "const.h"
 
-#define SFO_MAX_ELEMENTS    10
-#define SFO_MAX_STRING_SIZE 16
-
-typedef char T_SFO_data[SFO_MAX_STRING_SIZE];
+typedef char T_SFO_data[CST_STRING_FIFO_MAX_STRING_LENGTH];
 
 typedef struct T_SFO_Element T_SFO_Element;
 

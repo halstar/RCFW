@@ -6,6 +6,7 @@
 
 #include "stm32f1xx_hal.h"
 #include "string_fifo.h"
+#include "const.h"
 #include "log.h"
 
 static UART_HandleTypeDef *g_CON_uartHandle;
@@ -78,8 +79,8 @@ void CON_sendString(char *p_string)
   /* As this method is using for logging/debug, we will not deal with failure cases */
   (void)HAL_UART_Transmit(g_CON_uartHandle,
                (uint8_t *)p_string,
-                  strnlen(p_string, CON_MAX_STRING_LENGTH),
-                          1000);
+                  strnlen(p_string, CST_CONSOLE_TX_MAX_STRING_LENGTH),
+                          CST_UART_TRANSMIT_TIMEOUT_IN_MS);
 
   return;
 }
@@ -88,7 +89,10 @@ void CON_sendString(char *p_string)
 int fputc(int p_character, FILE *p_fileDescriptor)
 {
   /* As this method is using for logging/debug, we will not deal with failure cases */
-  (void)HAL_UART_Transmit(g_CON_uartHandle, (uint8_t *)&p_character, 1, 1000);
+  (void)HAL_UART_Transmit(g_CON_uartHandle,
+              (uint8_t *)&p_character,
+                          1,
+                          CST_UART_TRANSMIT_TIMEOUT_IN_MS);
 
   return p_character;
 }

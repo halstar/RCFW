@@ -6,4 +6,5 @@
 * Add a SW reset function on input switch PC0?
 * Use STM32CubeMX code generator & HAL layer to rework SPI/bluetooth?
 * Implement command's reception/decoding from master board (Raspberry Pi),
+* In log macros, truncate input string to CST_CONSOLE_TX_MAX_STRING_LENGTH,
 * Finalize PID integration.
