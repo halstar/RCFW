@@ -8,6 +8,7 @@
 #include "main.h"
 #include "log.h"
 #include "utils.h"
+#include "string_fifo.h"
 
 #define DRV_FRONT_RIGHT_MOTOR_NAME "FRONT RIGHT"
 #define DRV_FRONT_LEFT_MOTOR_NAME  "FRONT LEFT "
@@ -302,17 +303,17 @@ void DRV_updateFromBluetooth(T_BLU_Data *p_bluetoothData)
   return;
 }
 
-void DRV_updateFromMaster(uint16_t p_deltaTime)
+void DRV_updateFromMaster(T_SFO_Context *p_commandsFifo, uint16_t p_deltaTime)
 {
-  int32_t l_measuredSpeedFrontRight;
-  int32_t l_measuredSpeedFrontLeft;
-  int32_t l_measuredSpeedRearRight;
-  int32_t l_measuredSpeedRearLeft;
-
-  int32_t l_pidSpeedFrontRight;
-  int32_t l_pidSpeedFrontLeft;
-  int32_t l_pidSpeedRearRight;
-  int32_t l_pidSpeedRearLeft;
+  int32_t    l_measuredSpeedFrontRight;
+  int32_t    l_measuredSpeedFrontLeft;
+  int32_t    l_measuredSpeedRearRight;
+  int32_t    l_measuredSpeedRearLeft;
+  int32_t    l_pidSpeedFrontRight;
+  int32_t    l_pidSpeedFrontLeft;
+  int32_t    l_pidSpeedRearRight;
+  int32_t    l_pidSpeedRearLeft;
+  T_SFO_data l_command;
 
   /* Ignore master board data only whenever a manual mode is selected */
   if (g_DRV_mode != DRV_MODE_MASTER_BOARD_CONTROL)
@@ -321,6 +322,13 @@ void DRV_updateFromMaster(uint16_t p_deltaTime)
   }
   else
   {
+    if (SFO_getCount(p_commandsFifo) != 0)
+    {
+      SFO_logInfo(p_commandsFifo);
+      SFO_pop    (p_commandsFifo         , &l_command);
+      LOG_info   ("Drive got command: %s",  l_command);
+    }
+
     /* Get measurements */
     l_measuredSpeedFrontRight = ENC_getCount(&g_DRV_encoderFrontRight);
     l_measuredSpeedFrontLeft  = ENC_getCount(&g_DRV_encoderFrontLeft );

@@ -4,6 +4,7 @@
 #include "stm32f1xx_hal.h"
 
 #include "bluetooth_control.h"
+#include "string_fifo.h"
 
 #define DRV_MAXIMUM_SPEED 40
 
@@ -20,9 +21,9 @@ void DRV_init(TIM_HandleTypeDef *p_pwmTimerHandle,
               TIM_HandleTypeDef *p_frontRightEncoderTimerHandle,
               TIM_HandleTypeDef *p_frontLeftEncoderTimerHandle);
 
-void       DRV_updateEncoder      (TIM_HandleTypeDef *p_encoderTimerHandle);
-void       DRV_updateFromBluetooth(T_BLU_Data        *p_bluetoothData     );
-void       DRV_updateFromMaster   (uint16_t           p_deltaTime         );
-T_DRV_MODE DRV_getMode            (void                                   );
+void       DRV_updateEncoder      (TIM_HandleTypeDef *p_encoderTimerHandle                );
+void       DRV_updateFromBluetooth(T_BLU_Data        *p_bluetoothData                     );
+void       DRV_updateFromMaster   (T_SFO_Context     *p_commandsFifo, uint16_t p_deltaTime);
+T_DRV_MODE DRV_getMode            (void                                                   );
 
 #endif /* __DRIVE_H */
