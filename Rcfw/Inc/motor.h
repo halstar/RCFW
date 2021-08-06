@@ -32,7 +32,10 @@ void MTR_init(T_MTR_Handle      *p_handle,
               TIM_HandleTypeDef *p_pwmTimerHandle,
               uint32_t           p_pwmChannel);
 
-void MTR_setDirection(T_MTR_Handle *p_handle, T_MTR_DIRECTION p_direction);
-void MTR_setSpeed    (T_MTR_Handle *p_handle, uint32_t        p_speed    );
+void            MTR_setDirection(T_MTR_Handle *p_handle, T_MTR_DIRECTION p_direction);
+T_MTR_DIRECTION MTR_getDirection(T_MTR_Handle *p_handle                             );
+void            MTR_setSpeed    (T_MTR_Handle *p_handle, uint32_t        p_speed    );
+uint32_t        MTR_getSpeed    (T_MTR_Handle *p_handle                             );
+
 
 #endif /* __MOTOR_H */

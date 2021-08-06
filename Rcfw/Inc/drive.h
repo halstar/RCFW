@@ -23,5 +23,6 @@ void       DRV_updateEncoder      (TIM_HandleTypeDef *p_encoderTimerHandle      
 void       DRV_updateFromBluetooth(T_BLU_Data        *p_bluetoothData                     );
 void       DRV_updateFromMaster   (T_SFO_Context     *p_commandsFifo, uint16_t p_deltaTime);
 T_DRV_MODE DRV_getMode            (void                                                   );
+void       DRV_logInfo            (void                                                   );
 
 #endif /* __DRIVE_H */

@@ -1,7 +1,9 @@
 #include <stdio.h>
+#include <string.h>
 #include <stdbool.h>
 
 #include "utils.h"
+#include "const.h"
 #include "log.h"
 
 #include "stm32f1xx_hal.h"
@@ -96,6 +98,7 @@ void LOG_decreaseLevel(void)
 
 void LOG_log(T_LOG_LEVEL p_level, const char *p_format, ...)
 {
+  char              l_buffer[CST_CONSOLE_TX_MAX_STRING_LENGTH];
   HAL_StatusTypeDef l_halReturnCode;
   va_list           l_argumentsList;
   RTC_TimeTypeDef   l_time;
@@ -129,9 +132,26 @@ void LOG_log(T_LOG_LEVEL p_level, const char *p_format, ...)
 
     va_start(l_argumentsList, p_format);
 
-    (void)printf("%-7s - %02x:%02x:%02x - ", g_LOG_levelStrings[p_level], l_time.Hours, l_time.Minutes, l_time.Seconds);
-    (void)vprintf(p_format, l_argumentsList);
-    (void)printf("\r\n");
+    (void)sprintf  ( l_buffer, "%-7s - %02x:%02x:%02x - ", g_LOG_levelStrings[p_level], l_time.Hours, l_time.Minutes, l_time.Seconds);
+    /* 21 is the length of string "%-7s - %02x:%02x:%02x - ". 2 is the length of string "\r\n". */
+    /* So we start and write format right after the former and we keep space for the latter.    */
+    (void)vsnprintf(&l_buffer[21], CST_CONSOLE_TX_MAX_STRING_LENGTH - 21 - 2, p_format, l_argumentsList);
+    (void)strcat   ( l_buffer    , "\r\n");
+
+    /* -1 is there to consider the end/null character, which strnlen() does not count */
+    if (strnlen(l_buffer, CST_CONSOLE_TX_MAX_STRING_LENGTH) == CST_CONSOLE_TX_MAX_STRING_LENGTH - 1)
+    {
+      /* At -1, we got the end/null character. At -2 & 3, we got "\r\n". */
+      l_buffer[CST_CONSOLE_TX_MAX_STRING_LENGTH - 4] = '.';
+      l_buffer[CST_CONSOLE_TX_MAX_STRING_LENGTH - 5] = '.';
+      l_buffer[CST_CONSOLE_TX_MAX_STRING_LENGTH - 6] = '.';
+    }
+    else
+    {
+      ; /* Nothing to do */
+    }
+
+    (void)printf("%s", l_buffer);
 
     va_end(l_argumentsList);
   }

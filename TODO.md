@@ -5,7 +5,6 @@
 * Fix clock configuration issue while debugging (try OpenOCD),
 * Add a SW reset function on input switch PC0?
 * Use STM32CubeMX code generator & HAL layer to rework SPI/bluetooth?
-* In log macros, truncate input string to CST_CONSOLE_TX_MAX_STRING_LENGTH,
 * Add support for embedded MPU-6050 inertial unit? (use case TBD...)
-* Add a debug/console helper SFO_logInfo(), like PID_logInfo(),
+* Add capability for console redirection to RaspberryPi?
 * Finalize PID integration.

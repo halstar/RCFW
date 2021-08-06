@@ -64,6 +64,11 @@ void MTR_setDirection(T_MTR_Handle *p_handle, T_MTR_DIRECTION p_direction)
   return;
 }
 
+T_MTR_DIRECTION MTR_getDirection(T_MTR_Handle *p_handle)
+{
+  return p_handle->direction;
+}
+
 void MTR_setSpeed(T_MTR_Handle *p_handle, uint32_t p_speed)
 {
   if (p_speed == p_handle->speed)
@@ -80,4 +85,9 @@ void MTR_setSpeed(T_MTR_Handle *p_handle, uint32_t p_speed)
   }
 
   return;
+}
+
+uint32_t MTR_getSpeed(T_MTR_Handle *p_handle)
+{
+  return p_handle->speed;
 }

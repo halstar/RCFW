@@ -412,6 +412,7 @@ int main(void)
 
   /* Initialize driving module */
   DRV_init(&htim8, &htim2, &htim3, &htim4, &htim5);
+  DRV_logInfo();
 
   /* USER CODE END 2 */
 

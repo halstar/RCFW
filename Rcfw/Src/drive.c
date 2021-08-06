@@ -438,6 +438,69 @@ T_DRV_MODE DRV_getMode(void)
   return g_DRV_mode;
 }
 
+void DRV_logInfo(void)
+{
+  T_MTR_DIRECTION l_direction;
+  uint32_t        l_speed;
+
+  if (g_DRV_mode == DRV_MODE_MANUAL_FIXED_SPEED)
+  {
+    LOG_info("Mode  : MANUAL FIXED SPEED");
+  }
+  else if (g_DRV_mode == DRV_MODE_MANUAL_VARIABLE_SPEED)
+  {
+    LOG_info("Mode  : MANUAL VARIABLE SPEED");
+  }
+  else if (g_DRV_mode == DRV_MODE_MASTER_BOARD_CONTROL)
+  {
+    LOG_info("Mode  : MASTER BOARD CONTROL");
+  }
+  else
+  {
+    LOG_error("Unsupported drive mode: %u", g_DRV_mode);
+  }
+
+  if (g_DRV_isDriveOn == true)
+  {
+    LOG_info("Drive : ON");
+  }
+  else
+  {
+    LOG_info("Drive : OFF");
+  }
+
+  if (g_DRV_areMotorsOn == true)
+  {
+    LOG_info("Motors: ON");
+  }
+  else
+  {
+    LOG_info("Motors: OFF");
+  }
+
+  l_direction = MTR_getDirection(&g_DRV_motorFrontLeft);
+  l_speed     = MTR_getSpeed    (&g_DRV_motorFrontLeft);
+
+  LOG_info("%s motor direction/speed: %u/%u", DRV_FRONT_LEFT_MOTOR_NAME, l_direction, l_speed);
+
+  l_direction = MTR_getDirection(&g_DRV_motorFrontRight);
+  l_speed     = MTR_getSpeed    (&g_DRV_motorFrontRight);
+
+  LOG_info("%s motor direction/speed: %u/%u", DRV_FRONT_RIGHT_MOTOR_NAME, l_direction, l_speed);
+
+  l_direction = MTR_getDirection(&g_DRV_motorRearLeft);
+  l_speed     = MTR_getSpeed    (&g_DRV_motorRearLeft);
+
+  LOG_info("%s motor direction/speed: %u/%u", DRV_REAR_LEFT_MOTOR_NAME, l_direction, l_speed);
+
+  l_direction = MTR_getDirection(&g_DRV_motorRearRight);
+  l_speed     = MTR_getSpeed    (&g_DRV_motorRearRight);
+
+  LOG_info("%s motor direction/speed: %u/%u", DRV_REAR_RIGHT_MOTOR_NAME, l_direction, l_speed);
+
+  return;
+}
+
 static void DRV_sleep(void)
 {
   if (g_DRV_isDriveOn == true)
