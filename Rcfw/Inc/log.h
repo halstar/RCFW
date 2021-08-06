@@ -1,6 +1,7 @@
 #ifndef __LOG_H
 #define __LOG_H
 
+#include <stdbool.h>
 #include <stdarg.h>
 
 #include "stm32f1xx_hal.h"
@@ -13,9 +14,8 @@ typedef enum
   LOG_LEVEL_ERROR
 } T_LOG_LEVEL;
 
-void LOG_init         (RTC_HandleTypeDef *p_rctHandle                );
-void LOG_turnOn       (void                                          );
-void LOG_turnOff      (void                                          );
+void LOG_init         (RTC_HandleTypeDef *p_rctHandle, bool p_isLogOn);
+void LOG_toggleOnOff  (void                                          );
 void LOG_setLevel     (T_LOG_LEVEL p_level                           );
 void LOG_increaseLevel(void                                          );
 void LOG_decreaseLevel(void                                          );

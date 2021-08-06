@@ -73,23 +73,13 @@ void MAS_updateFifo(T_SFO_Context *p_fifo)
   return;
 }
 
-void MAS_sendString(char *p_string)
+void MAS_sendString(char *p_string, uint32_t p_length)
 {
-  HAL_StatusTypeDef l_halReturnCode;
-
-  l_halReturnCode = HAL_UART_Transmit(g_MAS_uartHandle,
-                           (uint8_t *)p_string,
-                              strnlen(p_string, CST_MASTER_TX_MAX_STRING_LENGTH),
-                                      CST_UART_TRANSMIT_TIMEOUT_IN_MS);
-
-  if (l_halReturnCode == HAL_OK)
-  {
-    ; /* Nothing to do */
-  }
-  else
-  {
-    LOG_error("HAL_UART_Transmit() returned an error code: %d", l_halReturnCode);
-  }
+  /* As this method is using for logging/debug, we will not deal with failure cases */
+ (void)HAL_UART_Transmit(g_MAS_uartHandle,
+              (uint8_t *)p_string,
+                         p_length,
+                         CST_UART_TRANSMIT_TIMEOUT_IN_MS);
 
   return;
 }

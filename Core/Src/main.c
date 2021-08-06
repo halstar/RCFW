@@ -53,7 +53,6 @@
 
 #define MAIN_MIN_BATTERY_LEVEL_IN_MV 10000
 #define MAIN_LOOP_DELAY_IN_MS        10000
-#define MAIN_PAD_BUTTON_PERIOD_IN_S      2
 
 /* USER CODE END PM */
 
@@ -76,8 +75,11 @@ UART_HandleTypeDef huart1;
 
 /* USER CODE BEGIN PV */
 
-static uint32_t g_MAIN_padUpPressedStartTime;
-static uint32_t g_MAIN_padDownPressedStartTime;
+static uint32_t     g_MAIN_padUpPressedStartTime;
+static uint32_t     g_MAIN_padDownPressedStartTime;
+static uint32_t     g_MAIN_padLeftPressedStartTime;
+static uint32_t     g_MAIN_padRightPressedStartTime;
+T_MAIN_PRINT_OUTPUT g_MAIN_printOutput;
 
 /* USER CODE END PV */
 
@@ -99,7 +101,8 @@ static void MX_TIM6_Init(void);
 /* USER CODE BEGIN PFP */
 
 static void MAIN_displayRcfwBanner(void                                           );
-static void MAIN_updateLogLevel   (T_BLU_Data *p_data                             );
+static void MAIN_togglePrintOutput(void                                           );
+static void MAIN_updateLogSetup   (T_BLU_Data *p_data                             );
 static void MAIN_updateLedMode    (T_DRV_MODE  p_driveMode, uint32_t p_voltageInMv);
 
 /* USER CODE END PFP */
@@ -124,7 +127,25 @@ static void MAIN_displayRcfwBanner(void)
   return;
 }
 
-static void MAIN_updateLogLevel(T_BLU_Data *p_data)
+static void MAIN_togglePrintOutput(void)
+{
+  if (g_MAIN_printOutput == MAIN_PRINT_OUTPUT_TO_CONSOLE)
+  {
+    LOG_info("Directing print to MASTER");
+
+    g_MAIN_printOutput = MAIN_PRINT_OUTPUT_TO_MASTER;
+  }
+  else
+  {
+    LOG_info("Directing print to CONSOLE");
+
+    g_MAIN_printOutput = MAIN_PRINT_OUTPUT_TO_CONSOLE;
+  }
+
+  return;
+}
+
+static void MAIN_updateLogSetup(T_BLU_Data *p_data)
 {
   RTC_TimeTypeDef l_time;
   RTC_DateTypeDef l_date;
@@ -142,7 +163,7 @@ static void MAIN_updateLogLevel(T_BLU_Data *p_data)
 
         LOG_increaseLevel();
       }
-      else if (UTI_turnRtcTimeToSeconds(&l_time) - g_MAIN_padUpPressedStartTime < MAIN_PAD_BUTTON_PERIOD_IN_S)
+      else if (UTI_turnRtcTimeToSeconds(&l_time) - g_MAIN_padUpPressedStartTime < STP_PAD_BUTTONS_DEBOUNCE_PERIOD_IN_S)
       {
         ; /* Nothing to do */
       }
@@ -159,7 +180,7 @@ static void MAIN_updateLogLevel(T_BLU_Data *p_data)
 
         LOG_decreaseLevel();
       }
-      else if (UTI_turnRtcTimeToSeconds(&l_time) - g_MAIN_padDownPressedStartTime < MAIN_PAD_BUTTON_PERIOD_IN_S)
+      else if (UTI_turnRtcTimeToSeconds(&l_time) - g_MAIN_padDownPressedStartTime < STP_PAD_BUTTONS_DEBOUNCE_PERIOD_IN_S)
       {
         ; /* Nothing to do */
       }
@@ -170,11 +191,37 @@ static void MAIN_updateLogLevel(T_BLU_Data *p_data)
       break;
 
     case BLU_BUTTON_PAD_LEFT:
-      LOG_turnOff();
+      if (g_MAIN_padLeftPressedStartTime == 0)
+      {
+        g_MAIN_padLeftPressedStartTime = UTI_turnRtcTimeToSeconds(&l_time);
+
+        LOG_toggleOnOff();
+      }
+      else if (UTI_turnRtcTimeToSeconds(&l_time) - g_MAIN_padLeftPressedStartTime < STP_PAD_BUTTONS_DEBOUNCE_PERIOD_IN_S)
+      {
+        ; /* Nothing to do */
+      }
+      else
+      {
+        g_MAIN_padLeftPressedStartTime = 0;
+      }
       break;
 
     case BLU_BUTTON_PAD_RIGHT:
-      LOG_turnOn();
+      if (g_MAIN_padRightPressedStartTime == 0)
+      {
+        g_MAIN_padRightPressedStartTime = UTI_turnRtcTimeToSeconds(&l_time);
+
+        MAIN_togglePrintOutput();
+      }
+      else if (UTI_turnRtcTimeToSeconds(&l_time) - g_MAIN_padRightPressedStartTime < STP_PAD_BUTTONS_DEBOUNCE_PERIOD_IN_S)
+      {
+        ; /* Nothing to do */
+      }
+      else
+      {
+        g_MAIN_padRightPressedStartTime = 0;
+      }
       break;
 
     default:
@@ -294,8 +341,11 @@ int main(void)
   /* USER CODE BEGIN 2 */
 
   /* Setup global variables */
-  g_MAIN_padUpPressedStartTime   = 0;
-  g_MAIN_padDownPressedStartTime = 0;
+  g_MAIN_padUpPressedStartTime    = 0;
+  g_MAIN_padDownPressedStartTime  = 0;
+  g_MAIN_padLeftPressedStartTime  = 0;
+  g_MAIN_padRightPressedStartTime = 0;
+  g_MAIN_printOutput              = MAIN_PRINT_OUTPUT_TO_CONSOLE;
 
   /* Initialize commands string FIFO */
   SFO_init(&l_commandsFifo);
@@ -313,10 +363,9 @@ int main(void)
 //  }
 
   /* Setup and start using logs */
-  LOG_init    (&hrtc                );
-  LOG_setLevel(STP_DEFAULT_LOG_LEVEL);
-  LOG_turnOn  (                     );
-  LOG_info    ("Starting RCFW"      );
+  LOG_init    (&hrtc, STP_DEFAULT_IS_LOG_ON);
+  LOG_setLevel(STP_DEFAULT_LOG_LEVEL       );
+  LOG_info    ("Starting RCFW"             );
 
   /* Display RCFW banner */
   MAIN_displayRcfwBanner();
@@ -431,7 +480,7 @@ int main(void)
 
     BAT_update         (&l_voltageInMv            );
     MAIN_updateLedMode (l_driveMode, l_voltageInMv);
-    MAIN_updateLogLevel(&l_bluetoothData          );
+    MAIN_updateLogSetup(&l_bluetoothData          );
 
     UTI_delayUs(MAIN_LOOP_DELAY_IN_MS);
 

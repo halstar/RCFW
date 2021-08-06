@@ -74,25 +74,13 @@ void CON_updateFifo(T_SFO_Context *p_fifo)
   return;
 }
 
-void CON_sendString(char *p_string)
+void CON_sendString(char *p_string, uint32_t p_length)
 {
   /* As this method is using for logging/debug, we will not deal with failure cases */
   (void)HAL_UART_Transmit(g_CON_uartHandle,
                (uint8_t *)p_string,
-                  strnlen(p_string, CST_CONSOLE_TX_MAX_STRING_LENGTH),
+                          p_length,
                           CST_UART_TRANSMIT_TIMEOUT_IN_MS);
 
   return;
-}
-
-
-int fputc(int p_character, FILE *p_fileDescriptor)
-{
-  /* As this method is using for logging/debug, we will not deal with failure cases */
-  (void)HAL_UART_Transmit(g_CON_uartHandle,
-              (uint8_t *)&p_character,
-                          1,
-                          CST_UART_TRANSMIT_TIMEOUT_IN_MS);
-
-  return p_character;
 }

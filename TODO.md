@@ -6,5 +6,4 @@
 * Add a SW reset function on input switch PC0?
 * Use STM32CubeMX code generator & HAL layer to rework SPI/bluetooth?
 * Add support for embedded MPU-6050 inertial unit? (use case TBD...)
-* Add capability for console redirection to RaspberryPi?
 * Finalize PID integration.

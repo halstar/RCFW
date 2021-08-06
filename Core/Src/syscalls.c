@@ -33,12 +33,13 @@
 #include <sys/unistd.h>
 
 #include "stm32f1xx_hal.h"
-#include "const.h"
+#include "main.h"
+#include "console.h"
+#include "master_control.h"
 
 /* Variables */
 extern int __io_putchar(int ch) __attribute__((weak));
 extern int __io_getchar(void) __attribute__((weak));
-extern UART_HandleTypeDef huart1;
 
 
 char *__env[1] = { 0 };
@@ -87,11 +88,16 @@ __attribute__((weak)) int _write(int file, char *ptr, int len)
     return -1;
   }
 
-  HAL_StatusTypeDef status = HAL_UART_Transmit(&huart1,
-                                     (uint8_t *)ptr,
-                                                len,
-                                                CST_UART_TRANSMIT_TIMEOUT_IN_MS);
-  return (status == HAL_OK ? len : 0);
+  if (g_MAIN_printOutput == MAIN_PRINT_OUTPUT_TO_CONSOLE)
+  {
+    CON_sendString(ptr, len);
+  }
+  else
+  {
+    MAS_sendString(ptr, len);
+  }
+
+  return len;
 }
 
 int _close(int file)

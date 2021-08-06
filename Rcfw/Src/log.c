@@ -16,30 +16,17 @@ static const char        *g_LOG_levelStrings[4] =
   "DEBUG", "INFO", "WARNING", "ERROR"
 };
 
-void LOG_init(RTC_HandleTypeDef *p_rctHandle)
+void LOG_init(RTC_HandleTypeDef *p_rctHandle, bool p_isLogOn)
 {
+  g_LOG_isOn      = p_isLogOn;
   g_LOG_rtcHandle = p_rctHandle;
 
-  return;
-}
-
-void LOG_turnOn(void)
-{
-  if (g_LOG_isOn == false)
-  {
-    g_LOG_isOn = true;
-
-    LOG_info("Turning LOG ON");
-  }
-  else
-  {
-    ; /* Nothing to do */
-  }
+  LOG_info("LOG initialized");
 
   return;
 }
 
-void LOG_turnOff(void)
+void LOG_toggleOnOff(void)
 {
   if (g_LOG_isOn == true)
   {
@@ -49,7 +36,9 @@ void LOG_turnOff(void)
   }
   else
   {
-    ; /* Nothing to do */
+    g_LOG_isOn = true;
+
+    LOG_info("Turning LOG ON");
   }
 
   return;
