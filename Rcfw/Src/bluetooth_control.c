@@ -4,6 +4,7 @@
 
 #include "stm32f1xx_hal.h"
 #include "utils.h"
+#include "setup.h"
 #include "main.h"
 #include "log.h"
 
@@ -18,13 +19,11 @@
 #define BLU_LEFT_X_OFFSET      5
 #define BLU_LEFT_Y_OFFSET      6
 
-static uint32_t   g_BLU_maxDataValue;
 static T_BLU_Data g_BLU_lastData;
 
-static void         BLU_sendCommand  (uint8_t  p_command                                               );
-static void         BLU_readData     (uint8_t *p_buffer                                                );
-static T_BLU_BUTTON BLU_getButton    (uint8_t *p_buffer                                                );
-static int32_t      BLU_normalizeData(uint32_t p_rawData, uint32_t p_maxValue, bool p_isInversionNeeded);
+static void         BLU_sendCommand(uint8_t  p_command);
+static void         BLU_readData   (uint8_t *p_buffer );
+static T_BLU_BUTTON BLU_getButton  (uint8_t *p_buffer );
 
 static void BLU_sendCommand(uint8_t p_command)
 {
@@ -119,38 +118,9 @@ static T_BLU_BUTTON BLU_getButton(uint8_t *p_buffer)
   return BLU_BUTTON_NONE;
 }
 
-static int32_t BLU_normalizeData(uint32_t p_rawData, uint32_t p_maxValue, bool p_isInversionNeeded)
-{
-  float l_normalizedData;
-
-  l_normalizedData = p_rawData - 128.0f;
-
-  if (l_normalizedData > 0.0f)
-  {
-    l_normalizedData *= (float)p_maxValue / 127.0f;
-  }
-  else
-  {
-    l_normalizedData *= (float)p_maxValue / 128.0f;
-  }
-
-  if (p_isInversionNeeded == true)
-  {
-    l_normalizedData *= -1.0f;
-  }
-  else
-  {
-    ; /* Nothing to do */
-  }
-
-  return (int32_t)l_normalizedData;
-}
-
-void BLU_init(uint32_t p_maxDataValue)
+void BLU_init(void)
 {
   LOG_info("Initializing bluetooth control");
-
-  g_BLU_maxDataValue = p_maxDataValue;
 
   g_BLU_lastData.leftX  = BLU_DATA_DEFAUT_DIRECTION;
   g_BLU_lastData.leftY  = BLU_DATA_DEFAUT_DIRECTION;
@@ -169,8 +139,6 @@ void BLU_receiveData(T_BLU_Data *p_data)
   uint32_t     l_rightX;
   uint32_t     l_rightY;
   T_BLU_BUTTON l_button;
-
-  // LOG_info("Receiving Bluetooth data");
 
   /* Read raw data */
   BLU_readData(l_buffer);
@@ -199,11 +167,11 @@ void BLU_receiveData(T_BLU_Data *p_data)
            (l_rightY == g_BLU_lastData.rightY) &&
            (l_button == g_BLU_lastData.button))
   {
-    /* Normalize directions data in range [-100..100] */
-    p_data->leftX  = BLU_normalizeData(l_leftX , g_BLU_maxDataValue, false);
-    p_data->leftY  = BLU_normalizeData(l_leftY , g_BLU_maxDataValue, true );
-    p_data->rightX = BLU_normalizeData(l_rightX, g_BLU_maxDataValue, false);
-    p_data->rightY = BLU_normalizeData(l_rightY, g_BLU_maxDataValue, true );
+    /* Normalize directions data in range [-MAX..MAX] */
+    p_data->leftX  = UTI_normalizeIntValue(l_leftX , 0, 255, -STP_DRIVE_MAX_SPEED, STP_DRIVE_MAX_SPEED, false);
+    p_data->leftY  = UTI_normalizeIntValue(l_leftY , 0, 255, -STP_DRIVE_MAX_SPEED, STP_DRIVE_MAX_SPEED, true );
+    p_data->rightX = UTI_normalizeIntValue(l_rightX, 0, 255, -STP_DRIVE_MAX_SPEED, STP_DRIVE_MAX_SPEED, false);
+    p_data->rightY = UTI_normalizeIntValue(l_rightY, 0, 255, -STP_DRIVE_MAX_SPEED, STP_DRIVE_MAX_SPEED, true );
     p_data->button = l_button;
   }
   else

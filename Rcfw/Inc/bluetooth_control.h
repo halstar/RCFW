@@ -33,7 +33,7 @@ typedef struct {
   T_BLU_BUTTON button;
 } T_BLU_Data;
 
-void BLU_init       (uint32_t    p_maxDataValue);
-void BLU_receiveData(T_BLU_Data *p_data        );
+void BLU_init       (void              );
+void BLU_receiveData(T_BLU_Data *p_data);
 
 #endif /* __BLUTOOTH_CONTROL_H */

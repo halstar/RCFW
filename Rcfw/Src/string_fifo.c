@@ -15,7 +15,7 @@ void SFO_dataInit(T_SFO_data *p_data)
 
 void SFO_init(T_SFO_Context *p_fifo)
 {
-  LOG_debug("Initializing string FIFO");
+  LOG_debug("String FIFO now empty");
 
   p_fifo->head  = NULL;
   p_fifo->tail  = NULL;
@@ -30,7 +30,7 @@ void SFO_push(T_SFO_Context *p_fifo, T_SFO_data *p_dataIn)
 
   if (p_fifo->count == CST_STRING_FIFO_MAX_ELEMENTS)
   {
-    LOG_error("SFO_push() failure - String FIFO is full (%u elements)", SFO_MAX_ELEMENTS);
+    LOG_error("SFO_push() failure - String FIFO is full (%u elements)", CST_STRING_FIFO_MAX_ELEMENTS);
   }
   else
   {
@@ -111,7 +111,7 @@ void SFO_logInfo(T_SFO_Context *p_fifo)
   }
   else
   {
-    LOG_info("String FIFO: %u elements", p_fifo->count);
+    LOG_info("String FIFO: %u element(s)", p_fifo->count);
 
     l_element = p_fifo->head;
 

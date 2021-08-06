@@ -7,4 +7,5 @@
 * Use STM32CubeMX code generator & HAL layer to rework SPI/bluetooth?
 * Implement command's reception/decoding from master board (Raspberry Pi),
 * In log macros, truncate input string to CST_CONSOLE_TX_MAX_STRING_LENGTH,
+* Add support for embedded MPU-6050 inertial unit? (use case TBD...)
 * Finalize PID integration.

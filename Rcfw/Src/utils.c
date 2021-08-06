@@ -86,3 +86,23 @@ int32_t UTI_clampIntValue(int32_t p_value, int32_t p_minValue, int32_t p_maxValu
 
   return l_returnValue;
 }
+
+int32_t UTI_normalizeIntValue(int32_t p_value, int32_t p_inMinValue, int32_t p_inMaxValue, int32_t p_outMinValue, int32_t p_outMaxValue, bool p_isInversionNeeded)
+{
+  float l_returnValue;
+  float l_ratio;
+
+  l_ratio       = ((float)p_outMaxValue - (float)p_outMinValue) / ((float)p_inMaxValue - (float)p_inMinValue);
+  l_returnValue =  (float)(p_value - p_inMinValue) * l_ratio + p_outMinValue;
+
+  if (p_isInversionNeeded == true)
+  {
+    l_returnValue *= -1.0f;
+  }
+  else
+  {
+    ; /* Nothing to do */
+  }
+
+  return (int32_t)l_returnValue;
+}

@@ -6,8 +6,6 @@
 #include "bluetooth_control.h"
 #include "string_fifo.h"
 
-#define DRV_MAXIMUM_SPEED 40
-
 typedef enum
 {
   DRV_MODE_MANUAL_FIXED_SPEED = 0,

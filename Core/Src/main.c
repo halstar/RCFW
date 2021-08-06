@@ -28,6 +28,7 @@
 
 #include "log.h"
 #include "led.h"
+#include "setup.h"
 #include "utils.h"
 #include "drive.h"
 #include "console.h"
@@ -305,11 +306,17 @@ int main(void)
   /* Setup master connection */
   MAS_init(&huart4);
 
+  /* Temporary delay/workaound to deal with debugger connection issue */
+//  for (int i = 0; i < 10; i++)
+//  {
+//    HAL_Delay(1000);
+//  }
+
   /* Setup and start using logs */
-  LOG_init    (&hrtc          );
-  LOG_setLevel(LOG_LEVEL_INFO);
-  LOG_turnOn  (               );
-  LOG_info    ("Starting RCFW");
+  LOG_init    (&hrtc                );
+  LOG_setLevel(STP_DEFAULT_LOG_LEVEL);
+  LOG_turnOn  (                     );
+  LOG_info    ("Starting RCFW"      );
 
   /* Display RCFW banner */
   MAIN_displayRcfwBanner();
@@ -400,7 +407,7 @@ int main(void)
   }
 
   /* Initialize bluetooth control */
-  BLU_init(DRV_MAXIMUM_SPEED);
+  BLU_init();
 
   /* Initialize driving module */
   DRV_init(&htim8, &htim2, &htim3, &htim4, &htim5);

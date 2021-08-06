@@ -1,4 +1,5 @@
 #include <stdbool.h>
+#include <stdlib.h>
 
 #include "drive.h"
 
@@ -7,6 +8,7 @@
 #include "encoder.h"
 #include "main.h"
 #include "log.h"
+#include "setup.h"
 #include "utils.h"
 #include "string_fifo.h"
 
@@ -22,7 +24,7 @@
 #define DRV_BUTTONS_FIXED_SPEED   (DRV_JOYSTICKS_FIXED_SPEED * 2)
 
 static bool         g_DRV_areMotorsOn;
-static bool         g_DRV_isActive;
+static bool         g_DRV_isDriveOn;
 static T_DRV_MODE   g_DRV_mode;
 static T_PID_Handle g_DRV_pidFrontRight    , g_DRV_pidFrontLeft    , g_DRV_pidRearLeft    , g_DRV_pidRearRight    ;
 static T_MTR_Handle g_DRV_motorFrontRight  , g_DRV_motorFrontLeft  , g_DRV_motorRearLeft  , g_DRV_motorRearRight  ;
@@ -97,13 +99,13 @@ void DRV_init(TIM_HandleTypeDef *p_pwmTimerHandle,
   ENC_init(&g_DRV_encoderRearLeft  , DRV_REAR_LEFT_MOTOR_NAME  , false, p_rearLeftEncoderTimerHandle  );
   ENC_init(&g_DRV_encoderRearRight , DRV_REAR_RIGHT_MOTOR_NAME , true , p_rearRightEncoderTimerHandle );
 
-  /* Activate motors by default (de-activating them is used for debug  */
+  /* Activate motors by default (de-activating them is used for debug)  */
   g_DRV_areMotorsOn = true;
 
-  /* Considered that drive is inactive when the code starts */
-  g_DRV_isActive = false;
+  /* Assume that drive is not ON by default */
+  g_DRV_isDriveOn = false;
 
-  /* Start with master board control mode. BLink green LED accordingly */
+  /* Start with master board control mode */
   g_DRV_mode = DRV_MODE_MASTER_BOARD_CONTROL;
 
   return;
@@ -215,6 +217,7 @@ void DRV_updateFromBluetooth(T_BLU_Data *p_bluetoothData)
       }
       break;
 
+    case BLU_BUTTON_NONE:
     default:
       ; /* Nothing to do */
       break;
@@ -314,6 +317,7 @@ void DRV_updateFromMaster(T_SFO_Context *p_commandsFifo, uint16_t p_deltaTime)
   int32_t    l_pidSpeedRearRight;
   int32_t    l_pidSpeedRearLeft;
   T_SFO_data l_command;
+  int32_t    l_speed;
 
   /* Ignore master board data only whenever a manual mode is selected */
   if (g_DRV_mode != DRV_MODE_MASTER_BOARD_CONTROL)
@@ -322,11 +326,89 @@ void DRV_updateFromMaster(T_SFO_Context *p_commandsFifo, uint16_t p_deltaTime)
   }
   else
   {
+    /* Deal with only one command per cycle. If a FIFO overflow occurs, */
+    /* FIFO string will report an error, showing us a design issue...   */
     if (SFO_getCount(p_commandsFifo) != 0)
     {
       SFO_logInfo(p_commandsFifo);
       SFO_pop    (p_commandsFifo         , &l_command);
       LOG_info   ("Drive got command: %s",  l_command);
+
+      l_speed = atoi(&l_command[2]);
+
+      /* Check that speed is in allowed range */
+      if ((l_speed < STP_CONSOLE_MIN_SPEED) || (l_speed > STP_CONSOLE_MAX_SPEED))
+      {
+        LOG_error("Drive got out of range speed: %d", l_speed);
+      }
+      else
+      {
+        l_speed = UTI_normalizeIntValue(l_speed ,
+                                        STP_CONSOLE_MIN_SPEED,
+                                        STP_CONSOLE_MAX_SPEED,
+                                        STP_DRIVE_MIN_SPEED,
+                                        STP_DRIVE_MAX_SPEED,
+                                        false);
+
+        /* Forward Straight */
+        if ((l_command[0] == 'S') && (l_command[1] == 'T'))
+        {
+          DRV_sleep();
+        }
+        else if ((l_command[0] == 'F') && (l_command[1] == 'S'))
+        {
+          DRV_moveForward(l_speed);
+        }
+        /* Move Backward */
+        else if ((l_command[0] == 'B') && (l_command[1] == 'S'))
+        {
+          DRV_moveBackward(l_speed);
+        }
+        /* TurN (i.e. Rotate) Left */
+        else if ((l_command[0] == 'R') && (l_command[1] == 'L'))
+        {
+          DRV_turnLeft(l_speed);
+        }
+        /* TurN (i.e. Rotate) Right */
+        else if ((l_command[0] == 'R') && (l_command[1] == 'R'))
+        {
+          DRV_turnRight(l_speed);
+        }
+        /* Translate Left */
+        else if ((l_command[0] == 'T') && (l_command[1] == 'L'))
+        {
+          DRV_translateLeft(l_speed);
+        }
+        /* Translate Right */
+        else if ((l_command[0] == 'T') && (l_command[1] == 'R'))
+        {
+          DRV_translateRight(l_speed);
+        }
+        /* Forward Left */
+        else if ((l_command[0] == 'F') && (l_command[1] == 'L'))
+        {
+          DRV_moveForwardLeft(l_speed);
+        }
+        /* Forward Right */
+        else if ((l_command[0] == 'F') && (l_command[1] == 'R'))
+        {
+          DRV_moveForwardRight(l_speed);
+        }
+        /* Backward Left */
+        else if ((l_command[0] == 'B') && (l_command[1] == 'L'))
+        {
+          DRV_moveBackwardLeft(l_speed);
+        }
+        /* Forward Right */
+        else if ((l_command[0] == 'B') && (l_command[1] == 'R'))
+        {
+          DRV_moveBackwardRight(l_speed);
+        }
+        else
+        {
+          LOG_error("Drive got unsupported command: '%s'", l_command);
+        }
+      }
     }
 
     /* Get measurements */
@@ -358,7 +440,7 @@ T_DRV_MODE DRV_getMode(void)
 
 static void DRV_sleep(void)
 {
-  if (g_DRV_isActive == true)
+  if (g_DRV_isDriveOn == true)
   {
     LOG_debug("Drive going to sleep");
 
@@ -367,7 +449,7 @@ static void DRV_sleep(void)
     MTR_setSpeed(&g_DRV_motorRearRight , 0);
     MTR_setSpeed(&g_DRV_motorRearLeft  , 0);
 
-    g_DRV_isActive = false;
+    g_DRV_isDriveOn = false;
   }
   else
   {
@@ -383,7 +465,7 @@ static void DRV_moveForward(uint32_t p_speed)
 
   LOG_debug("Moving forward @%u", l_speed);
 
-  g_DRV_isActive = true;
+  g_DRV_isDriveOn = true;
 
   MTR_setDirection(&g_DRV_motorFrontRight, MTR_DIRECTION_FORWARD);
   MTR_setDirection(&g_DRV_motorFrontLeft , MTR_DIRECTION_FORWARD);
@@ -411,7 +493,7 @@ static void DRV_moveBackward(uint32_t p_speed)
 
   LOG_debug("Moving backward @%u", l_speed);
 
-  g_DRV_isActive = true;
+  g_DRV_isDriveOn = true;
 
   MTR_setDirection(&g_DRV_motorFrontRight, MTR_DIRECTION_BACKWARD);
   MTR_setDirection(&g_DRV_motorFrontLeft , MTR_DIRECTION_BACKWARD);
@@ -439,7 +521,7 @@ static void DRV_moveForwardRight (uint32_t p_speed)
 
   LOG_debug("Moving forward-right @%u", l_speed);
 
-  g_DRV_isActive = true;
+  g_DRV_isDriveOn = true;
 
   MTR_setDirection(&g_DRV_motorFrontLeft, MTR_DIRECTION_FORWARD);
   MTR_setDirection(&g_DRV_motorRearRight, MTR_DIRECTION_FORWARD);
@@ -465,7 +547,7 @@ static void DRV_moveForwardLeft  (uint32_t p_speed)
 
   LOG_debug("Moving forward-left @%u", l_speed);
 
-  g_DRV_isActive = true;
+  g_DRV_isDriveOn = true;
 
   MTR_setDirection(&g_DRV_motorFrontRight, MTR_DIRECTION_FORWARD);
   MTR_setDirection(&g_DRV_motorRearLeft  , MTR_DIRECTION_FORWARD);
@@ -491,7 +573,7 @@ static void DRV_moveBackwardRight(uint32_t p_speed)
 
   LOG_debug("Moving backward-right @%u", l_speed);
 
-  g_DRV_isActive = true;
+  g_DRV_isDriveOn = true;
 
   MTR_setDirection(&g_DRV_motorFrontRight, MTR_DIRECTION_BACKWARD);
   MTR_setDirection(&g_DRV_motorRearLeft  , MTR_DIRECTION_BACKWARD);
@@ -517,7 +599,7 @@ static void DRV_moveBackwardLeft (uint32_t p_speed)
 
   LOG_debug("Moving backward-left @%u", l_speed);
 
-  g_DRV_isActive = true;
+  g_DRV_isDriveOn = true;
 
   MTR_setDirection(&g_DRV_motorFrontLeft, MTR_DIRECTION_BACKWARD);
   MTR_setDirection(&g_DRV_motorRearRight, MTR_DIRECTION_BACKWARD);
@@ -543,7 +625,7 @@ static void DRV_turnLeft(uint32_t p_speed)
 
   LOG_debug("Turning left @%u", l_speed);
 
-  g_DRV_isActive = true;
+  g_DRV_isDriveOn = true;
 
   MTR_setDirection(&g_DRV_motorFrontRight, MTR_DIRECTION_FORWARD );
   MTR_setDirection(&g_DRV_motorFrontLeft , MTR_DIRECTION_BACKWARD);
@@ -571,7 +653,7 @@ static void DRV_turnRight(uint32_t p_speed)
 
   LOG_debug("Turning right @%u", l_speed);
 
-  g_DRV_isActive = true;
+  g_DRV_isDriveOn = true;
 
   MTR_setDirection(&g_DRV_motorFrontRight, MTR_DIRECTION_BACKWARD);
   MTR_setDirection(&g_DRV_motorFrontLeft , MTR_DIRECTION_FORWARD );
@@ -599,7 +681,7 @@ static void DRV_translateLeft(uint32_t p_speed)
 
   LOG_debug("Translating left @%u", l_speed);
 
-  g_DRV_isActive = true;
+  g_DRV_isDriveOn = true;
 
   MTR_setDirection(&g_DRV_motorFrontRight, MTR_DIRECTION_FORWARD );
   MTR_setDirection(&g_DRV_motorFrontLeft , MTR_DIRECTION_BACKWARD);
@@ -627,7 +709,7 @@ static void DRV_translateRight(uint32_t p_speed)
 
   LOG_debug("Translating right @%u", l_speed);
 
-  g_DRV_isActive = true;
+  g_DRV_isDriveOn = true;
 
   MTR_setDirection(&g_DRV_motorFrontRight, MTR_DIRECTION_BACKWARD);
   MTR_setDirection(&g_DRV_motorFrontLeft , MTR_DIRECTION_FORWARD );
