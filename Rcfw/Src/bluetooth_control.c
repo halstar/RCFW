@@ -122,57 +122,56 @@ void BLU_init(void)
 {
   LOG_info("Initializing bluetooth control");
 
-  g_BLU_lastData.leftX  = BLU_DATA_DEFAUT_DIRECTION;
-  g_BLU_lastData.leftY  = BLU_DATA_DEFAUT_DIRECTION;
-  g_BLU_lastData.rightX = BLU_DATA_DEFAUT_DIRECTION;
-  g_BLU_lastData.rightY = BLU_DATA_DEFAUT_DIRECTION;
-  g_BLU_lastData.button = BLU_BUTTON_NONE;
+  BLU_initData(&g_BLU_lastData);
+
+  return;
+}
+
+void BLU_initData(T_BLU_Data *p_data)
+{
+  p_data->leftX  = BLU_DATA_DEFAUT_DIRECTION;
+  p_data->leftY  = BLU_DATA_DEFAUT_DIRECTION;
+  p_data->rightX = BLU_DATA_DEFAUT_DIRECTION;
+  p_data->rightY = BLU_DATA_DEFAUT_DIRECTION;
+  p_data->button = BLU_BUTTON_NONE;
 
   return;
 }
 
 void BLU_receiveData(T_BLU_Data *p_data)
 {
-  uint8_t      l_buffer[BLU_DATA_BUFFER_LENGTH];
-  uint32_t     l_leftX;
-  uint32_t     l_leftY;
-  uint32_t     l_rightX;
-  uint32_t     l_rightY;
-  T_BLU_BUTTON l_button;
+  uint8_t    l_buffer[BLU_DATA_BUFFER_LENGTH];
+  T_BLU_Data l_readData;
 
   /* Read raw data */
   BLU_readData(l_buffer);
 
   /* Start and decode raw data */
-  l_leftX  = l_buffer[BLU_LEFT_X_OFFSET ];
-  l_leftY  = l_buffer[BLU_LEFT_Y_OFFSET ];
-  l_rightX = l_buffer[BLU_RIGHT_X_OFFSET];
-  l_rightY = l_buffer[BLU_RIGHT_Y_OFFSET];
-  l_button = BLU_getButton(l_buffer);
+  l_readData.leftX  = l_buffer[BLU_LEFT_X_OFFSET ];
+  l_readData.leftY  = l_buffer[BLU_LEFT_Y_OFFSET ];
+  l_readData.rightX = l_buffer[BLU_RIGHT_X_OFFSET];
+  l_readData.rightY = l_buffer[BLU_RIGHT_Y_OFFSET];
+  l_readData.button = BLU_getButton(l_buffer);
 
   /* Deal with startup condition, while read data is not valid yet */
-  if  ((l_leftX == 255 && l_leftY == 255 && l_rightX == 255 && l_rightY ==255)
-    || (l_leftX ==   0 && l_leftY ==   0 && l_rightX ==   0 && l_rightY ==  0))
+  if  ((l_readData.leftX == 255 && l_readData.leftY == 255 && l_readData.rightX == 255 && l_readData.rightY ==255)
+    || (l_readData.leftX ==   0 && l_readData.leftY ==   0 && l_readData.rightX ==   0 && l_readData.rightY ==  0))
   {
-    l_leftX  = BLU_DATA_DEFAUT_DIRECTION;
-    l_leftY  = BLU_DATA_DEFAUT_DIRECTION;
-    l_rightX = BLU_DATA_DEFAUT_DIRECTION;
-    l_rightY = BLU_DATA_DEFAUT_DIRECTION;
-    l_button = BLU_BUTTON_NONE;
+    BLU_initData(&l_readData);
   }
   /* Use a confirmation mechanism, on 2 cycles, as glitches are observed */
-  else if ((l_leftX  == g_BLU_lastData.leftX) &&
-           (l_leftY  == g_BLU_lastData.leftY) &&
-           (l_rightX == g_BLU_lastData.rightX) &&
-           (l_rightY == g_BLU_lastData.rightY) &&
-           (l_button == g_BLU_lastData.button))
+  else if ((l_readData.leftX  == g_BLU_lastData.leftX) &&
+           (l_readData.leftY  == g_BLU_lastData.leftY) &&
+           (l_readData.rightX == g_BLU_lastData.rightX) &&
+           (l_readData.rightY == g_BLU_lastData.rightY) &&
+           (l_readData.button == g_BLU_lastData.button))
   {
     /* Normalize directions data in range [-MAX..MAX] */
-    p_data->leftX  = UTI_normalizeIntValue(l_leftX , 0, 255, -STP_DRIVE_MAX_SPEED, STP_DRIVE_MAX_SPEED, false);
-    p_data->leftY  = UTI_normalizeIntValue(l_leftY , 0, 255, -STP_DRIVE_MAX_SPEED, STP_DRIVE_MAX_SPEED, true );
-    p_data->rightX = UTI_normalizeIntValue(l_rightX, 0, 255, -STP_DRIVE_MAX_SPEED, STP_DRIVE_MAX_SPEED, false);
-    p_data->rightY = UTI_normalizeIntValue(l_rightY, 0, 255, -STP_DRIVE_MAX_SPEED, STP_DRIVE_MAX_SPEED, true );
-    p_data->button = l_button;
+    p_data->leftX  = UTI_normalizeIntValue(l_readData.leftX , 0, 255, -STP_DRIVE_MAX_SPEED, STP_DRIVE_MAX_SPEED, false);
+    p_data->leftY  = UTI_normalizeIntValue(l_readData.leftY , 0, 255, -STP_DRIVE_MAX_SPEED, STP_DRIVE_MAX_SPEED, true );
+    p_data->rightX = UTI_normalizeIntValue(l_readData.rightX, 0, 255, -STP_DRIVE_MAX_SPEED, STP_DRIVE_MAX_SPEED, false);
+    p_data->rightY = UTI_normalizeIntValue(l_readData.rightY, 0, 255, -STP_DRIVE_MAX_SPEED, STP_DRIVE_MAX_SPEED, true );
+    p_data->button = l_readData.button;
   }
   else
   {
@@ -180,11 +179,11 @@ void BLU_receiveData(T_BLU_Data *p_data)
   }
 
   /* Saved received data for later use in confirmation mechanism */
-  g_BLU_lastData.leftX  = l_leftX;
-  g_BLU_lastData.leftY  = l_leftY;
-  g_BLU_lastData.rightX = l_rightX;
-  g_BLU_lastData.rightY = l_rightY;
-  g_BLU_lastData.button = l_button;
+  g_BLU_lastData.leftX  = l_readData.leftX;
+  g_BLU_lastData.leftY  = l_readData.leftY;
+  g_BLU_lastData.rightX = l_readData.rightX;
+  g_BLU_lastData.rightY = l_readData.rightY;
+  g_BLU_lastData.button = l_readData.button;
 
   return;
 }

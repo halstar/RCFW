@@ -23,7 +23,7 @@ typedef struct
   uint32_t       count;
 } T_SFO_Context;
 
-void     SFO_dataInit(T_SFO_data    *p_data                       );
+void     SFO_initData(T_SFO_data    *p_data                       );
 void     SFO_init    (T_SFO_Context *p_fifo                       );
 void     SFO_push    (T_SFO_Context *p_fifo, T_SFO_data *p_dataIn );
 void     SFO_pop     (T_SFO_Context *p_fifo, T_SFO_data *p_dataOut);

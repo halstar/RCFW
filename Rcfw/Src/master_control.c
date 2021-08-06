@@ -22,7 +22,7 @@ void MAS_init(UART_HandleTypeDef *p_uartHandle)
   g_MAS_dataSize       = 0;
   g_MAS_isDataComplete = false;
 
-  SFO_dataInit(&g_MAS_data);
+  SFO_initData(&g_MAS_data);
 
   HAL_UART_Receive_IT(g_MAS_uartHandle, &g_MAS_datum, 1);
 
@@ -64,7 +64,7 @@ void MAS_updateFifo(T_SFO_Context *p_fifo)
   else
   {
     SFO_push    (p_fifo, &g_MAS_data);
-    SFO_dataInit(&g_MAS_data);
+    SFO_initData(&g_MAS_data);
 
     g_MAS_dataSize       = 0;
     g_MAS_isDataComplete = false;

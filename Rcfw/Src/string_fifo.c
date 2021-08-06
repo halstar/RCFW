@@ -6,7 +6,7 @@
 #include "log.h"
 
 
-void SFO_dataInit(T_SFO_data *p_data)
+void SFO_initData(T_SFO_data *p_data)
 {
   (void)memset(p_data, 0, CST_STRING_FIFO_MAX_STRING_LENGTH);
 

@@ -406,8 +406,9 @@ int main(void)
     LOG_info("Started PWM channels");
   }
 
-  /* Initialize bluetooth control */
-  BLU_init();
+  /* Initialize bluetooth control and data */
+  BLU_init    ();
+  BLU_initData(&l_bluetoothData);
 
   /* Initialize driving module */
   DRV_init(&htim8, &htim2, &htim3, &htim4, &htim5);

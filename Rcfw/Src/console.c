@@ -23,7 +23,7 @@ void CON_init(UART_HandleTypeDef *p_uartHandle)
   g_CON_dataSize       = 0;
   g_CON_isDataComplete = false;
 
-  SFO_dataInit(&g_CON_data);
+  SFO_initData(&g_CON_data);
 
   HAL_UART_Receive_IT(g_CON_uartHandle, &g_CON_datum, 1);
 
@@ -65,7 +65,7 @@ void CON_updateFifo(T_SFO_Context *p_fifo)
   else
   {
     SFO_push    (p_fifo, &g_CON_data);
-    SFO_dataInit(&g_CON_data);
+    SFO_initData(&g_CON_data);
 
     g_CON_dataSize       = 0;
     g_CON_isDataComplete = false;

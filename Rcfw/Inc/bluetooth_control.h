@@ -34,6 +34,7 @@ typedef struct {
 } T_BLU_Data;
 
 void BLU_init       (void              );
+void BLU_initData   (T_BLU_Data *p_data);
 void BLU_receiveData(T_BLU_Data *p_data);
 
 #endif /* __BLUTOOTH_CONTROL_H */
