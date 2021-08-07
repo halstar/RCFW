@@ -19,6 +19,8 @@ void ENC_reset(T_ENC_Handle *p_handle)
 {
   p_handle->value = 0;
 
+  __HAL_TIM_SET_COUNTER(p_handle->timerHandle, 0);
+
   return;
 }
 
@@ -38,6 +40,12 @@ void ENC_update(T_ENC_Handle *p_handle, int16_t p_value)
 
 int16_t ENC_getCount(T_ENC_Handle *p_handle)
 {
-  return p_handle->value;
+  int16_t l_count;
+
+  l_count = p_handle->value;
+
+  ENC_reset(p_handle);
+
+  return l_count;
 }
 

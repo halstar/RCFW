@@ -16,7 +16,7 @@ typedef struct T_SFO_Element
   T_SFO_Element *nextElement;
 } T_SFO_Element;
 
-typedef struct
+typedef struct T_SFO_Context
 {
   T_SFO_Element *head;
   T_SFO_Element *tail;

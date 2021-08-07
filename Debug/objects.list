@@ -25,6 +25,7 @@
 "./Drivers/STM32F1xx_HAL_Driver/Src/stm32f1xx_hal_uart.o"
 "./Rcfw/Src/battery_check.o"
 "./Rcfw/Src/bluetooth_control.o"
+"./Rcfw/Src/circular_buffer.o"
 "./Rcfw/Src/console.o"
 "./Rcfw/Src/drive.o"
 "./Rcfw/Src/encoder.o"

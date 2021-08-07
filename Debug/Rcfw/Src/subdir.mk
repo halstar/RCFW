@@ -7,6 +7,7 @@
 C_SRCS += \
 ../Rcfw/Src/battery_check.c \
 ../Rcfw/Src/bluetooth_control.c \
+../Rcfw/Src/circular_buffer.c \
 ../Rcfw/Src/console.c \
 ../Rcfw/Src/drive.c \
 ../Rcfw/Src/encoder.c \
@@ -21,6 +22,7 @@ C_SRCS += \
 OBJS += \
 ./Rcfw/Src/battery_check.o \
 ./Rcfw/Src/bluetooth_control.o \
+./Rcfw/Src/circular_buffer.o \
 ./Rcfw/Src/console.o \
 ./Rcfw/Src/drive.o \
 ./Rcfw/Src/encoder.o \
@@ -35,6 +37,7 @@ OBJS += \
 C_DEPS += \
 ./Rcfw/Src/battery_check.d \
 ./Rcfw/Src/bluetooth_control.d \
+./Rcfw/Src/circular_buffer.d \
 ./Rcfw/Src/console.d \
 ./Rcfw/Src/drive.d \
 ./Rcfw/Src/encoder.d \

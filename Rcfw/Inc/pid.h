@@ -3,7 +3,7 @@
 
 #include "stm32f1xx_hal.h"
 
-typedef struct
+typedef struct T_PID_Handle
 {
   /* Configuration values */
   int32_t kp;

@@ -10,7 +10,7 @@ typedef enum
   MTR_DIRECTION_BACKWARD
 } T_MTR_DIRECTION;
 
-typedef struct
+typedef struct T_MTR_Handle
 {
   char              *name;
   GPIO_TypeDef      *dirPin1Port;

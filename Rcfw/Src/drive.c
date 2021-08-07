@@ -10,6 +10,7 @@
 #include "log.h"
 #include "setup.h"
 #include "utils.h"
+#include "circular_buffer.h"
 #include "string_fifo.h"
 
 #define DRV_FRONT_RIGHT_MOTOR_NAME "FRONT RIGHT"
@@ -23,12 +24,26 @@
 /* the latter actually using only 2 motors, while the other movements use 4 motors.   */
 #define DRV_BUTTONS_FIXED_SPEED   (DRV_JOYSTICKS_FIXED_SPEED * 2)
 
-static bool         g_DRV_areMotorsOn;
-static bool         g_DRV_isDriveOn;
-static T_DRV_MODE   g_DRV_mode;
-static T_PID_Handle g_DRV_pidFrontRight    , g_DRV_pidFrontLeft    , g_DRV_pidRearLeft    , g_DRV_pidRearRight    ;
-static T_MTR_Handle g_DRV_motorFrontRight  , g_DRV_motorFrontLeft  , g_DRV_motorRearLeft  , g_DRV_motorRearRight  ;
-static T_ENC_Handle g_DRV_encoderFrontRight, g_DRV_encoderFrontLeft, g_DRV_encoderRearLeft, g_DRV_encoderRearRight;
+static bool          g_DRV_areMotorsOn;
+static bool          g_DRV_isDriveOn;
+static T_DRV_MODE    g_DRV_mode;
+static T_PID_Handle  g_DRV_pidFrontRight    , g_DRV_pidFrontLeft    , g_DRV_pidRearLeft    , g_DRV_pidRearRight    ;
+static T_MTR_Handle  g_DRV_motorFrontRight  , g_DRV_motorFrontLeft  , g_DRV_motorRearLeft  , g_DRV_motorRearRight  ;
+static T_ENC_Handle  g_DRV_encoderFrontRight, g_DRV_encoderFrontLeft, g_DRV_encoderRearLeft, g_DRV_encoderRearRight;
+static T_CBU_Context g_DRV_speedBufferFrontRight, g_DRV_speedBufferFrontLeft, g_DRV_speedBufferRearLeft, g_DRV_speedBufferRearRight;
+
+extern RTC_HandleTypeDef hrtc;
+
+static void DRV_setDirectionsForward       (void);
+static void DRV_setDirectionsBackward      (void);
+static void DRV_setDirectionsForwardRight  (void);
+static void DRV_setDirectionsForwardLeft   (void);
+static void DRV_setDirectionsBackwardRight (void);
+static void DRV_setDirectionsBackwardLeft  (void);
+static void DRV_setDirectionsTurnLeft      (void);
+static void DRV_setDirectionsTurnRight     (void);
+static void DRV_setDirectionsTranslateLeft (void);
+static void DRV_setDirectionsTranslateRight(void);
 
 static void DRV_sleep            (void            );
 static void DRV_moveForward      (uint32_t p_speed);
@@ -99,6 +114,12 @@ void DRV_init(TIM_HandleTypeDef *p_pwmTimerHandle,
   ENC_init(&g_DRV_encoderRearLeft  , DRV_REAR_LEFT_MOTOR_NAME  , false, p_rearLeftEncoderTimerHandle  );
   ENC_init(&g_DRV_encoderRearRight , DRV_REAR_RIGHT_MOTOR_NAME , true , p_rearRightEncoderTimerHandle );
 
+  /* Setup speed buffers */
+  CBU_init(&g_DRV_speedBufferFrontRight);
+  CBU_init(&g_DRV_speedBufferFrontLeft );
+  CBU_init(&g_DRV_speedBufferRearLeft  );
+  CBU_init(&g_DRV_speedBufferRearRight );
+
   /* Activate motors by default (de-activating them is used for debug)  */
   g_DRV_areMotorsOn = true;
 
@@ -150,7 +171,7 @@ void DRV_updateEncoder(TIM_HandleTypeDef *p_encoderTimerHandle)
   return;
 }
 
-void DRV_updateFromBluetooth(T_BLU_Data *p_bluetoothData)
+void DRV_updateFromBluetooth(T_BLU_Data *p_bluetoothData, uint16_t p_deltaTime)
 {
   uint32_t l_speed;
 
@@ -308,16 +329,24 @@ void DRV_updateFromBluetooth(T_BLU_Data *p_bluetoothData)
 
 void DRV_updateFromMaster(T_SFO_Context *p_commandsFifo, uint16_t p_deltaTime)
 {
-  int32_t    l_measuredSpeedFrontRight;
-  int32_t    l_measuredSpeedFrontLeft;
-  int32_t    l_measuredSpeedRearRight;
-  int32_t    l_measuredSpeedRearLeft;
+  float      l_measuredSpeedFrontRight;
+  float      l_measuredSpeedFrontLeft;
+  float      l_measuredSpeedRearRight;
+  float      l_measuredSpeedRearLeft;
+  float      l_averageSpeedFrontRight;
+  float      l_averageSpeedFrontLeft;
+  float      l_averageSpeedRearRight;
+  float      l_averageSpeedRearLeft;
   int32_t    l_pidSpeedFrontRight;
   int32_t    l_pidSpeedFrontLeft;
   int32_t    l_pidSpeedRearRight;
   int32_t    l_pidSpeedRearLeft;
   T_SFO_data l_command;
   int32_t    l_speed;
+
+  RTC_TimeTypeDef   l_time;
+  RTC_DateTypeDef   l_date;
+  static RTC_TimeTypeDef   l_lastTime;
 
   /* Ignore master board data only whenever a manual mode is selected */
   if (g_DRV_mode != DRV_MODE_MASTER_BOARD_CONTROL)
@@ -357,52 +386,52 @@ void DRV_updateFromMaster(T_SFO_Context *p_commandsFifo, uint16_t p_deltaTime)
         }
         else if ((l_command[0] == 'F') && (l_command[1] == 'S'))
         {
-          DRV_moveForward(l_speed);
+          DRV_setDirectionsForward();
         }
         /* Move Backward */
         else if ((l_command[0] == 'B') && (l_command[1] == 'S'))
         {
-          DRV_moveBackward(l_speed);
+          DRV_setDirectionsBackward();
         }
         /* TurN (i.e. Rotate) Left */
         else if ((l_command[0] == 'R') && (l_command[1] == 'L'))
         {
-          DRV_turnLeft(l_speed);
+          DRV_setDirectionsTurnLeft();
         }
         /* TurN (i.e. Rotate) Right */
         else if ((l_command[0] == 'R') && (l_command[1] == 'R'))
         {
-          DRV_turnRight(l_speed);
+          DRV_setDirectionsTurnRight();
         }
         /* Translate Left */
         else if ((l_command[0] == 'T') && (l_command[1] == 'L'))
         {
-          DRV_translateLeft(l_speed);
+          DRV_setDirectionsTranslateLeft();
         }
         /* Translate Right */
         else if ((l_command[0] == 'T') && (l_command[1] == 'R'))
         {
-          DRV_translateRight(l_speed);
+          DRV_setDirectionsTranslateRight();
         }
         /* Forward Left */
         else if ((l_command[0] == 'F') && (l_command[1] == 'L'))
         {
-          DRV_moveForwardLeft(l_speed);
+          DRV_setDirectionsForwardLeft();
         }
         /* Forward Right */
         else if ((l_command[0] == 'F') && (l_command[1] == 'R'))
         {
-          DRV_moveForwardRight(l_speed);
+          DRV_setDirectionsForwardRight();
         }
         /* Backward Left */
         else if ((l_command[0] == 'B') && (l_command[1] == 'L'))
         {
-          DRV_moveBackwardLeft(l_speed);
+          DRV_setDirectionsBackwardLeft();
         }
         /* Forward Right */
         else if ((l_command[0] == 'B') && (l_command[1] == 'R'))
         {
-          DRV_moveBackwardRight(l_speed);
+          DRV_setDirectionsBackwardRight();
         }
         else
         {
@@ -412,22 +441,52 @@ void DRV_updateFromMaster(T_SFO_Context *p_commandsFifo, uint16_t p_deltaTime)
     }
 
     /* Get measurements */
-    l_measuredSpeedFrontRight = ENC_getCount(&g_DRV_encoderFrontRight);
-    l_measuredSpeedFrontLeft  = ENC_getCount(&g_DRV_encoderFrontLeft );
-    l_measuredSpeedRearRight  = ENC_getCount(&g_DRV_encoderRearRight );
-    l_measuredSpeedRearLeft   = ENC_getCount(&g_DRV_encoderRearLeft  );
+    l_measuredSpeedFrontRight = (float)ENC_getCount(&g_DRV_encoderFrontRight) / ((float)p_deltaTime / 1000.0f) * 150.0f;
+    l_measuredSpeedFrontLeft  = (float)ENC_getCount(&g_DRV_encoderFrontLeft ) / ((float)p_deltaTime / 1000.0f) * 150.0f;
+    l_measuredSpeedRearRight  = (float)ENC_getCount(&g_DRV_encoderRearRight ) / ((float)p_deltaTime / 1000.0f) * 150.0f;
+    l_measuredSpeedRearLeft   = (float)ENC_getCount(&g_DRV_encoderRearLeft  ) / ((float)p_deltaTime / 1000.0f) * 150.0f;
+
+    CBU_push(&g_DRV_speedBufferFrontRight, l_measuredSpeedFrontRight);
+    CBU_push(&g_DRV_speedBufferFrontLeft , l_measuredSpeedFrontLeft );
+    CBU_push(&g_DRV_speedBufferRearRight , l_measuredSpeedRearRight );
+    CBU_push(&g_DRV_speedBufferRearLeft  , l_measuredSpeedRearLeft  );
+
+    l_averageSpeedFrontRight = CBU_getAverage(&g_DRV_speedBufferFrontRight);
+    l_averageSpeedFrontLeft  = CBU_getAverage(&g_DRV_speedBufferFrontLeft );
+    l_averageSpeedRearRight  = CBU_getAverage(&g_DRV_speedBufferRearRight );
+    l_averageSpeedRearLeft   = CBU_getAverage(&g_DRV_speedBufferRearLeft  );
+
+    HAL_RTC_GetTime(&hrtc, &l_time, RTC_FORMAT_BCD);
+    HAL_RTC_GetDate(&hrtc, &l_date, RTC_FORMAT_BCD);
+
+    if (UTI_turnRtcTimeToSeconds(&l_time) - UTI_turnRtcTimeToSeconds(&l_lastTime) >= 1)
+    {
+      l_lastTime = l_time;
+      LOG_info("%d, %d, %d, %d",
+               (int32_t)l_averageSpeedFrontRight,
+               (int32_t)l_averageSpeedFrontLeft,
+               (int32_t)l_averageSpeedRearRight,
+               (int32_t)l_averageSpeedRearLeft);
+    }
 
     /* Update PIDs */
-    l_pidSpeedFrontRight = PID_update(&g_DRV_pidFrontRight, l_measuredSpeedFrontRight, p_deltaTime);
-    l_pidSpeedFrontLeft  = PID_update(&g_DRV_pidFrontLeft , l_measuredSpeedFrontLeft , p_deltaTime);
-    l_pidSpeedRearRight  = PID_update(&g_DRV_pidRearRight , l_measuredSpeedRearRight , p_deltaTime);
-    l_pidSpeedRearLeft   = PID_update(&g_DRV_pidRearLeft  , l_measuredSpeedRearLeft  , p_deltaTime);
+    l_pidSpeedFrontRight = PID_update(&g_DRV_pidFrontRight, l_averageSpeedFrontRight, p_deltaTime);
+    l_pidSpeedFrontLeft  = PID_update(&g_DRV_pidFrontLeft , l_averageSpeedFrontLeft , p_deltaTime);
+    l_pidSpeedRearRight  = PID_update(&g_DRV_pidRearRight , l_averageSpeedRearRight , p_deltaTime);
+    l_pidSpeedRearLeft   = PID_update(&g_DRV_pidRearLeft  , l_averageSpeedRearLeft  , p_deltaTime);
 
-    /* Update motors */
-    MTR_setSpeed(&g_DRV_motorFrontRight, l_pidSpeedFrontRight);
-    MTR_setSpeed(&g_DRV_motorFrontLeft , l_pidSpeedFrontLeft );
-    MTR_setSpeed(&g_DRV_motorRearRight , l_pidSpeedRearRight );
-    MTR_setSpeed(&g_DRV_motorRearLeft  , l_pidSpeedRearLeft  );
+    if (g_DRV_areMotorsOn == false)
+    {
+      ; /* Nothing to do */
+    }
+    else
+    {
+      /* Update motors */
+      MTR_setSpeed(&g_DRV_motorFrontRight, l_pidSpeedFrontRight);
+      MTR_setSpeed(&g_DRV_motorFrontLeft , l_pidSpeedFrontLeft );
+      MTR_setSpeed(&g_DRV_motorRearRight , l_pidSpeedRearRight );
+      MTR_setSpeed(&g_DRV_motorRearLeft  , l_pidSpeedRearLeft  );
+    }
   }
 
   return;
@@ -501,6 +560,99 @@ void DRV_logInfo(void)
   return;
 }
 
+static void DRV_setDirectionsForward(void)
+{
+  MTR_setDirection(&g_DRV_motorFrontRight, MTR_DIRECTION_FORWARD);
+  MTR_setDirection(&g_DRV_motorFrontLeft , MTR_DIRECTION_FORWARD);
+  MTR_setDirection(&g_DRV_motorRearRight , MTR_DIRECTION_FORWARD);
+  MTR_setDirection(&g_DRV_motorRearLeft  , MTR_DIRECTION_FORWARD);
+
+  return;
+}
+
+static void DRV_setDirectionsBackward(void)
+{
+  MTR_setDirection(&g_DRV_motorFrontRight, MTR_DIRECTION_BACKWARD);
+  MTR_setDirection(&g_DRV_motorFrontLeft , MTR_DIRECTION_BACKWARD);
+  MTR_setDirection(&g_DRV_motorRearRight , MTR_DIRECTION_BACKWARD);
+  MTR_setDirection(&g_DRV_motorRearLeft  , MTR_DIRECTION_BACKWARD);
+
+  return;
+}
+
+static void DRV_setDirectionsForwardRight(void)
+{
+  MTR_setDirection(&g_DRV_motorFrontLeft, MTR_DIRECTION_FORWARD);
+  MTR_setDirection(&g_DRV_motorRearRight, MTR_DIRECTION_FORWARD);
+
+  return;
+}
+
+static void DRV_setDirectionsForwardLeft(void)
+{
+  MTR_setDirection(&g_DRV_motorFrontRight, MTR_DIRECTION_FORWARD);
+  MTR_setDirection(&g_DRV_motorRearLeft  , MTR_DIRECTION_FORWARD);
+
+  return;
+}
+
+static void DRV_setDirectionsBackwardRight(void)
+{
+  MTR_setDirection(&g_DRV_motorFrontRight, MTR_DIRECTION_BACKWARD);
+  MTR_setDirection(&g_DRV_motorRearLeft  , MTR_DIRECTION_BACKWARD);
+
+  return;
+}
+
+static void DRV_setDirectionsBackwardLeft(void)
+{
+  MTR_setDirection(&g_DRV_motorFrontLeft, MTR_DIRECTION_BACKWARD);
+  MTR_setDirection(&g_DRV_motorRearRight, MTR_DIRECTION_BACKWARD);
+
+  return;
+}
+
+static void DRV_setDirectionsTurnLeft(void)
+{
+  MTR_setDirection(&g_DRV_motorFrontRight, MTR_DIRECTION_FORWARD );
+  MTR_setDirection(&g_DRV_motorFrontLeft , MTR_DIRECTION_BACKWARD);
+  MTR_setDirection(&g_DRV_motorRearRight , MTR_DIRECTION_FORWARD );
+  MTR_setDirection(&g_DRV_motorRearLeft  , MTR_DIRECTION_BACKWARD);
+
+  return;
+}
+
+static void DRV_setDirectionsTurnRight(void)
+{
+  MTR_setDirection(&g_DRV_motorFrontRight, MTR_DIRECTION_BACKWARD);
+  MTR_setDirection(&g_DRV_motorFrontLeft , MTR_DIRECTION_FORWARD );
+  MTR_setDirection(&g_DRV_motorRearRight , MTR_DIRECTION_BACKWARD);
+  MTR_setDirection(&g_DRV_motorRearLeft  , MTR_DIRECTION_FORWARD );
+
+  return;
+}
+
+static void DRV_setDirectionsTranslateLeft(void)
+{
+  MTR_setDirection(&g_DRV_motorFrontRight, MTR_DIRECTION_FORWARD );
+  MTR_setDirection(&g_DRV_motorFrontLeft , MTR_DIRECTION_BACKWARD);
+  MTR_setDirection(&g_DRV_motorRearRight , MTR_DIRECTION_BACKWARD);
+  MTR_setDirection(&g_DRV_motorRearLeft  , MTR_DIRECTION_FORWARD );
+
+  return;
+}
+
+static void DRV_setDirectionsTranslateRight(void)
+{
+  MTR_setDirection(&g_DRV_motorFrontRight, MTR_DIRECTION_BACKWARD);
+  MTR_setDirection(&g_DRV_motorFrontLeft , MTR_DIRECTION_FORWARD );
+  MTR_setDirection(&g_DRV_motorRearRight , MTR_DIRECTION_FORWARD );
+  MTR_setDirection(&g_DRV_motorRearLeft  , MTR_DIRECTION_BACKWARD);
+
+  return;
+}
+
+
 static void DRV_sleep(void)
 {
   if (g_DRV_isDriveOn == true)
@@ -530,10 +682,7 @@ static void DRV_moveForward(uint32_t p_speed)
 
   g_DRV_isDriveOn = true;
 
-  MTR_setDirection(&g_DRV_motorFrontRight, MTR_DIRECTION_FORWARD);
-  MTR_setDirection(&g_DRV_motorFrontLeft , MTR_DIRECTION_FORWARD);
-  MTR_setDirection(&g_DRV_motorRearRight , MTR_DIRECTION_FORWARD);
-  MTR_setDirection(&g_DRV_motorRearLeft  , MTR_DIRECTION_FORWARD);
+  DRV_setDirectionsForward();
 
   if (g_DRV_areMotorsOn == false)
   {
@@ -558,10 +707,7 @@ static void DRV_moveBackward(uint32_t p_speed)
 
   g_DRV_isDriveOn = true;
 
-  MTR_setDirection(&g_DRV_motorFrontRight, MTR_DIRECTION_BACKWARD);
-  MTR_setDirection(&g_DRV_motorFrontLeft , MTR_DIRECTION_BACKWARD);
-  MTR_setDirection(&g_DRV_motorRearRight , MTR_DIRECTION_BACKWARD);
-  MTR_setDirection(&g_DRV_motorRearLeft  , MTR_DIRECTION_BACKWARD);
+  DRV_setDirectionsBackward();
 
   if (g_DRV_areMotorsOn == false)
   {
@@ -578,7 +724,7 @@ static void DRV_moveBackward(uint32_t p_speed)
   return;
 }
 
-static void DRV_moveForwardRight (uint32_t p_speed)
+static void DRV_moveForwardRight(uint32_t p_speed)
 {
   uint32_t l_speed = p_speed;
 
@@ -586,8 +732,7 @@ static void DRV_moveForwardRight (uint32_t p_speed)
 
   g_DRV_isDriveOn = true;
 
-  MTR_setDirection(&g_DRV_motorFrontLeft, MTR_DIRECTION_FORWARD);
-  MTR_setDirection(&g_DRV_motorRearRight, MTR_DIRECTION_FORWARD);
+  DRV_setDirectionsForwardRight();
 
   if (g_DRV_areMotorsOn == false)
   {
@@ -604,7 +749,7 @@ static void DRV_moveForwardRight (uint32_t p_speed)
   return;
 }
 
-static void DRV_moveForwardLeft  (uint32_t p_speed)
+static void DRV_moveForwardLeft(uint32_t p_speed)
 {
   uint32_t l_speed = p_speed;
 
@@ -612,8 +757,7 @@ static void DRV_moveForwardLeft  (uint32_t p_speed)
 
   g_DRV_isDriveOn = true;
 
-  MTR_setDirection(&g_DRV_motorFrontRight, MTR_DIRECTION_FORWARD);
-  MTR_setDirection(&g_DRV_motorRearLeft  , MTR_DIRECTION_FORWARD);
+  DRV_setDirectionsForwardLeft();
 
   if (g_DRV_areMotorsOn == false)
   {
@@ -638,8 +782,7 @@ static void DRV_moveBackwardRight(uint32_t p_speed)
 
   g_DRV_isDriveOn = true;
 
-  MTR_setDirection(&g_DRV_motorFrontRight, MTR_DIRECTION_BACKWARD);
-  MTR_setDirection(&g_DRV_motorRearLeft  , MTR_DIRECTION_BACKWARD);
+  DRV_setDirectionsBackwardRight();
 
   if (g_DRV_areMotorsOn == false)
   {
@@ -656,7 +799,7 @@ static void DRV_moveBackwardRight(uint32_t p_speed)
   return;
 }
 
-static void DRV_moveBackwardLeft (uint32_t p_speed)
+static void DRV_moveBackwardLeft(uint32_t p_speed)
 {
   uint32_t l_speed = p_speed;
 
@@ -664,8 +807,7 @@ static void DRV_moveBackwardLeft (uint32_t p_speed)
 
   g_DRV_isDriveOn = true;
 
-  MTR_setDirection(&g_DRV_motorFrontLeft, MTR_DIRECTION_BACKWARD);
-  MTR_setDirection(&g_DRV_motorRearRight, MTR_DIRECTION_BACKWARD);
+  DRV_setDirectionsBackwardLeft();
 
   if (g_DRV_areMotorsOn == false)
   {
@@ -690,10 +832,7 @@ static void DRV_turnLeft(uint32_t p_speed)
 
   g_DRV_isDriveOn = true;
 
-  MTR_setDirection(&g_DRV_motorFrontRight, MTR_DIRECTION_FORWARD );
-  MTR_setDirection(&g_DRV_motorFrontLeft , MTR_DIRECTION_BACKWARD);
-  MTR_setDirection(&g_DRV_motorRearRight , MTR_DIRECTION_FORWARD );
-  MTR_setDirection(&g_DRV_motorRearLeft  , MTR_DIRECTION_BACKWARD);
+  DRV_setDirectionsTurnLeft();
 
   if (g_DRV_areMotorsOn == false)
   {
@@ -718,10 +857,7 @@ static void DRV_turnRight(uint32_t p_speed)
 
   g_DRV_isDriveOn = true;
 
-  MTR_setDirection(&g_DRV_motorFrontRight, MTR_DIRECTION_BACKWARD);
-  MTR_setDirection(&g_DRV_motorFrontLeft , MTR_DIRECTION_FORWARD );
-  MTR_setDirection(&g_DRV_motorRearRight , MTR_DIRECTION_BACKWARD);
-  MTR_setDirection(&g_DRV_motorRearLeft  , MTR_DIRECTION_FORWARD );
+  DRV_setDirectionsTurnRight();
 
   if (g_DRV_areMotorsOn == false)
   {
@@ -746,10 +882,7 @@ static void DRV_translateLeft(uint32_t p_speed)
 
   g_DRV_isDriveOn = true;
 
-  MTR_setDirection(&g_DRV_motorFrontRight, MTR_DIRECTION_FORWARD );
-  MTR_setDirection(&g_DRV_motorFrontLeft , MTR_DIRECTION_BACKWARD);
-  MTR_setDirection(&g_DRV_motorRearRight , MTR_DIRECTION_BACKWARD);
-  MTR_setDirection(&g_DRV_motorRearLeft  , MTR_DIRECTION_FORWARD );
+  DRV_setDirectionsTranslateLeft();
 
   if (g_DRV_areMotorsOn == false)
   {
@@ -774,10 +907,7 @@ static void DRV_translateRight(uint32_t p_speed)
 
   g_DRV_isDriveOn = true;
 
-  MTR_setDirection(&g_DRV_motorFrontRight, MTR_DIRECTION_BACKWARD);
-  MTR_setDirection(&g_DRV_motorFrontLeft , MTR_DIRECTION_FORWARD );
-  MTR_setDirection(&g_DRV_motorRearRight , MTR_DIRECTION_FORWARD );
-  MTR_setDirection(&g_DRV_motorRearLeft  , MTR_DIRECTION_BACKWARD);
+  DRV_setDirectionsTranslateRight();
 
   if (g_DRV_areMotorsOn == false)
   {

@@ -25,7 +25,8 @@ typedef enum
   BLU_BUTTON_COUNT_VALUE   ,
 } T_BLU_BUTTON;
 
-typedef struct {
+typedef struct T_BLU_Data
+{
   int32_t      leftX;
   int32_t      leftY;
   int32_t      rightX;

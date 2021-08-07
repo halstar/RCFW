@@ -5,7 +5,7 @@
 
 #include "stm32f1xx_hal.h"
 
-typedef struct
+typedef struct T_ENC_Handle
 {
   char              *name;
   int16_t            value;
