@@ -6,38 +6,38 @@
 typedef struct T_PID_Handle
 {
   /* Configuration values */
-  int32_t kp;
-  int32_t ki;
-  int32_t kd;
-  int32_t targetValue;
-  int32_t minValue;
-  int32_t maxValue;
-  int32_t antiWindUpValue;
+  float kp;
+  float ki;
+  float kd;
+  float targetValue;
+  float minValue;
+  float maxValue;
+  float   antiWindUpValue;
   /* Computation values */
-  int32_t pValue;
-  int32_t iValue;
-  int32_t dValue;
-  int32_t computedValue;
-  int32_t lastError;
+  float pValue;
+  float iValue;
+  float dValue;
+  float computedValue;
+  float lastError;
 } T_PID_Handle;
 
-void    PID_init          (T_PID_Handle *p_handle, int32_t p_kp, int32_t p_ki, int32_t p_kd, int32_t p_targetValue, int32_t p_minValue, int32_t p_maxValue, int32_t p_antiWindUpFactor);
-void    PID_reset         (T_PID_Handle *p_handle);
-void    PID_setKp         (T_PID_Handle *p_handle, int32_t p_kp);
-void    PID_setKi         (T_PID_Handle *p_handle, int32_t p_ki);
-void    PID_setKd         (T_PID_Handle *p_handle, int32_t p_kd);
-void    PID_setTargetValue(T_PID_Handle *p_handle, int32_t p_targetValue);
-void    PID_setMinValue   (T_PID_Handle *p_handle, int32_t p_minValue);
-void    PID_setMaxValue   (T_PID_Handle *p_handle, int32_t p_maxValue);
-void    PID_setAntiWindUp (T_PID_Handle *p_handle, int32_t p_antiWindUpFactor);
-int32_t PID_getKp         (T_PID_Handle *p_handle);
-int32_t PID_getKi         (T_PID_Handle *p_handle);
-int32_t PID_getKd         (T_PID_Handle *p_handle);
-int32_t PID_getTargetValue(T_PID_Handle *p_handle);
-int32_t PID_getMinValue   (T_PID_Handle *p_handle);
-int32_t PID_getMaxValue   (T_PID_Handle *p_handle);
-int32_t PID_getAntiWindUp (T_PID_Handle *p_handle);
-int32_t PID_update        (T_PID_Handle *p_handle, int32_t p_currentValue, uint32_t p_timeDelta);
-void    PID_logInfo       (T_PID_Handle *p_handle);
+void  PID_init               (T_PID_Handle *p_handle, float p_kp, float p_ki, float p_kd, float p_targetValue, float p_minValue, float p_maxValue, float p_antiWindUpFactor);
+void  PID_reset              (T_PID_Handle *p_handle);
+void  PID_setKp              (T_PID_Handle *p_handle, float p_kp);
+void  PID_setKi              (T_PID_Handle *p_handle, float p_ki);
+void  PID_setKd              (T_PID_Handle *p_handle, float p_kd);
+void  PID_setTargetValue     (T_PID_Handle *p_handle, float p_targetValue);
+void  PID_setMinValue        (T_PID_Handle *p_handle, float p_minValue);
+void  PID_setMaxValue        (T_PID_Handle *p_handle, float p_maxValue);
+void  PID_setAntiWindUpFactor(T_PID_Handle *p_handle, float p_antiWindUpFactor);
+float PID_getKp              (T_PID_Handle *p_handle);
+float PID_getKi              (T_PID_Handle *p_handle);
+float PID_getKd              (T_PID_Handle *p_handle);
+float PID_getTargetValue     (T_PID_Handle *p_handle);
+float PID_getMinValue        (T_PID_Handle *p_handle);
+float PID_getMaxValue        (T_PID_Handle *p_handle);
+float PID_getAntiWindUpValue (T_PID_Handle *p_handle);
+float PID_update             (T_PID_Handle *p_handle, float p_currentValue, uint32_t p_timeDelta);
+void  PID_logInfo            (T_PID_Handle *p_handle);
 
 #endif /* __PID_H */

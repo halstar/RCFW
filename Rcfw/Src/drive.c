@@ -1,5 +1,6 @@
 #include <stdbool.h>
 #include <stdlib.h>
+#include <math.h>
 
 #include "drive.h"
 
@@ -25,7 +26,6 @@
 #define DRV_BUTTONS_FIXED_SPEED   (DRV_JOYSTICKS_FIXED_SPEED * 2)
 
 static bool          g_DRV_areMotorsOn;
-static bool          g_DRV_isDriveOn;
 static T_DRV_MODE    g_DRV_mode;
 static T_PID_Handle  g_DRV_pidFrontRight    , g_DRV_pidFrontLeft    , g_DRV_pidRearLeft    , g_DRV_pidRearRight    ;
 static T_MTR_Handle  g_DRV_motorFrontRight  , g_DRV_motorFrontLeft  , g_DRV_motorRearLeft  , g_DRV_motorRearRight  ;
@@ -34,6 +34,7 @@ static T_CBU_Context g_DRV_speedBufferFrontRight, g_DRV_speedBufferFrontLeft, g_
 
 extern RTC_HandleTypeDef hrtc;
 
+static void DRV_setDirectionsStop          (void);
 static void DRV_setDirectionsForward       (void);
 static void DRV_setDirectionsBackward      (void);
 static void DRV_setDirectionsForwardRight  (void);
@@ -45,7 +46,7 @@ static void DRV_setDirectionsTurnRight     (void);
 static void DRV_setDirectionsTranslateLeft (void);
 static void DRV_setDirectionsTranslateRight(void);
 
-static void DRV_sleep            (void            );
+static void DRV_stop             (void            );
 static void DRV_moveForward      (uint32_t p_speed);
 static void DRV_moveBackward     (uint32_t p_speed);
 static void DRV_moveForwardRight (uint32_t p_speed);
@@ -65,11 +66,11 @@ void DRV_init(TIM_HandleTypeDef *p_pwmTimerHandle,
 {
   LOG_info("Initializing Drive module");
 
-  /* Setup PIDs */
-  PID_init(&g_DRV_pidFrontRight, 1, 1, 1, 0, -100, 100, 0.5);
-  PID_init(&g_DRV_pidFrontLeft , 1, 1, 1, 0, -100, 100, 0.5);
-  PID_init(&g_DRV_pidRearLeft  , 1, 1, 1, 0, -100, 100, 0.5);
-  PID_init(&g_DRV_pidRearRight , 1, 1, 1, 0, -100, 100, 0.5);
+  /* Setup PIDs with a target speed to 0 */
+  PID_init(&g_DRV_pidFrontRight, STD_DRIVE_PID_P_FACTOR, STD_DRIVE_PID_I_FACTOR, STD_DRIVE_PID_D_FACTOR, 0, STP_DRIVE_MIN_SPEED, STP_DRIVE_MAX_SPEED, STD_DRIVE_PID_ANTI_WIND_UP_FACTOR);
+  PID_init(&g_DRV_pidFrontLeft , STD_DRIVE_PID_P_FACTOR, STD_DRIVE_PID_I_FACTOR, STD_DRIVE_PID_D_FACTOR, 0, STP_DRIVE_MIN_SPEED, STP_DRIVE_MAX_SPEED, STD_DRIVE_PID_ANTI_WIND_UP_FACTOR);
+  PID_init(&g_DRV_pidRearLeft  , STD_DRIVE_PID_P_FACTOR, STD_DRIVE_PID_I_FACTOR, STD_DRIVE_PID_D_FACTOR, 0, STP_DRIVE_MIN_SPEED, STP_DRIVE_MAX_SPEED, STD_DRIVE_PID_ANTI_WIND_UP_FACTOR);
+  PID_init(&g_DRV_pidRearRight , STD_DRIVE_PID_P_FACTOR, STD_DRIVE_PID_I_FACTOR, STD_DRIVE_PID_D_FACTOR, 0, STP_DRIVE_MIN_SPEED, STP_DRIVE_MAX_SPEED, STD_DRIVE_PID_ANTI_WIND_UP_FACTOR);
 
   /* Setup motors (with a 0 speed & stopped direction, at this point) */
   MTR_init(&g_DRV_motorFrontRight,
@@ -123,9 +124,6 @@ void DRV_init(TIM_HandleTypeDef *p_pwmTimerHandle,
   /* Activate motors by default (de-activating them is used for debug)  */
   g_DRV_areMotorsOn = true;
 
-  /* Assume that drive is not ON by default */
-  g_DRV_isDriveOn = false;
-
   /* Start with master board control mode */
   g_DRV_mode = DRV_MODE_MASTER_BOARD_CONTROL;
 
@@ -171,7 +169,7 @@ void DRV_updateEncoder(TIM_HandleTypeDef *p_encoderTimerHandle)
   return;
 }
 
-void DRV_updateFromBluetooth(T_BLU_Data *p_bluetoothData, uint16_t p_deltaTime)
+void DRV_updateFromBluetooth(T_BLU_Data *p_bluetoothData)
 {
   uint32_t l_speed;
 
@@ -320,7 +318,7 @@ void DRV_updateFromBluetooth(T_BLU_Data *p_bluetoothData, uint16_t p_deltaTime)
     else
     {
       /* Most of the time, we will get here */
-      DRV_sleep();
+      DRV_stop();
     }
   }
 
@@ -337,10 +335,10 @@ void DRV_updateFromMaster(T_SFO_Context *p_commandsFifo, uint16_t p_deltaTime)
   float      l_averageSpeedFrontLeft;
   float      l_averageSpeedRearRight;
   float      l_averageSpeedRearLeft;
-  int32_t    l_pidSpeedFrontRight;
-  int32_t    l_pidSpeedFrontLeft;
-  int32_t    l_pidSpeedRearRight;
-  int32_t    l_pidSpeedRearLeft;
+  float      l_pidSpeedFrontRight;
+  float      l_pidSpeedFrontLeft;
+  float      l_pidSpeedRearRight;
+  float      l_pidSpeedRearLeft;
   T_SFO_data l_command;
   int32_t    l_speed;
 
@@ -366,72 +364,128 @@ void DRV_updateFromMaster(T_SFO_Context *p_commandsFifo, uint16_t p_deltaTime)
       l_speed = atoi(&l_command[2]);
 
       /* Check that speed is in allowed range */
-      if ((l_speed < STP_CONSOLE_MIN_SPEED) || (l_speed > STP_CONSOLE_MAX_SPEED))
+      if ((l_speed < STP_MASTER_MIN_SPEED) || (l_speed > STP_MASTER_MAX_SPEED))
       {
         LOG_error("Drive got out of range speed: %d", l_speed);
       }
       else
       {
         l_speed = UTI_normalizeIntValue(l_speed ,
-                                        STP_CONSOLE_MIN_SPEED,
-                                        STP_CONSOLE_MAX_SPEED,
+                                        STP_MASTER_MIN_SPEED,
+                                        STP_MASTER_MAX_SPEED,
                                         STP_DRIVE_MIN_SPEED,
                                         STP_DRIVE_MAX_SPEED,
                                         false);
 
-        /* Forward Straight */
+        /* Stop */
         if ((l_command[0] == 'S') && (l_command[1] == 'T'))
         {
-          DRV_sleep();
+          DRV_setDirectionsStop();
+
+          PID_setTargetValue(&g_DRV_pidFrontRight, 0);
+          PID_setTargetValue(&g_DRV_pidFrontLeft , 0);
+          PID_setTargetValue(&g_DRV_pidRearRight , 0);
+          PID_setTargetValue(&g_DRV_pidRearLeft  , 0);
         }
+        /* Forward Straight */
         else if ((l_command[0] == 'F') && (l_command[1] == 'S'))
         {
           DRV_setDirectionsForward();
+
+          PID_setTargetValue(&g_DRV_pidFrontRight, l_speed);
+          PID_setTargetValue(&g_DRV_pidFrontLeft , l_speed);
+          PID_setTargetValue(&g_DRV_pidRearRight , l_speed);
+          PID_setTargetValue(&g_DRV_pidRearLeft  , l_speed);
         }
         /* Move Backward */
         else if ((l_command[0] == 'B') && (l_command[1] == 'S'))
         {
           DRV_setDirectionsBackward();
+
+          PID_setTargetValue(&g_DRV_pidFrontRight, l_speed);
+          PID_setTargetValue(&g_DRV_pidFrontLeft , l_speed);
+          PID_setTargetValue(&g_DRV_pidRearRight , l_speed);
+          PID_setTargetValue(&g_DRV_pidRearLeft  , l_speed);
         }
         /* TurN (i.e. Rotate) Left */
         else if ((l_command[0] == 'R') && (l_command[1] == 'L'))
         {
           DRV_setDirectionsTurnLeft();
+
+          PID_setTargetValue(&g_DRV_pidFrontRight, l_speed);
+          PID_setTargetValue(&g_DRV_pidFrontLeft , l_speed);
+          PID_setTargetValue(&g_DRV_pidRearRight , l_speed);
+          PID_setTargetValue(&g_DRV_pidRearLeft  , l_speed);
         }
         /* TurN (i.e. Rotate) Right */
         else if ((l_command[0] == 'R') && (l_command[1] == 'R'))
         {
           DRV_setDirectionsTurnRight();
+
+          PID_setTargetValue(&g_DRV_pidFrontRight, l_speed);
+          PID_setTargetValue(&g_DRV_pidFrontLeft , l_speed);
+          PID_setTargetValue(&g_DRV_pidRearRight , l_speed);
+          PID_setTargetValue(&g_DRV_pidRearLeft  , l_speed);
         }
         /* Translate Left */
         else if ((l_command[0] == 'T') && (l_command[1] == 'L'))
         {
           DRV_setDirectionsTranslateLeft();
+
+          PID_setTargetValue(&g_DRV_pidFrontRight, l_speed);
+          PID_setTargetValue(&g_DRV_pidFrontLeft , l_speed);
+          PID_setTargetValue(&g_DRV_pidRearRight , l_speed);
+          PID_setTargetValue(&g_DRV_pidRearLeft  , l_speed);
         }
         /* Translate Right */
         else if ((l_command[0] == 'T') && (l_command[1] == 'R'))
         {
           DRV_setDirectionsTranslateRight();
+
+          PID_setTargetValue(&g_DRV_pidFrontRight, l_speed);
+          PID_setTargetValue(&g_DRV_pidFrontLeft , l_speed);
+          PID_setTargetValue(&g_DRV_pidRearRight , l_speed);
+          PID_setTargetValue(&g_DRV_pidRearLeft  , l_speed);
         }
         /* Forward Left */
         else if ((l_command[0] == 'F') && (l_command[1] == 'L'))
         {
           DRV_setDirectionsForwardLeft();
+
+          PID_setTargetValue(&g_DRV_pidFrontRight, l_speed);
+          PID_setTargetValue(&g_DRV_pidFrontLeft ,       0);
+          PID_setTargetValue(&g_DRV_pidRearRight ,       0);
+          PID_setTargetValue(&g_DRV_pidRearLeft  , l_speed);
         }
         /* Forward Right */
         else if ((l_command[0] == 'F') && (l_command[1] == 'R'))
         {
           DRV_setDirectionsForwardRight();
+
+          PID_setTargetValue(&g_DRV_pidFrontRight,       0);
+          PID_setTargetValue(&g_DRV_pidFrontLeft , l_speed);
+          PID_setTargetValue(&g_DRV_pidRearRight , l_speed);
+          PID_setTargetValue(&g_DRV_pidRearLeft  ,       0);
         }
         /* Backward Left */
         else if ((l_command[0] == 'B') && (l_command[1] == 'L'))
         {
           DRV_setDirectionsBackwardLeft();
+
+          PID_setTargetValue(&g_DRV_pidFrontRight,       0);
+          PID_setTargetValue(&g_DRV_pidFrontLeft , l_speed);
+          PID_setTargetValue(&g_DRV_pidRearRight , l_speed);
+          PID_setTargetValue(&g_DRV_pidRearLeft  ,       0);
         }
         /* Forward Right */
         else if ((l_command[0] == 'B') && (l_command[1] == 'R'))
         {
           DRV_setDirectionsBackwardRight();
+
+          PID_setTargetValue(&g_DRV_pidFrontRight, l_speed);
+          PID_setTargetValue(&g_DRV_pidFrontLeft ,       0);
+          PID_setTargetValue(&g_DRV_pidRearRight ,       0);
+          PID_setTargetValue(&g_DRV_pidRearLeft  , l_speed);
         }
         else
         {
@@ -441,10 +495,10 @@ void DRV_updateFromMaster(T_SFO_Context *p_commandsFifo, uint16_t p_deltaTime)
     }
 
     /* Get measurements */
-    l_measuredSpeedFrontRight = (float)ENC_getCount(&g_DRV_encoderFrontRight) / ((float)p_deltaTime / 1000.0f) * 150.0f;
-    l_measuredSpeedFrontLeft  = (float)ENC_getCount(&g_DRV_encoderFrontLeft ) / ((float)p_deltaTime / 1000.0f) * 150.0f;
-    l_measuredSpeedRearRight  = (float)ENC_getCount(&g_DRV_encoderRearRight ) / ((float)p_deltaTime / 1000.0f) * 150.0f;
-    l_measuredSpeedRearLeft   = (float)ENC_getCount(&g_DRV_encoderRearLeft  ) / ((float)p_deltaTime / 1000.0f) * 150.0f;
+    l_measuredSpeedFrontRight = fabs((float)ENC_getCount(&g_DRV_encoderFrontRight) / (float)p_deltaTime * STD_DRIVE_PID_ENCODER_TO_SPEED_FACTOR);
+    l_measuredSpeedFrontLeft  = fabs((float)ENC_getCount(&g_DRV_encoderFrontLeft ) / (float)p_deltaTime * STD_DRIVE_PID_ENCODER_TO_SPEED_FACTOR);
+    l_measuredSpeedRearRight  = fabs((float)ENC_getCount(&g_DRV_encoderRearRight ) / (float)p_deltaTime * STD_DRIVE_PID_ENCODER_TO_SPEED_FACTOR);
+    l_measuredSpeedRearLeft   = fabs((float)ENC_getCount(&g_DRV_encoderRearLeft  ) / (float)p_deltaTime * STD_DRIVE_PID_ENCODER_TO_SPEED_FACTOR);
 
     CBU_push(&g_DRV_speedBufferFrontRight, l_measuredSpeedFrontRight);
     CBU_push(&g_DRV_speedBufferFrontLeft , l_measuredSpeedFrontLeft );
@@ -459,9 +513,10 @@ void DRV_updateFromMaster(T_SFO_Context *p_commandsFifo, uint16_t p_deltaTime)
     HAL_RTC_GetTime(&hrtc, &l_time, RTC_FORMAT_BCD);
     HAL_RTC_GetDate(&hrtc, &l_date, RTC_FORMAT_BCD);
 
-    if (UTI_turnRtcTimeToSeconds(&l_time) - UTI_turnRtcTimeToSeconds(&l_lastTime) >= 1)
+    if (UTI_turnRtcTimeToSeconds(&l_time) - UTI_turnRtcTimeToSeconds(&l_lastTime) >= 3)
     {
       l_lastTime = l_time;
+      PID_logInfo(&g_DRV_pidFrontRight);
       LOG_info("%d, %d, %d, %d",
                (int32_t)l_averageSpeedFrontRight,
                (int32_t)l_averageSpeedFrontLeft,
@@ -519,15 +574,6 @@ void DRV_logInfo(void)
     LOG_error("Unsupported drive mode: %u", g_DRV_mode);
   }
 
-  if (g_DRV_isDriveOn == true)
-  {
-    LOG_info("Drive : ON");
-  }
-  else
-  {
-    LOG_info("Drive : OFF");
-  }
-
   if (g_DRV_areMotorsOn == true)
   {
     LOG_info("Motors: ON");
@@ -556,6 +602,16 @@ void DRV_logInfo(void)
   l_speed     = MTR_getSpeed    (&g_DRV_motorRearRight);
 
   LOG_info("%s motor direction/speed: %u/%u", DRV_REAR_RIGHT_MOTOR_NAME, l_direction, l_speed);
+
+  return;
+}
+
+static void DRV_setDirectionsStop(void)
+{
+  MTR_setDirection(&g_DRV_motorFrontRight, MTR_DIRECTION_STOP);
+  MTR_setDirection(&g_DRV_motorFrontLeft , MTR_DIRECTION_STOP);
+  MTR_setDirection(&g_DRV_motorRearRight , MTR_DIRECTION_STOP);
+  MTR_setDirection(&g_DRV_motorRearLeft  , MTR_DIRECTION_STOP);
 
   return;
 }
@@ -652,24 +708,14 @@ static void DRV_setDirectionsTranslateRight(void)
   return;
 }
 
-
-static void DRV_sleep(void)
+static void DRV_stop(void)
 {
-  if (g_DRV_isDriveOn == true)
-  {
-    LOG_debug("Drive going to sleep");
+  DRV_setDirectionsStop();
 
-    MTR_setSpeed(&g_DRV_motorFrontRight, 0);
-    MTR_setSpeed(&g_DRV_motorFrontLeft , 0);
-    MTR_setSpeed(&g_DRV_motorRearRight , 0);
-    MTR_setSpeed(&g_DRV_motorRearLeft  , 0);
-
-    g_DRV_isDriveOn = false;
-  }
-  else
-  {
-    ; /* Nothing to do */
-  }
+  MTR_setSpeed(&g_DRV_motorFrontRight, 0);
+  MTR_setSpeed(&g_DRV_motorFrontLeft , 0);
+  MTR_setSpeed(&g_DRV_motorRearRight , 0);
+  MTR_setSpeed(&g_DRV_motorRearLeft  , 0);
 
   return;
 }
@@ -679,8 +725,6 @@ static void DRV_moveForward(uint32_t p_speed)
   uint32_t l_speed = p_speed;
 
   LOG_debug("Moving forward @%u", l_speed);
-
-  g_DRV_isDriveOn = true;
 
   DRV_setDirectionsForward();
 
@@ -705,8 +749,6 @@ static void DRV_moveBackward(uint32_t p_speed)
 
   LOG_debug("Moving backward @%u", l_speed);
 
-  g_DRV_isDriveOn = true;
-
   DRV_setDirectionsBackward();
 
   if (g_DRV_areMotorsOn == false)
@@ -729,8 +771,6 @@ static void DRV_moveForwardRight(uint32_t p_speed)
   uint32_t l_speed = p_speed;
 
   LOG_debug("Moving forward-right @%u", l_speed);
-
-  g_DRV_isDriveOn = true;
 
   DRV_setDirectionsForwardRight();
 
@@ -755,8 +795,6 @@ static void DRV_moveForwardLeft(uint32_t p_speed)
 
   LOG_debug("Moving forward-left @%u", l_speed);
 
-  g_DRV_isDriveOn = true;
-
   DRV_setDirectionsForwardLeft();
 
   if (g_DRV_areMotorsOn == false)
@@ -779,8 +817,6 @@ static void DRV_moveBackwardRight(uint32_t p_speed)
   uint32_t l_speed = p_speed;
 
   LOG_debug("Moving backward-right @%u", l_speed);
-
-  g_DRV_isDriveOn = true;
 
   DRV_setDirectionsBackwardRight();
 
@@ -805,8 +841,6 @@ static void DRV_moveBackwardLeft(uint32_t p_speed)
 
   LOG_debug("Moving backward-left @%u", l_speed);
 
-  g_DRV_isDriveOn = true;
-
   DRV_setDirectionsBackwardLeft();
 
   if (g_DRV_areMotorsOn == false)
@@ -829,8 +863,6 @@ static void DRV_turnLeft(uint32_t p_speed)
   uint32_t l_speed = p_speed;
 
   LOG_debug("Turning left @%u", l_speed);
-
-  g_DRV_isDriveOn = true;
 
   DRV_setDirectionsTurnLeft();
 
@@ -855,8 +887,6 @@ static void DRV_turnRight(uint32_t p_speed)
 
   LOG_debug("Turning right @%u", l_speed);
 
-  g_DRV_isDriveOn = true;
-
   DRV_setDirectionsTurnRight();
 
   if (g_DRV_areMotorsOn == false)
@@ -880,8 +910,6 @@ static void DRV_translateLeft(uint32_t p_speed)
 
   LOG_debug("Translating left @%u", l_speed);
 
-  g_DRV_isDriveOn = true;
-
   DRV_setDirectionsTranslateLeft();
 
   if (g_DRV_areMotorsOn == false)
@@ -904,8 +932,6 @@ static void DRV_translateRight(uint32_t p_speed)
   uint32_t l_speed = p_speed;
 
   LOG_debug("Translating right @%u", l_speed);
-
-  g_DRV_isDriveOn = true;
 
   DRV_setDirectionsTranslateRight();
 
