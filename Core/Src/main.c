@@ -460,7 +460,8 @@ int main(void)
   BLU_initData(&l_bluetoothData);
 
   /* Initialize driving module */
-  DRV_init(&htim8, &htim2, &htim3, &htim4, &htim5);
+  DRV_init(&htim8, &htim4, &htim5, &htim2, &htim3);
+
   DRV_logInfo();
 
   /* USER CODE END 2 */
@@ -1133,17 +1134,17 @@ static void MX_GPIO_Init(void)
   __HAL_RCC_GPIOD_CLK_ENABLE();
 
   /*Configure GPIO pin Output Level */
-  HAL_GPIO_WritePin(GPIOC, BLUE_LED_Pin|BLUETOOTH_SPI_CMD_Pin|BLUETOOTH_SPI_CS_Pin|MOTOR_FRONT_RIGHT_IN_1_Pin
-                          |MOTOR_FRONT_RIGHT_IN_2_Pin|MOTOR_REAR_LEFT_IN_2_Pin, GPIO_PIN_RESET);
+  HAL_GPIO_WritePin(GPIOC, BLUE_LED_Pin|BLUETOOTH_SPI_CMD_Pin|BLUETOOTH_SPI_CS_Pin|MOTOR_REAR_LEFT_OUT_1_Pin
+                          |MOTOR_REAR_LEFT_OUT_2_Pin|MOTOR_FRONT_RIGHT_OUT_2_Pin, GPIO_PIN_RESET);
 
   /*Configure GPIO pin Output Level */
   HAL_GPIO_WritePin(BLUETOOTH_SPI_CLK_GPIO_Port, BLUETOOTH_SPI_CLK_Pin, GPIO_PIN_RESET);
 
   /*Configure GPIO pin Output Level */
-  HAL_GPIO_WritePin(GPIOB, MOTOR_FRONT_LEFT_IN_1_Pin|MOTOR_FRONT_LEFT_IN_2_Pin|MOTOR_REAR_RIGHT_IN_2_Pin|MOTOR_REAR_RIGHT_IN_1_Pin, GPIO_PIN_RESET);
+  HAL_GPIO_WritePin(GPIOB, MOTOR_REAR_RIGHT_OUT_1_Pin|MOTOR_REAR_RIGHT_OUT_2_Pin|MOTOR_FRONT_LEFT_OUT_2_Pin|MOTOR_FRONT_LEFT_OUT_1_Pin, GPIO_PIN_RESET);
 
   /*Configure GPIO pin Output Level */
-  HAL_GPIO_WritePin(MOTOR_REAR_LEFT_IN_1_GPIO_Port, MOTOR_REAR_LEFT_IN_1_Pin, GPIO_PIN_RESET);
+  HAL_GPIO_WritePin(MOTOR_FRONT_RIGHT_OUT_1_GPIO_Port, MOTOR_FRONT_RIGHT_OUT_1_Pin, GPIO_PIN_RESET);
 
   /*Configure GPIO pin : BLUE_LED_Pin */
   GPIO_InitStruct.Pin = BLUE_LED_Pin;
@@ -1152,10 +1153,10 @@ static void MX_GPIO_Init(void)
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
   HAL_GPIO_Init(BLUE_LED_GPIO_Port, &GPIO_InitStruct);
 
-  /*Configure GPIO pins : BLUETOOTH_SPI_CMD_Pin BLUETOOTH_SPI_CS_Pin MOTOR_FRONT_RIGHT_IN_1_Pin MOTOR_FRONT_RIGHT_IN_2_Pin
-                           MOTOR_REAR_LEFT_IN_2_Pin */
-  GPIO_InitStruct.Pin = BLUETOOTH_SPI_CMD_Pin|BLUETOOTH_SPI_CS_Pin|MOTOR_FRONT_RIGHT_IN_1_Pin|MOTOR_FRONT_RIGHT_IN_2_Pin
-                          |MOTOR_REAR_LEFT_IN_2_Pin;
+  /*Configure GPIO pins : BLUETOOTH_SPI_CMD_Pin BLUETOOTH_SPI_CS_Pin MOTOR_REAR_LEFT_OUT_1_Pin MOTOR_REAR_LEFT_OUT_2_Pin
+                           MOTOR_FRONT_RIGHT_OUT_2_Pin */
+  GPIO_InitStruct.Pin = BLUETOOTH_SPI_CMD_Pin|BLUETOOTH_SPI_CS_Pin|MOTOR_REAR_LEFT_OUT_1_Pin|MOTOR_REAR_LEFT_OUT_2_Pin
+                          |MOTOR_FRONT_RIGHT_OUT_2_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_HIGH;
@@ -1174,19 +1175,19 @@ static void MX_GPIO_Init(void)
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_HIGH;
   HAL_GPIO_Init(BLUETOOTH_SPI_CLK_GPIO_Port, &GPIO_InitStruct);
 
-  /*Configure GPIO pins : MOTOR_FRONT_LEFT_IN_1_Pin MOTOR_FRONT_LEFT_IN_2_Pin MOTOR_REAR_RIGHT_IN_2_Pin MOTOR_REAR_RIGHT_IN_1_Pin */
-  GPIO_InitStruct.Pin = MOTOR_FRONT_LEFT_IN_1_Pin|MOTOR_FRONT_LEFT_IN_2_Pin|MOTOR_REAR_RIGHT_IN_2_Pin|MOTOR_REAR_RIGHT_IN_1_Pin;
+  /*Configure GPIO pins : MOTOR_REAR_RIGHT_OUT_1_Pin MOTOR_REAR_RIGHT_OUT_2_Pin MOTOR_FRONT_LEFT_OUT_2_Pin MOTOR_FRONT_LEFT_OUT_1_Pin */
+  GPIO_InitStruct.Pin = MOTOR_REAR_RIGHT_OUT_1_Pin|MOTOR_REAR_RIGHT_OUT_2_Pin|MOTOR_FRONT_LEFT_OUT_2_Pin|MOTOR_FRONT_LEFT_OUT_1_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_HIGH;
   HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
 
-  /*Configure GPIO pin : MOTOR_REAR_LEFT_IN_1_Pin */
-  GPIO_InitStruct.Pin = MOTOR_REAR_LEFT_IN_1_Pin;
+  /*Configure GPIO pin : MOTOR_FRONT_RIGHT_OUT_1_Pin */
+  GPIO_InitStruct.Pin = MOTOR_FRONT_RIGHT_OUT_1_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_HIGH;
-  HAL_GPIO_Init(MOTOR_REAR_LEFT_IN_1_GPIO_Port, &GPIO_InitStruct);
+  HAL_GPIO_Init(MOTOR_FRONT_RIGHT_OUT_1_GPIO_Port, &GPIO_InitStruct);
 
 }
 

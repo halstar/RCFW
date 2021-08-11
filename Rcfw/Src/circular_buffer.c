@@ -6,7 +6,7 @@ void CBU_init(T_CBU_Context *p_buffer)
 {
   uint32_t l_index;
 
-  LOG_debug("Initializing Circular buffer");
+  LOG_debug("Initializing circular buffer");
 
   for (l_index = 0; l_index < CST_CIRCULAR_BUFFER_MAX_ELEMENTS; l_index++)
   {

@@ -271,15 +271,15 @@ void HAL_TIM_Encoder_MspInit(TIM_HandleTypeDef* htim_encoder)
     PA15     ------> TIM2_CH1
     PB3     ------> TIM2_CH2
     */
-    GPIO_InitStruct.Pin = ENCODER_1_IN_1_Pin;
+    GPIO_InitStruct.Pin = ENCODER_FRONT_RIGHT_IN_1_Pin;
     GPIO_InitStruct.Mode = GPIO_MODE_INPUT;
     GPIO_InitStruct.Pull = GPIO_NOPULL;
-    HAL_GPIO_Init(ENCODER_1_IN_1_GPIO_Port, &GPIO_InitStruct);
+    HAL_GPIO_Init(ENCODER_FRONT_RIGHT_IN_1_GPIO_Port, &GPIO_InitStruct);
 
-    GPIO_InitStruct.Pin = ENCODER_1_IN_2_Pin;
+    GPIO_InitStruct.Pin = ENCODER_FRONT_RIGHT_IN_2_Pin;
     GPIO_InitStruct.Mode = GPIO_MODE_INPUT;
     GPIO_InitStruct.Pull = GPIO_NOPULL;
-    HAL_GPIO_Init(ENCODER_1_IN_2_GPIO_Port, &GPIO_InitStruct);
+    HAL_GPIO_Init(ENCODER_FRONT_RIGHT_IN_2_GPIO_Port, &GPIO_InitStruct);
 
     __HAL_AFIO_REMAP_TIM2_PARTIAL_1();
 
@@ -303,7 +303,7 @@ void HAL_TIM_Encoder_MspInit(TIM_HandleTypeDef* htim_encoder)
     PA6     ------> TIM3_CH1
     PA7     ------> TIM3_CH2
     */
-    GPIO_InitStruct.Pin = ENCODER_2_IN_1_Pin|ENCODER_2_IN_2_Pin;
+    GPIO_InitStruct.Pin = ENCODER_FRONT_LEFT_IN_1_Pin|ENCODER_FRONT_LEFT_IN_2_Pin;
     GPIO_InitStruct.Mode = GPIO_MODE_INPUT;
     GPIO_InitStruct.Pull = GPIO_NOPULL;
     HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
@@ -328,7 +328,7 @@ void HAL_TIM_Encoder_MspInit(TIM_HandleTypeDef* htim_encoder)
     PB6     ------> TIM4_CH1
     PB7     ------> TIM4_CH2
     */
-    GPIO_InitStruct.Pin = ENCODER_3_IN_1_Pin|ENCODER_3_IN_2_Pin;
+    GPIO_InitStruct.Pin = ENCODER_REAR_LEFT_IN_1_Pin|ENCODER_REAR_LEFT_IN_2_Pin;
     GPIO_InitStruct.Mode = GPIO_MODE_INPUT;
     GPIO_InitStruct.Pull = GPIO_NOPULL;
     HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
@@ -353,7 +353,7 @@ void HAL_TIM_Encoder_MspInit(TIM_HandleTypeDef* htim_encoder)
     PA0-WKUP     ------> TIM5_CH1
     PA1     ------> TIM5_CH2
     */
-    GPIO_InitStruct.Pin = ENCODER_4_IN_1_Pin|ENCODER_4_IN_2_Pin;
+    GPIO_InitStruct.Pin = ENCODER_REAR_RIGHT_IN_1_Pin|ENCODER_REAR_RIGHT_IN_2_Pin;
     GPIO_InitStruct.Mode = GPIO_MODE_INPUT;
     GPIO_InitStruct.Pull = GPIO_NOPULL;
     HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
@@ -384,7 +384,7 @@ void HAL_TIM_MspPostInit(TIM_HandleTypeDef* htim)
     PC8     ------> TIM8_CH3
     PC9     ------> TIM8_CH4
     */
-    GPIO_InitStruct.Pin = MOTOR_FRONT_LEFT_PWM_Pin|MOTOR_FRONT_RIGHT_PWM_Pin|MOTOR_REAR_LEFT_PWM_Pin|MOTOR_REAR_RIGHT_PWM_Pin;
+    GPIO_InitStruct.Pin = MOTOR_REAR_RIGHT_PWM_Pin|MOTOR_REAR_LEFT_PWM_Pin|MOTOR_FRONT_RIGHT_PWM_Pin|MOTOR_FRONT_LEFT_PWM_Pin;
     GPIO_InitStruct.Mode = GPIO_MODE_AF_PP;
     GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_HIGH;
     HAL_GPIO_Init(GPIOC, &GPIO_InitStruct);
@@ -473,9 +473,9 @@ void HAL_TIM_Encoder_MspDeInit(TIM_HandleTypeDef* htim_encoder)
     PA15     ------> TIM2_CH1
     PB3     ------> TIM2_CH2
     */
-    HAL_GPIO_DeInit(ENCODER_1_IN_1_GPIO_Port, ENCODER_1_IN_1_Pin);
+    HAL_GPIO_DeInit(ENCODER_FRONT_RIGHT_IN_1_GPIO_Port, ENCODER_FRONT_RIGHT_IN_1_Pin);
 
-    HAL_GPIO_DeInit(ENCODER_1_IN_2_GPIO_Port, ENCODER_1_IN_2_Pin);
+    HAL_GPIO_DeInit(ENCODER_FRONT_RIGHT_IN_2_GPIO_Port, ENCODER_FRONT_RIGHT_IN_2_Pin);
 
     /* TIM2 interrupt DeInit */
     HAL_NVIC_DisableIRQ(TIM2_IRQn);
@@ -495,7 +495,7 @@ void HAL_TIM_Encoder_MspDeInit(TIM_HandleTypeDef* htim_encoder)
     PA6     ------> TIM3_CH1
     PA7     ------> TIM3_CH2
     */
-    HAL_GPIO_DeInit(GPIOA, ENCODER_2_IN_1_Pin|ENCODER_2_IN_2_Pin);
+    HAL_GPIO_DeInit(GPIOA, ENCODER_FRONT_LEFT_IN_1_Pin|ENCODER_FRONT_LEFT_IN_2_Pin);
 
     /* TIM3 interrupt DeInit */
     HAL_NVIC_DisableIRQ(TIM3_IRQn);
@@ -515,7 +515,7 @@ void HAL_TIM_Encoder_MspDeInit(TIM_HandleTypeDef* htim_encoder)
     PB6     ------> TIM4_CH1
     PB7     ------> TIM4_CH2
     */
-    HAL_GPIO_DeInit(GPIOB, ENCODER_3_IN_1_Pin|ENCODER_3_IN_2_Pin);
+    HAL_GPIO_DeInit(GPIOB, ENCODER_REAR_LEFT_IN_1_Pin|ENCODER_REAR_LEFT_IN_2_Pin);
 
     /* TIM4 interrupt DeInit */
     HAL_NVIC_DisableIRQ(TIM4_IRQn);
@@ -535,7 +535,7 @@ void HAL_TIM_Encoder_MspDeInit(TIM_HandleTypeDef* htim_encoder)
     PA0-WKUP     ------> TIM5_CH1
     PA1     ------> TIM5_CH2
     */
-    HAL_GPIO_DeInit(GPIOA, ENCODER_4_IN_1_Pin|ENCODER_4_IN_2_Pin);
+    HAL_GPIO_DeInit(GPIOA, ENCODER_REAR_RIGHT_IN_1_Pin|ENCODER_REAR_RIGHT_IN_2_Pin);
 
     /* TIM5 interrupt DeInit */
     HAL_NVIC_DisableIRQ(TIM5_IRQn);

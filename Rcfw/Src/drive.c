@@ -27,9 +27,9 @@
 
 static bool          g_DRV_areMotorsOn;
 static T_DRV_MODE    g_DRV_mode;
-static T_PID_Handle  g_DRV_pidFrontRight    , g_DRV_pidFrontLeft    , g_DRV_pidRearLeft    , g_DRV_pidRearRight    ;
-static T_MTR_Handle  g_DRV_motorFrontRight  , g_DRV_motorFrontLeft  , g_DRV_motorRearLeft  , g_DRV_motorRearRight  ;
-static T_ENC_Handle  g_DRV_encoderFrontRight, g_DRV_encoderFrontLeft, g_DRV_encoderRearLeft, g_DRV_encoderRearRight;
+static T_PID_Handle  g_DRV_pidFrontRight        , g_DRV_pidFrontLeft        , g_DRV_pidRearLeft        , g_DRV_pidRearRight        ;
+static T_MTR_Handle  g_DRV_motorFrontRight      , g_DRV_motorFrontLeft      , g_DRV_motorRearLeft      , g_DRV_motorRearRight      ;
+static T_ENC_Handle  g_DRV_encoderFrontRight    , g_DRV_encoderFrontLeft    , g_DRV_encoderRearLeft    , g_DRV_encoderRearRight    ;
 static T_CBU_Context g_DRV_speedBufferFrontRight, g_DRV_speedBufferFrontLeft, g_DRV_speedBufferRearLeft, g_DRV_speedBufferRearRight;
 
 extern RTC_HandleTypeDef hrtc;
@@ -75,39 +75,39 @@ void DRV_init(TIM_HandleTypeDef *p_pwmTimerHandle,
   /* Setup motors (with a 0 speed & stopped direction, at this point) */
   MTR_init(&g_DRV_motorFrontRight,
            DRV_FRONT_RIGHT_MOTOR_NAME,
-           MOTOR_FRONT_RIGHT_IN_1_GPIO_Port,
-           MOTOR_FRONT_RIGHT_IN_1_Pin,
-           MOTOR_FRONT_RIGHT_IN_2_GPIO_Port,
-           MOTOR_FRONT_RIGHT_IN_2_Pin,
-           p_pwmTimerHandle,
-           TIM_CHANNEL_2);
-
-  MTR_init(&g_DRV_motorFrontLeft,
-           DRV_FRONT_LEFT_MOTOR_NAME,
-           MOTOR_FRONT_LEFT_IN_1_GPIO_Port,
-           MOTOR_FRONT_LEFT_IN_1_Pin,
-           MOTOR_FRONT_LEFT_IN_2_GPIO_Port,
-           MOTOR_FRONT_LEFT_IN_2_Pin,
-           p_pwmTimerHandle,
-           TIM_CHANNEL_1);
-
-  MTR_init(&g_DRV_motorRearLeft,
-           DRV_REAR_LEFT_MOTOR_NAME,
-           MOTOR_REAR_LEFT_IN_1_GPIO_Port,
-           MOTOR_REAR_LEFT_IN_1_Pin,
-           MOTOR_REAR_LEFT_IN_2_GPIO_Port,
-           MOTOR_REAR_LEFT_IN_2_Pin,
+           MOTOR_FRONT_RIGHT_OUT_1_GPIO_Port,
+           MOTOR_FRONT_RIGHT_OUT_1_Pin,
+           MOTOR_FRONT_RIGHT_OUT_2_GPIO_Port,
+           MOTOR_FRONT_RIGHT_OUT_2_Pin,
            p_pwmTimerHandle,
            TIM_CHANNEL_4);
 
-  MTR_init(&g_DRV_motorRearRight,
-           DRV_REAR_RIGHT_MOTOR_NAME,
-           MOTOR_REAR_RIGHT_IN_1_GPIO_Port,
-           MOTOR_REAR_RIGHT_IN_1_Pin,
-           MOTOR_REAR_RIGHT_IN_2_GPIO_Port,
-           MOTOR_REAR_RIGHT_IN_2_Pin,
+  MTR_init(&g_DRV_motorFrontLeft,
+           DRV_FRONT_LEFT_MOTOR_NAME,
+           MOTOR_FRONT_LEFT_OUT_1_GPIO_Port,
+           MOTOR_FRONT_LEFT_OUT_1_Pin,
+           MOTOR_FRONT_LEFT_OUT_2_GPIO_Port,
+           MOTOR_FRONT_LEFT_OUT_2_Pin,
            p_pwmTimerHandle,
            TIM_CHANNEL_3);
+
+  MTR_init(&g_DRV_motorRearLeft,
+           DRV_REAR_LEFT_MOTOR_NAME,
+           MOTOR_REAR_LEFT_OUT_1_GPIO_Port,
+           MOTOR_REAR_LEFT_OUT_1_Pin,
+           MOTOR_REAR_LEFT_OUT_2_GPIO_Port,
+           MOTOR_REAR_LEFT_OUT_2_Pin,
+           p_pwmTimerHandle,
+           TIM_CHANNEL_2);
+
+  MTR_init(&g_DRV_motorRearRight,
+           DRV_REAR_RIGHT_MOTOR_NAME,
+           MOTOR_REAR_RIGHT_OUT_1_GPIO_Port,
+           MOTOR_REAR_RIGHT_OUT_1_Pin,
+           MOTOR_REAR_RIGHT_OUT_2_GPIO_Port,
+           MOTOR_REAR_RIGHT_OUT_2_Pin,
+           p_pwmTimerHandle,
+           TIM_CHANNEL_1);
 
   /* Setup encoders */
   ENC_init(&g_DRV_encoderFrontRight, DRV_FRONT_RIGHT_MOTOR_NAME, true , p_frontRightEncoderTimerHandle);
