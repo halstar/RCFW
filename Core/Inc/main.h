@@ -67,6 +67,8 @@ void Error_Handler(void);
 /* Private defines -----------------------------------------------------------*/
 #define BLUE_LED_Pin GPIO_PIN_13
 #define BLUE_LED_GPIO_Port GPIOC
+#define SW_RESET_Pin GPIO_PIN_0
+#define SW_RESET_GPIO_Port GPIOC
 #define BLUETOOTH_SPI_CMD_Pin GPIO_PIN_1
 #define BLUETOOTH_SPI_CMD_GPIO_Port GPIOC
 #define BLUETOOTH_SPI_DAT_Pin GPIO_PIN_2

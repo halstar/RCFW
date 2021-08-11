@@ -9,21 +9,11 @@
 #include "encoder.h"
 #include "main.h"
 #include "log.h"
+#include "const.h"
 #include "setup.h"
 #include "utils.h"
 #include "circular_buffer.h"
 #include "string_fifo.h"
-
-#define DRV_FRONT_RIGHT_MOTOR_NAME "FRONT RIGHT"
-#define DRV_FRONT_LEFT_MOTOR_NAME  "FRONT LEFT "
-#define DRV_REAR_LEFT_MOTOR_NAME   "REAR  LEFT "
-#define DRV_REAR_RIGHT_MOTOR_NAME  "REAR  RIGHT"
-
-#define DRV_JOYSTICKS_THRESHOLD   10
-#define DRV_JOYSTICKS_FIXED_SPEED 20
-/* Double buttons fixed speed at it concerns forward/backward + left/right movements, */
-/* the latter actually using only 2 motors, while the other movements use 4 motors.   */
-#define DRV_BUTTONS_FIXED_SPEED   (DRV_JOYSTICKS_FIXED_SPEED * 2)
 
 static bool          g_DRV_areMotorsOn;
 static T_DRV_MODE    g_DRV_mode;
@@ -67,14 +57,14 @@ void DRV_init(TIM_HandleTypeDef *p_pwmTimerHandle,
   LOG_info("Initializing Drive module");
 
   /* Setup PIDs with a target speed to 0 */
-  PID_init(&g_DRV_pidFrontRight, STD_DRIVE_PID_P_FACTOR, STD_DRIVE_PID_I_FACTOR, STD_DRIVE_PID_D_FACTOR, 0, STP_DRIVE_MIN_SPEED, STP_DRIVE_MAX_SPEED, STD_DRIVE_PID_ANTI_WIND_UP_FACTOR);
-  PID_init(&g_DRV_pidFrontLeft , STD_DRIVE_PID_P_FACTOR, STD_DRIVE_PID_I_FACTOR, STD_DRIVE_PID_D_FACTOR, 0, STP_DRIVE_MIN_SPEED, STP_DRIVE_MAX_SPEED, STD_DRIVE_PID_ANTI_WIND_UP_FACTOR);
-  PID_init(&g_DRV_pidRearLeft  , STD_DRIVE_PID_P_FACTOR, STD_DRIVE_PID_I_FACTOR, STD_DRIVE_PID_D_FACTOR, 0, STP_DRIVE_MIN_SPEED, STP_DRIVE_MAX_SPEED, STD_DRIVE_PID_ANTI_WIND_UP_FACTOR);
-  PID_init(&g_DRV_pidRearRight , STD_DRIVE_PID_P_FACTOR, STD_DRIVE_PID_I_FACTOR, STD_DRIVE_PID_D_FACTOR, 0, STP_DRIVE_MIN_SPEED, STP_DRIVE_MAX_SPEED, STD_DRIVE_PID_ANTI_WIND_UP_FACTOR);
+  PID_init(&g_DRV_pidFrontRight, STP_DRIVE_PID_P_FACTOR, STP_DRIVE_PID_I_FACTOR, STP_DRIVE_PID_D_FACTOR, 0, STP_DRIVE_MIN_SPEED, STP_DRIVE_MAX_SPEED, STP_DRIVE_PID_ANTI_WIND_UP_FACTOR);
+  PID_init(&g_DRV_pidFrontLeft , STP_DRIVE_PID_P_FACTOR, STP_DRIVE_PID_I_FACTOR, STP_DRIVE_PID_D_FACTOR, 0, STP_DRIVE_MIN_SPEED, STP_DRIVE_MAX_SPEED, STP_DRIVE_PID_ANTI_WIND_UP_FACTOR);
+  PID_init(&g_DRV_pidRearLeft  , STP_DRIVE_PID_P_FACTOR, STP_DRIVE_PID_I_FACTOR, STP_DRIVE_PID_D_FACTOR, 0, STP_DRIVE_MIN_SPEED, STP_DRIVE_MAX_SPEED, STP_DRIVE_PID_ANTI_WIND_UP_FACTOR);
+  PID_init(&g_DRV_pidRearRight , STP_DRIVE_PID_P_FACTOR, STP_DRIVE_PID_I_FACTOR, STP_DRIVE_PID_D_FACTOR, 0, STP_DRIVE_MIN_SPEED, STP_DRIVE_MAX_SPEED, STP_DRIVE_PID_ANTI_WIND_UP_FACTOR);
 
   /* Setup motors (with a 0 speed & stopped direction, at this point) */
   MTR_init(&g_DRV_motorFrontRight,
-           DRV_FRONT_RIGHT_MOTOR_NAME,
+           CST_FRONT_RIGHT_MOTOR_NAME,
            MOTOR_FRONT_RIGHT_OUT_1_GPIO_Port,
            MOTOR_FRONT_RIGHT_OUT_1_Pin,
            MOTOR_FRONT_RIGHT_OUT_2_GPIO_Port,
@@ -83,7 +73,7 @@ void DRV_init(TIM_HandleTypeDef *p_pwmTimerHandle,
            TIM_CHANNEL_4);
 
   MTR_init(&g_DRV_motorFrontLeft,
-           DRV_FRONT_LEFT_MOTOR_NAME,
+           CST_FRONT_LEFT_MOTOR_NAME,
            MOTOR_FRONT_LEFT_OUT_1_GPIO_Port,
            MOTOR_FRONT_LEFT_OUT_1_Pin,
            MOTOR_FRONT_LEFT_OUT_2_GPIO_Port,
@@ -92,7 +82,7 @@ void DRV_init(TIM_HandleTypeDef *p_pwmTimerHandle,
            TIM_CHANNEL_3);
 
   MTR_init(&g_DRV_motorRearLeft,
-           DRV_REAR_LEFT_MOTOR_NAME,
+           CST_REAR_LEFT_MOTOR_NAME,
            MOTOR_REAR_LEFT_OUT_1_GPIO_Port,
            MOTOR_REAR_LEFT_OUT_1_Pin,
            MOTOR_REAR_LEFT_OUT_2_GPIO_Port,
@@ -101,7 +91,7 @@ void DRV_init(TIM_HandleTypeDef *p_pwmTimerHandle,
            TIM_CHANNEL_2);
 
   MTR_init(&g_DRV_motorRearRight,
-           DRV_REAR_RIGHT_MOTOR_NAME,
+           CST_REAR_RIGHT_MOTOR_NAME,
            MOTOR_REAR_RIGHT_OUT_1_GPIO_Port,
            MOTOR_REAR_RIGHT_OUT_1_Pin,
            MOTOR_REAR_RIGHT_OUT_2_GPIO_Port,
@@ -110,10 +100,10 @@ void DRV_init(TIM_HandleTypeDef *p_pwmTimerHandle,
            TIM_CHANNEL_1);
 
   /* Setup encoders */
-  ENC_init(&g_DRV_encoderFrontRight, DRV_FRONT_RIGHT_MOTOR_NAME, true , p_frontRightEncoderTimerHandle);
-  ENC_init(&g_DRV_encoderFrontLeft , DRV_FRONT_LEFT_MOTOR_NAME , false, p_frontLeftEncoderTimerHandle );
-  ENC_init(&g_DRV_encoderRearLeft  , DRV_REAR_LEFT_MOTOR_NAME  , false, p_rearLeftEncoderTimerHandle  );
-  ENC_init(&g_DRV_encoderRearRight , DRV_REAR_RIGHT_MOTOR_NAME , true , p_rearRightEncoderTimerHandle );
+  ENC_init(&g_DRV_encoderFrontRight, CST_FRONT_RIGHT_MOTOR_NAME, true , p_frontRightEncoderTimerHandle);
+  ENC_init(&g_DRV_encoderFrontLeft , CST_FRONT_LEFT_MOTOR_NAME , false, p_frontLeftEncoderTimerHandle );
+  ENC_init(&g_DRV_encoderRearLeft  , CST_REAR_LEFT_MOTOR_NAME  , false, p_rearLeftEncoderTimerHandle  );
+  ENC_init(&g_DRV_encoderRearRight , CST_REAR_RIGHT_MOTOR_NAME , true , p_rearRightEncoderTimerHandle );
 
   /* Setup speed buffers */
   CBU_init(&g_DRV_speedBufferFrontRight);
@@ -141,25 +131,25 @@ void DRV_updateEncoder(TIM_HandleTypeDef *p_encoderTimerHandle)
   {
     ENC_update(&g_DRV_encoderRearLeft, l_count);
 
-    // LOG_debug("%s encoder: %d", DRV_REAR_LEFT_MOTOR_NAME, ENC_getCount(&g_DRV_encoderRearLeft));
+    // LOG_debug("%s encoder: %d", CST_REAR_LEFT_MOTOR_NAME, ENC_getCount(&g_DRV_encoderRearLeft));
   }
   else if (p_encoderTimerHandle == g_DRV_encoderRearRight.timerHandle)
   {
     ENC_update(&g_DRV_encoderRearRight, l_count);
 
-    // LOG_debug("%s encoder: %d", DRV_REAR_RIGHT_MOTOR_NAME, ENC_getCount(&g_DRV_encoderRearRight));
+    // LOG_debug("%s encoder: %d", CST_REAR_RIGHT_MOTOR_NAME, ENC_getCount(&g_DRV_encoderRearRight));
   }
   else if (p_encoderTimerHandle == g_DRV_encoderFrontRight.timerHandle)
   {
     ENC_update(&g_DRV_encoderFrontRight, l_count);
 
-    // LOG_debug("%s encoder: %d", DRV_FRONT_RIGHT_MOTOR_NAME, ENC_getCount(&g_DRV_encoderFrontRight));
+    // LOG_debug("%s encoder: %d", CST_FRONT_RIGHT_MOTOR_NAME, ENC_getCount(&g_DRV_encoderFrontRight));
   }
   else if (p_encoderTimerHandle == g_DRV_encoderFrontLeft.timerHandle)
   {
     ENC_update(&g_DRV_encoderFrontLeft, l_count);
 
-    // LOG_debug("%s encoder: %d", DRV_FRONT_LEFT_MOTOR_NAME, ENC_getCount(&g_DRV_encoderFrontLeft));
+    // LOG_debug("%s encoder: %d", CST_FRONT_LEFT_MOTOR_NAME, ENC_getCount(&g_DRV_encoderFrontLeft));
   }
   else
   {
@@ -251,69 +241,69 @@ void DRV_updateFromBluetooth(T_BLU_Data *p_bluetoothData)
   /* Manual mode, applying directions received by bluetooth */
   else
   {
-    if (p_bluetoothData->leftY > DRV_JOYSTICKS_THRESHOLD)
+    if (p_bluetoothData->leftY > STP_JOYSTICKS_THRESHOLD)
     {
-      l_speed = g_DRV_mode == DRV_MODE_MANUAL_FIXED_SPEED ? DRV_JOYSTICKS_FIXED_SPEED : p_bluetoothData->leftY;
+      l_speed = g_DRV_mode == DRV_MODE_MANUAL_FIXED_SPEED ? STP_JOYSTICKS_FIXED_SPEED : p_bluetoothData->leftY;
 
       DRV_moveForward(l_speed);
     }
-    else if (p_bluetoothData->rightY > DRV_JOYSTICKS_THRESHOLD)
+    else if (p_bluetoothData->rightY > STP_JOYSTICKS_THRESHOLD)
     {
-      l_speed = g_DRV_mode == DRV_MODE_MANUAL_FIXED_SPEED ? DRV_JOYSTICKS_FIXED_SPEED : p_bluetoothData->rightY;
+      l_speed = g_DRV_mode == DRV_MODE_MANUAL_FIXED_SPEED ? STP_JOYSTICKS_FIXED_SPEED : p_bluetoothData->rightY;
 
       DRV_moveForward(l_speed);
     }
-    else if (p_bluetoothData->leftY < -DRV_JOYSTICKS_THRESHOLD)
+    else if (p_bluetoothData->leftY < -STP_JOYSTICKS_THRESHOLD)
     {
-      l_speed = g_DRV_mode == DRV_MODE_MANUAL_FIXED_SPEED ? DRV_JOYSTICKS_FIXED_SPEED : -p_bluetoothData->leftY;
+      l_speed = g_DRV_mode == DRV_MODE_MANUAL_FIXED_SPEED ? STP_JOYSTICKS_FIXED_SPEED : -p_bluetoothData->leftY;
 
       DRV_moveBackward(l_speed);
     }
-    else if (p_bluetoothData->rightY < -DRV_JOYSTICKS_THRESHOLD)
+    else if (p_bluetoothData->rightY < -STP_JOYSTICKS_THRESHOLD)
     {
-      l_speed = g_DRV_mode == DRV_MODE_MANUAL_FIXED_SPEED ? DRV_JOYSTICKS_FIXED_SPEED : -p_bluetoothData->rightY;
+      l_speed = g_DRV_mode == DRV_MODE_MANUAL_FIXED_SPEED ? STP_JOYSTICKS_FIXED_SPEED : -p_bluetoothData->rightY;
 
       DRV_moveBackward(l_speed);
     }
-    else if (p_bluetoothData->leftX < -DRV_JOYSTICKS_THRESHOLD)
+    else if (p_bluetoothData->leftX < -STP_JOYSTICKS_THRESHOLD)
     {
-      l_speed = g_DRV_mode == DRV_MODE_MANUAL_FIXED_SPEED ? DRV_JOYSTICKS_FIXED_SPEED : -p_bluetoothData->leftX;
+      l_speed = g_DRV_mode == DRV_MODE_MANUAL_FIXED_SPEED ? STP_JOYSTICKS_FIXED_SPEED : -p_bluetoothData->leftX;
 
       DRV_turnLeft(l_speed);
     }
-    else if (p_bluetoothData->leftX > DRV_JOYSTICKS_THRESHOLD)
+    else if (p_bluetoothData->leftX > STP_JOYSTICKS_THRESHOLD)
     {
-      l_speed = g_DRV_mode == DRV_MODE_MANUAL_FIXED_SPEED ? DRV_JOYSTICKS_FIXED_SPEED : p_bluetoothData->leftX;
+      l_speed = g_DRV_mode == DRV_MODE_MANUAL_FIXED_SPEED ? STP_JOYSTICKS_FIXED_SPEED : p_bluetoothData->leftX;
 
       DRV_turnRight(l_speed);
     }
-    else if (p_bluetoothData->rightX < -DRV_JOYSTICKS_THRESHOLD)
+    else if (p_bluetoothData->rightX < -STP_JOYSTICKS_THRESHOLD)
     {
-      l_speed = g_DRV_mode == DRV_MODE_MANUAL_FIXED_SPEED ? DRV_JOYSTICKS_FIXED_SPEED : -p_bluetoothData->rightX;
+      l_speed = g_DRV_mode == DRV_MODE_MANUAL_FIXED_SPEED ? STP_JOYSTICKS_FIXED_SPEED : -p_bluetoothData->rightX;
 
       DRV_translateLeft(l_speed);
     }
-    else if (p_bluetoothData->rightX > DRV_JOYSTICKS_THRESHOLD)
+    else if (p_bluetoothData->rightX > STP_JOYSTICKS_THRESHOLD)
     {
-      l_speed = g_DRV_mode == DRV_MODE_MANUAL_FIXED_SPEED ? DRV_JOYSTICKS_FIXED_SPEED : p_bluetoothData->rightX;
+      l_speed = g_DRV_mode == DRV_MODE_MANUAL_FIXED_SPEED ? STP_JOYSTICKS_FIXED_SPEED : p_bluetoothData->rightX;
 
       DRV_translateRight(l_speed);
     }
     else if (p_bluetoothData->button == BLU_BUTTON_L1)
     {
-      DRV_moveForwardLeft(DRV_BUTTONS_FIXED_SPEED);
+      DRV_moveForwardLeft(STP_BUTTONS_FIXED_SPEED);
     }
     else if (p_bluetoothData->button == BLU_BUTTON_L2)
     {
-      DRV_moveBackwardRight(DRV_BUTTONS_FIXED_SPEED);
+      DRV_moveBackwardRight(STP_BUTTONS_FIXED_SPEED);
     }
     else if (p_bluetoothData->button == BLU_BUTTON_R1)
     {
-      DRV_moveForwardRight(DRV_BUTTONS_FIXED_SPEED);
+      DRV_moveForwardRight(STP_BUTTONS_FIXED_SPEED);
     }
     else if (p_bluetoothData->button == BLU_BUTTON_R2)
     {
-      DRV_moveBackwardLeft(DRV_BUTTONS_FIXED_SPEED);
+      DRV_moveBackwardLeft(STP_BUTTONS_FIXED_SPEED);
     }
     else
     {
@@ -495,10 +485,10 @@ void DRV_updateFromMaster(T_SFO_Context *p_commandsFifo, uint16_t p_deltaTime)
     }
 
     /* Get measurements */
-    l_measuredSpeedFrontRight = fabs((float)ENC_getCount(&g_DRV_encoderFrontRight) / (float)p_deltaTime * STD_DRIVE_PID_ENCODER_TO_SPEED_FACTOR);
-    l_measuredSpeedFrontLeft  = fabs((float)ENC_getCount(&g_DRV_encoderFrontLeft ) / (float)p_deltaTime * STD_DRIVE_PID_ENCODER_TO_SPEED_FACTOR);
-    l_measuredSpeedRearRight  = fabs((float)ENC_getCount(&g_DRV_encoderRearRight ) / (float)p_deltaTime * STD_DRIVE_PID_ENCODER_TO_SPEED_FACTOR);
-    l_measuredSpeedRearLeft   = fabs((float)ENC_getCount(&g_DRV_encoderRearLeft  ) / (float)p_deltaTime * STD_DRIVE_PID_ENCODER_TO_SPEED_FACTOR);
+    l_measuredSpeedFrontRight = fabs((float)ENC_getCount(&g_DRV_encoderFrontRight) / (float)p_deltaTime * STP_DRIVE_PID_ENCODER_TO_SPEED_FACTOR);
+    l_measuredSpeedFrontLeft  = fabs((float)ENC_getCount(&g_DRV_encoderFrontLeft ) / (float)p_deltaTime * STP_DRIVE_PID_ENCODER_TO_SPEED_FACTOR);
+    l_measuredSpeedRearRight  = fabs((float)ENC_getCount(&g_DRV_encoderRearRight ) / (float)p_deltaTime * STP_DRIVE_PID_ENCODER_TO_SPEED_FACTOR);
+    l_measuredSpeedRearLeft   = fabs((float)ENC_getCount(&g_DRV_encoderRearLeft  ) / (float)p_deltaTime * STP_DRIVE_PID_ENCODER_TO_SPEED_FACTOR);
 
     CBU_push(&g_DRV_speedBufferFrontRight, l_measuredSpeedFrontRight);
     CBU_push(&g_DRV_speedBufferFrontLeft , l_measuredSpeedFrontLeft );
@@ -586,22 +576,22 @@ void DRV_logInfo(void)
   l_direction = MTR_getDirection(&g_DRV_motorFrontLeft);
   l_speed     = MTR_getSpeed    (&g_DRV_motorFrontLeft);
 
-  LOG_info("%s motor direction/speed: %u/%u", DRV_FRONT_LEFT_MOTOR_NAME, l_direction, l_speed);
+  LOG_info("%s motor direction/speed: %u/%u", CST_FRONT_LEFT_MOTOR_NAME, l_direction, l_speed);
 
   l_direction = MTR_getDirection(&g_DRV_motorFrontRight);
   l_speed     = MTR_getSpeed    (&g_DRV_motorFrontRight);
 
-  LOG_info("%s motor direction/speed: %u/%u", DRV_FRONT_RIGHT_MOTOR_NAME, l_direction, l_speed);
+  LOG_info("%s motor direction/speed: %u/%u", CST_FRONT_RIGHT_MOTOR_NAME, l_direction, l_speed);
 
   l_direction = MTR_getDirection(&g_DRV_motorRearLeft);
   l_speed     = MTR_getSpeed    (&g_DRV_motorRearLeft);
 
-  LOG_info("%s motor direction/speed: %u/%u", DRV_REAR_LEFT_MOTOR_NAME, l_direction, l_speed);
+  LOG_info("%s motor direction/speed: %u/%u", CST_REAR_LEFT_MOTOR_NAME, l_direction, l_speed);
 
   l_direction = MTR_getDirection(&g_DRV_motorRearRight);
   l_speed     = MTR_getSpeed    (&g_DRV_motorRearRight);
 
-  LOG_info("%s motor direction/speed: %u/%u", DRV_REAR_RIGHT_MOTOR_NAME, l_direction, l_speed);
+  LOG_info("%s motor direction/speed: %u/%u", CST_REAR_RIGHT_MOTOR_NAME, l_direction, l_speed);
 
   return;
 }

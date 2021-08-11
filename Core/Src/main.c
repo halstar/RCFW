@@ -75,10 +75,13 @@ UART_HandleTypeDef huart1;
 
 /* USER CODE BEGIN PV */
 
-static uint32_t     g_MAIN_padUpPressedStartTime;
-static uint32_t     g_MAIN_padDownPressedStartTime;
-static uint32_t     g_MAIN_padLeftPressedStartTime;
-static uint32_t     g_MAIN_padRightPressedStartTime;
+static uint32_t g_MAIN_padUpPressedStartTimeInS;
+static uint32_t g_MAIN_padDownPressedStartTimeInS;
+static uint32_t g_MAIN_padLeftPressedStartTimeInS;
+static uint32_t g_MAIN_padRightPressedStartTimeInS;
+static uint32_t g_MAIN_swResetPollinglastReadTimeInS;
+static uint32_t g_MAIN_batteryPollinglastReadTimeInS;
+
 T_MAIN_PRINT_OUTPUT g_MAIN_printOutput;
 
 /* USER CODE END PV */
@@ -102,7 +105,8 @@ static void MX_TIM6_Init(void);
 
 static void MAIN_displayRcfwBanner(void                                           );
 static void MAIN_togglePrintOutput(void                                           );
-static void MAIN_updateLogSetup   (T_BLU_Data *p_data                             );
+static void MAIN_updateSwReset    (void                                           );
+static void MAIN_updateLogSetup   (T_BLU_Data *p_data,      uint32_t p_timeInS    );
 static void MAIN_updateLedMode    (T_DRV_MODE  p_driveMode, uint32_t p_voltageInMv);
 
 /* USER CODE END PFP */
@@ -145,82 +149,100 @@ static void MAIN_togglePrintOutput(void)
   return;
 }
 
-static void MAIN_updateLogSetup(T_BLU_Data *p_data)
+static void MAIN_updateSwReset(void)
 {
-  RTC_TimeTypeDef l_time;
-  RTC_DateTypeDef l_date;
+  GPIO_PinState l_pinState;
 
-  /* As this method is using for logging/debug, we will not deal with failure cases */
-  (void)HAL_RTC_GetTime(&hrtc, &l_time, RTC_FORMAT_BCD);
-  (void)HAL_RTC_GetDate(&hrtc, &l_date, RTC_FORMAT_BCD);
+  l_pinState = HAL_GPIO_ReadPin(SW_RESET_GPIO_Port, SW_RESET_Pin);
 
+  if (l_pinState == GPIO_PIN_SET)
+  {
+    ; /* Nothing to do */
+  }
+  else
+  {
+    LOG_info("SW reset will be triggered in 3s");
+    HAL_Delay(1000);
+    LOG_info("SW reset will be triggered in 2s");
+    HAL_Delay(1000);
+    LOG_info("SW reset will be triggered in 1s");
+    HAL_Delay(1000);
+
+    HAL_NVIC_SystemReset();
+  }
+
+  return;
+}
+
+static void MAIN_updateLogSetup(T_BLU_Data *p_data, uint32_t p_timeInS)
+{
   switch (p_data->button)
   {
     case BLU_BUTTON_PAD_UP:
-      if (g_MAIN_padUpPressedStartTime == 0)
+      if (g_MAIN_padUpPressedStartTimeInS == 0)
       {
-        g_MAIN_padUpPressedStartTime = UTI_turnRtcTimeToSeconds(&l_time);
+        g_MAIN_padUpPressedStartTimeInS = p_timeInS;
 
         LOG_increaseLevel();
       }
-      else if (UTI_turnRtcTimeToSeconds(&l_time) - g_MAIN_padUpPressedStartTime < STP_PAD_BUTTONS_DEBOUNCE_PERIOD_IN_S)
+      else if (p_timeInS - g_MAIN_padUpPressedStartTimeInS < STP_PAD_BUTTONS_DEBOUNCE_PERIOD_IN_S)
       {
         ; /* Nothing to do */
       }
       else
       {
-        g_MAIN_padUpPressedStartTime = 0;
+        g_MAIN_padUpPressedStartTimeInS = 0;
       }
       break;
 
     case BLU_BUTTON_PAD_DOWN:
-      if (g_MAIN_padDownPressedStartTime == 0)
+      if (g_MAIN_padDownPressedStartTimeInS == 0)
       {
-        g_MAIN_padDownPressedStartTime = UTI_turnRtcTimeToSeconds(&l_time);
+        g_MAIN_padDownPressedStartTimeInS = p_timeInS;
 
         LOG_decreaseLevel();
       }
-      else if (UTI_turnRtcTimeToSeconds(&l_time) - g_MAIN_padDownPressedStartTime < STP_PAD_BUTTONS_DEBOUNCE_PERIOD_IN_S)
+      else if (p_timeInS - g_MAIN_padDownPressedStartTimeInS < STP_PAD_BUTTONS_DEBOUNCE_PERIOD_IN_S)
       {
         ; /* Nothing to do */
       }
       else
       {
-        g_MAIN_padDownPressedStartTime = 0;
+        g_MAIN_padDownPressedStartTimeInS = 0;
       }
       break;
 
     case BLU_BUTTON_PAD_LEFT:
-      if (g_MAIN_padLeftPressedStartTime == 0)
+      if (g_MAIN_padLeftPressedStartTimeInS == 0)
       {
-        g_MAIN_padLeftPressedStartTime = UTI_turnRtcTimeToSeconds(&l_time);
+        g_MAIN_padLeftPressedStartTimeInS = p_timeInS;
 
         LOG_toggleOnOff();
       }
-      else if (UTI_turnRtcTimeToSeconds(&l_time) - g_MAIN_padLeftPressedStartTime < STP_PAD_BUTTONS_DEBOUNCE_PERIOD_IN_S)
+      else if (p_timeInS - g_MAIN_padLeftPressedStartTimeInS < STP_PAD_BUTTONS_DEBOUNCE_PERIOD_IN_S)
       {
         ; /* Nothing to do */
       }
       else
       {
-        g_MAIN_padLeftPressedStartTime = 0;
+        g_MAIN_padLeftPressedStartTimeInS = 0;
       }
       break;
 
     case BLU_BUTTON_PAD_RIGHT:
-      if (g_MAIN_padRightPressedStartTime == 0)
+      if (g_MAIN_padRightPressedStartTimeInS == 0)
       {
-        g_MAIN_padRightPressedStartTime = UTI_turnRtcTimeToSeconds(&l_time);
+        g_MAIN_padRightPressedStartTimeInS = p_timeInS;
 
         MAIN_togglePrintOutput();
       }
-      else if (UTI_turnRtcTimeToSeconds(&l_time) - g_MAIN_padRightPressedStartTime < STP_PAD_BUTTONS_DEBOUNCE_PERIOD_IN_S)
+      else if (p_timeInS - g_MAIN_padRightPressedStartTimeInS < STP_PAD_BUTTONS_DEBOUNCE_PERIOD_IN_S)
       {
         ; /* Nothing to do */
       }
       else
       {
-        g_MAIN_padRightPressedStartTime = 0;
+        g_MAIN_padRightPressedStartTimeInS = 0;
       }
       break;
 
@@ -231,8 +253,8 @@ static void MAIN_updateLogSetup(T_BLU_Data *p_data)
 
   if ((p_data->button != BLU_BUTTON_PAD_UP) && (p_data->button != BLU_BUTTON_PAD_DOWN))
   {
-    g_MAIN_padUpPressedStartTime   = 0;
-    g_MAIN_padDownPressedStartTime = 0;
+    g_MAIN_padUpPressedStartTimeInS   = 0;
+    g_MAIN_padDownPressedStartTimeInS = 0;
   }
   else
   {
@@ -301,10 +323,13 @@ int main(void)
   T_SFO_Context     l_commandsFifo;
   T_BLU_Data        l_bluetoothData;
   T_DRV_MODE        l_driveMode;
+  RTC_TimeTypeDef   l_rtcTime;
+  RTC_DateTypeDef   l_rtcDate;
+  uint32_t          l_currentTimeInS;
   uint32_t          l_voltageInMv;
-  uint16_t          l_lastTime;
-  uint16_t          l_currentTime;
-  uint16_t          l_deltaTime;
+  uint16_t          l_lastTimeInMs;
+  uint16_t          l_currentTimeInMs;
+  uint16_t          l_deltaTimeInMs;
 
   /* USER CODE END 1 */
 
@@ -341,11 +366,13 @@ int main(void)
   /* USER CODE BEGIN 2 */
 
   /* Setup global variables */
-  g_MAIN_padUpPressedStartTime    = 0;
-  g_MAIN_padDownPressedStartTime  = 0;
-  g_MAIN_padLeftPressedStartTime  = 0;
-  g_MAIN_padRightPressedStartTime = 0;
-  g_MAIN_printOutput              = MAIN_PRINT_OUTPUT_TO_CONSOLE;
+  g_MAIN_padUpPressedStartTimeInS      = 0;
+  g_MAIN_padDownPressedStartTimeInS    = 0;
+  g_MAIN_padLeftPressedStartTimeInS    = 0;
+  g_MAIN_padRightPressedStartTimeInS   = 0;
+  g_MAIN_swResetPollinglastReadTimeInS = 0;
+  g_MAIN_batteryPollinglastReadTimeInS = 0;
+  g_MAIN_printOutput                   = MAIN_PRINT_OUTPUT_TO_CONSOLE;
 
   /* Initialize commands string FIFO */
   SFO_init(&l_commandsFifo);
@@ -438,7 +465,7 @@ int main(void)
   }
 
   /* Initialize battery monitor */
-  BAT_init(&hadc1, &hrtc);
+  BAT_init(&hadc1);
 
   /* Initialize PWM channels */
   l_halReturnCode  = HAL_TIM_PWM_Start(&htim8, TIM_CHANNEL_1);
@@ -470,29 +497,74 @@ int main(void)
   /* USER CODE BEGIN WHILE */
 
   /* Initialize time measurement for master board control */
-  l_lastTime = __HAL_TIM_GET_COUNTER(&htim6);
+  l_lastTimeInMs = __HAL_TIM_GET_COUNTER(&htim6);
 
   while (1)
   {
+    l_halReturnCode = HAL_RTC_GetTime(&hrtc, &l_rtcTime, RTC_FORMAT_BCD);
+
+    if (l_halReturnCode != HAL_OK)
+    {
+      LOG_error("HAL_RTC_GetTime() returned an error code: %d", l_halReturnCode);
+    }
+    else
+    {
+      ; /* Nothing to to */
+    }
+
+    l_halReturnCode = HAL_RTC_GetDate(&hrtc, &l_rtcDate, RTC_FORMAT_BCD);
+
+    if (l_halReturnCode != HAL_OK)
+    {
+      LOG_error("HAL_RTC_GetDate() returned an error code: %d", l_halReturnCode);
+    }
+    else
+    {
+      ; /* Nothing to to */
+    }
+
+    l_currentTimeInS = UTI_turnRtcTimeToSeconds(&l_rtcTime);
+
+    if (l_currentTimeInS - g_MAIN_swResetPollinglastReadTimeInS >= STP_SW_RESET_POLLING_PERIOD_IN_S)
+    {
+      MAIN_updateSwReset();
+
+      g_MAIN_swResetPollinglastReadTimeInS = l_currentTimeInS;
+    }
+    else
+    {
+      ; /* Nothing to do */
+    }
+
+    if (l_currentTimeInS - g_MAIN_batteryPollinglastReadTimeInS >= STP_BATTERY_POLLING_PERIOD_IN_S)
+    {
+      BAT_update(&l_voltageInMv);
+
+      g_MAIN_batteryPollinglastReadTimeInS = l_currentTimeInS;
+    }
+    else
+    {
+      ; /* Nothing to do */
+    }
+
     BLU_receiveData        (&l_bluetoothData);
     DRV_updateFromBluetooth(&l_bluetoothData);
 
     l_driveMode = DRV_getMode();
 
-    BAT_update         (&l_voltageInMv            );
-    MAIN_updateLedMode (l_driveMode, l_voltageInMv);
-    MAIN_updateLogSetup(&l_bluetoothData          );
+    MAIN_updateLedMode (l_driveMode     , l_voltageInMv   );
+    MAIN_updateLogSetup(&l_bluetoothData, l_currentTimeInS);
 
     UTI_delayUs(MAIN_LOOP_DELAY_IN_MS);
 
     CON_updateFifo(&l_commandsFifo);
     MAS_updateFifo(&l_commandsFifo);
 
-    l_currentTime = __HAL_TIM_GET_COUNTER(&htim6);
-    l_deltaTime   = l_lastTime - l_currentTime;
-    l_lastTime    = l_currentTime;
+    l_currentTimeInMs = __HAL_TIM_GET_COUNTER(&htim6);
+    l_deltaTimeInMs   = l_lastTimeInMs - l_currentTimeInMs;
+    l_lastTimeInMs    = l_currentTimeInMs;
 
-    DRV_updateFromMaster(&l_commandsFifo, l_deltaTime);
+    DRV_updateFromMaster(&l_commandsFifo, l_deltaTimeInMs);
 
     /* USER CODE END WHILE */
 
@@ -1153,6 +1225,12 @@ static void MX_GPIO_Init(void)
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
   HAL_GPIO_Init(BLUE_LED_GPIO_Port, &GPIO_InitStruct);
 
+  /*Configure GPIO pins : SW_RESET_Pin BLUETOOTH_SPI_DAT_Pin */
+  GPIO_InitStruct.Pin = SW_RESET_Pin|BLUETOOTH_SPI_DAT_Pin;
+  GPIO_InitStruct.Mode = GPIO_MODE_INPUT;
+  GPIO_InitStruct.Pull = GPIO_NOPULL;
+  HAL_GPIO_Init(GPIOC, &GPIO_InitStruct);
+
   /*Configure GPIO pins : BLUETOOTH_SPI_CMD_Pin BLUETOOTH_SPI_CS_Pin MOTOR_REAR_LEFT_OUT_1_Pin MOTOR_REAR_LEFT_OUT_2_Pin
                            MOTOR_FRONT_RIGHT_OUT_2_Pin */
   GPIO_InitStruct.Pin = BLUETOOTH_SPI_CMD_Pin|BLUETOOTH_SPI_CS_Pin|MOTOR_REAR_LEFT_OUT_1_Pin|MOTOR_REAR_LEFT_OUT_2_Pin
@@ -1161,12 +1239,6 @@ static void MX_GPIO_Init(void)
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_HIGH;
   HAL_GPIO_Init(GPIOC, &GPIO_InitStruct);
-
-  /*Configure GPIO pin : BLUETOOTH_SPI_DAT_Pin */
-  GPIO_InitStruct.Pin = BLUETOOTH_SPI_DAT_Pin;
-  GPIO_InitStruct.Mode = GPIO_MODE_INPUT;
-  GPIO_InitStruct.Pull = GPIO_NOPULL;
-  HAL_GPIO_Init(BLUETOOTH_SPI_DAT_GPIO_Port, &GPIO_InitStruct);
 
   /*Configure GPIO pin : BLUETOOTH_SPI_CLK_Pin */
   GPIO_InitStruct.Pin = BLUETOOTH_SPI_CLK_Pin;

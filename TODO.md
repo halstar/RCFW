@@ -3,7 +3,6 @@
 * Use DMA wherever possible (UART?), to get better performance,
 * Workout error handlers: real Error_Handler(), HardFault_Handler(), etc.
 * Fix clock configuration issue while debugging (try OpenOCD),
-* Add a SW reset function on input switch PC0?
 * Use STM32CubeMX code generator & HAL layer to rework SPI/bluetooth?
 * Add support for embedded MPU-6050 inertial unit? (use case TBD...),
 * Redesign/refactor drive.s as it's getting too big,
