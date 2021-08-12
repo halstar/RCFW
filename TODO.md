@@ -6,4 +6,4 @@
 * Use STM32CubeMX code generator & HAL layer to rework SPI/bluetooth?
 * Add support for embedded MPU-6050 inertial unit? (use case TBD...),
 * Redesign/refactor drive.s as it's getting too big,
-* Finalize PID integration.
+* Tune up PID values.

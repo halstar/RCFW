@@ -315,7 +315,7 @@ void DRV_updateFromBluetooth(T_BLU_Data *p_bluetoothData)
   return;
 }
 
-void DRV_updateFromCommands(T_SFO_Context *p_commandsFifo, uint32_t p_deltaTime)
+void DRV_updateFromCommands(T_SFO_Context *p_commandsFifo, uint32_t p_deltaTimeInMs, bool p_logInfo)
 {
   float      l_measuredSpeedFrontRight;
   float      l_measuredSpeedFrontLeft;
@@ -331,10 +331,6 @@ void DRV_updateFromCommands(T_SFO_Context *p_commandsFifo, uint32_t p_deltaTime)
   float      l_pidSpeedRearLeft;
   T_SFO_data l_command;
   int32_t    l_speed;
-
-  RTC_TimeTypeDef        l_time;
-  RTC_DateTypeDef        l_date;
-  static RTC_TimeTypeDef l_lastTime;
 
   /* Ignore master board data only whenever a manual mode is selected */
   if (g_DRV_mode != DRV_MODE_MASTER_BOARD_CONTROL)
@@ -485,10 +481,10 @@ void DRV_updateFromCommands(T_SFO_Context *p_commandsFifo, uint32_t p_deltaTime)
     }
 
     /* Get measurements */
-    l_measuredSpeedFrontRight = fabs((float)ENC_getCount(&g_DRV_encoderFrontRight) / (float)p_deltaTime * STP_DRIVE_PID_ENCODER_TO_SPEED_FACTOR);
-    l_measuredSpeedFrontLeft  = fabs((float)ENC_getCount(&g_DRV_encoderFrontLeft ) / (float)p_deltaTime * STP_DRIVE_PID_ENCODER_TO_SPEED_FACTOR);
-    l_measuredSpeedRearRight  = fabs((float)ENC_getCount(&g_DRV_encoderRearRight ) / (float)p_deltaTime * STP_DRIVE_PID_ENCODER_TO_SPEED_FACTOR);
-    l_measuredSpeedRearLeft   = fabs((float)ENC_getCount(&g_DRV_encoderRearLeft  ) / (float)p_deltaTime * STP_DRIVE_PID_ENCODER_TO_SPEED_FACTOR);
+    l_measuredSpeedFrontRight = fabs((float)ENC_getCount(&g_DRV_encoderFrontRight) / (float)p_deltaTimeInMs * STP_DRIVE_PID_ENCODER_TO_SPEED_FACTOR);
+    l_measuredSpeedFrontLeft  = fabs((float)ENC_getCount(&g_DRV_encoderFrontLeft ) / (float)p_deltaTimeInMs * STP_DRIVE_PID_ENCODER_TO_SPEED_FACTOR);
+    l_measuredSpeedRearRight  = fabs((float)ENC_getCount(&g_DRV_encoderRearRight ) / (float)p_deltaTimeInMs * STP_DRIVE_PID_ENCODER_TO_SPEED_FACTOR);
+    l_measuredSpeedRearLeft   = fabs((float)ENC_getCount(&g_DRV_encoderRearLeft  ) / (float)p_deltaTimeInMs * STP_DRIVE_PID_ENCODER_TO_SPEED_FACTOR);
 
     CBU_push(&g_DRV_speedBufferFrontRight, l_measuredSpeedFrontRight);
     CBU_push(&g_DRV_speedBufferFrontLeft , l_measuredSpeedFrontLeft );
@@ -500,13 +496,11 @@ void DRV_updateFromCommands(T_SFO_Context *p_commandsFifo, uint32_t p_deltaTime)
     l_averageSpeedRearRight  = CBU_getAverage(&g_DRV_speedBufferRearRight );
     l_averageSpeedRearLeft   = CBU_getAverage(&g_DRV_speedBufferRearLeft  );
 
-    HAL_RTC_GetTime(&hrtc, &l_time, RTC_FORMAT_BCD);
-    HAL_RTC_GetDate(&hrtc, &l_date, RTC_FORMAT_BCD);
-
-    if (UTI_turnRtcTimeToSeconds(&l_time) - UTI_turnRtcTimeToSeconds(&l_lastTime) >= 3)
+    if (p_logInfo == true)
     {
-      l_lastTime = l_time;
+      /* Log information for only one PID, to make display lighter */
       PID_logInfo(&g_DRV_pidFrontRight);
+
       LOG_info("%d, %d, %d, %d",
                (int32_t)l_averageSpeedFrontRight,
                (int32_t)l_averageSpeedFrontLeft,
@@ -515,10 +509,10 @@ void DRV_updateFromCommands(T_SFO_Context *p_commandsFifo, uint32_t p_deltaTime)
     }
 
     /* Update PIDs */
-    l_pidSpeedFrontRight = PID_update(&g_DRV_pidFrontRight, l_averageSpeedFrontRight, p_deltaTime);
-    l_pidSpeedFrontLeft  = PID_update(&g_DRV_pidFrontLeft , l_averageSpeedFrontLeft , p_deltaTime);
-    l_pidSpeedRearRight  = PID_update(&g_DRV_pidRearRight , l_averageSpeedRearRight , p_deltaTime);
-    l_pidSpeedRearLeft   = PID_update(&g_DRV_pidRearLeft  , l_averageSpeedRearLeft  , p_deltaTime);
+    l_pidSpeedFrontRight = PID_update(&g_DRV_pidFrontRight, l_averageSpeedFrontRight, p_deltaTimeInMs);
+    l_pidSpeedFrontLeft  = PID_update(&g_DRV_pidFrontLeft , l_averageSpeedFrontLeft , p_deltaTimeInMs);
+    l_pidSpeedRearRight  = PID_update(&g_DRV_pidRearRight , l_averageSpeedRearRight , p_deltaTimeInMs);
+    l_pidSpeedRearLeft   = PID_update(&g_DRV_pidRearLeft  , l_averageSpeedRearLeft  , p_deltaTimeInMs);
 
     if (g_DRV_areMotorsOn == false)
     {

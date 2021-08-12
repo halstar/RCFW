@@ -78,9 +78,10 @@ static uint32_t g_MAIN_padUpPressedStartTimeInS;
 static uint32_t g_MAIN_padDownPressedStartTimeInS;
 static uint32_t g_MAIN_padLeftPressedStartTimeInS;
 static uint32_t g_MAIN_padRightPressedStartTimeInS;
-static uint32_t g_MAIN_swResetPollingLastReadTimeInS;
-static uint32_t g_MAIN_batteryPollingLastReadTimeInS;
-static uint32_t g_MAIN_ledModeUpdateLastReadTimeInS;
+static uint32_t g_MAIN_swResetPollingLastTimeInS;
+static uint32_t g_MAIN_batteryPollingLastTimeInS;
+static uint32_t g_MAIN_ledModeUpdateLastTimeInS;
+static uint32_t g_MAIN_driveLogInfoLastTimeInS;
 
 T_MAIN_PRINT_OUTPUT g_MAIN_printOutput;
 
@@ -382,14 +383,15 @@ int main(void)
   UTI_resetRtcDate(&l_rtcDate      );
 
   /* Setup global variables */
-  g_MAIN_padUpPressedStartTimeInS      = 0;
-  g_MAIN_padDownPressedStartTimeInS    = 0;
-  g_MAIN_padLeftPressedStartTimeInS    = 0;
-  g_MAIN_padRightPressedStartTimeInS   = 0;
-  g_MAIN_swResetPollingLastReadTimeInS = 0;
-  g_MAIN_batteryPollingLastReadTimeInS = 0;
-  g_MAIN_ledModeUpdateLastReadTimeInS  = 0;
-  g_MAIN_printOutput                   = MAIN_PRINT_OUTPUT_TO_CONSOLE;
+  g_MAIN_padUpPressedStartTimeInS    = 0;
+  g_MAIN_padDownPressedStartTimeInS  = 0;
+  g_MAIN_padLeftPressedStartTimeInS  = 0;
+  g_MAIN_padRightPressedStartTimeInS = 0;
+  g_MAIN_swResetPollingLastTimeInS   = 0;
+  g_MAIN_batteryPollingLastTimeInS   = 0;
+  g_MAIN_ledModeUpdateLastTimeInS    = 0;
+  g_MAIN_driveLogInfoLastTimeInS     = 0;
+  g_MAIN_printOutput                 = MAIN_PRINT_OUTPUT_TO_CONSOLE;
 
   /* Setup console */
   CON_init(&huart1);
@@ -398,10 +400,10 @@ int main(void)
   MAS_init(&huart4);
 
   /* Temporary delay/workaound to deal with debugger connection issue */
-//  for (int i = 0; i < 10; i++)
-//  {
-//    HAL_Delay(1000);
-//  }
+  for (int i = 0; i < 10; i++)
+  {
+    HAL_Delay(1000);
+  }
 
   /* Setup and start using logs */
   LOG_init    (&hrtc, STP_DEFAULT_IS_LOG_ON);
@@ -540,33 +542,33 @@ int main(void)
 
     l_currentTimeInS = UTI_turnRtcTimeToSeconds(&l_rtcTime);
 
-    if (l_currentTimeInS - g_MAIN_swResetPollingLastReadTimeInS >= STP_SW_RESET_POLLING_PERIOD_IN_S)
+    if (l_currentTimeInS - g_MAIN_swResetPollingLastTimeInS >= STP_SW_RESET_POLLING_PERIOD_IN_S)
     {
       MAIN_updateSwReset();
 
-      g_MAIN_swResetPollingLastReadTimeInS = l_currentTimeInS;
+      g_MAIN_swResetPollingLastTimeInS = l_currentTimeInS;
     }
     else
     {
       ; /* Nothing to do */
     }
 
-    if (l_currentTimeInS - g_MAIN_batteryPollingLastReadTimeInS >= STP_BATTERY_POLLING_PERIOD_IN_S)
+    if (l_currentTimeInS - g_MAIN_batteryPollingLastTimeInS >= STP_BATTERY_POLLING_PERIOD_IN_S)
     {
       BAT_update(&l_voltageInMv);
 
-      g_MAIN_batteryPollingLastReadTimeInS = l_currentTimeInS;
+      g_MAIN_batteryPollingLastTimeInS = l_currentTimeInS;
     }
     else
     {
       ; /* Nothing to do */
     }
 
-    if (l_currentTimeInS - g_MAIN_ledModeUpdateLastReadTimeInS >= STP_LED_UPDATE_MODE_PERIOD_IN_S)
+    if (l_currentTimeInS - g_MAIN_ledModeUpdateLastTimeInS >= STP_LED_UPDATE_MODE_PERIOD_IN_S)
     {
       MAIN_updateLedMode (l_driveMode, l_voltageInMv);
 
-      g_MAIN_ledModeUpdateLastReadTimeInS = l_currentTimeInS;
+      g_MAIN_ledModeUpdateLastTimeInS = l_currentTimeInS;
     }
     else
     {
@@ -584,7 +586,16 @@ int main(void)
     l_deltaTimeInMs   = l_lastTimeInMs - l_currentTimeInMs;
     l_lastTimeInMs    = l_currentTimeInMs;
 
-    DRV_updateFromCommands(&l_commandsFifo, l_deltaTimeInMs);
+    if (l_currentTimeInS - g_MAIN_driveLogInfoLastTimeInS >= STP_DRIVE_LOG_INFO_PERIOD_IN_S)
+    {
+      DRV_updateFromCommands(&l_commandsFifo, l_deltaTimeInMs, true);
+
+      g_MAIN_driveLogInfoLastTimeInS = l_currentTimeInS;
+    }
+    else
+    {
+      DRV_updateFromCommands(&l_commandsFifo, l_deltaTimeInMs, false);
+    }
 
     UTI_delayUs(MAIN_LOOP_DELAY_IN_MS);
 

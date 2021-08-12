@@ -76,9 +76,10 @@ void MAS_updateFifo(T_SFO_Context *p_fifo)
 void MAS_sendString(char *p_string, uint32_t p_length)
 {
   /* As this method is using for logging/debug, we will not deal with failure cases */
- (void)HAL_UART_Transmit_IT(g_MAS_uartHandle,
-                 (uint8_t *)p_string,
-                            p_length);
+ (void)HAL_UART_Transmit(g_MAS_uartHandle,
+              (uint8_t *)p_string,
+                         p_length,
+                         CST_UART_TRANSMIT_TIMEOUT_IN_MS);
 
   return;
 }
