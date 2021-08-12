@@ -115,7 +115,7 @@ void DRV_init(TIM_HandleTypeDef *p_pwmTimerHandle,
   g_DRV_areMotorsOn = true;
 
   /* Start with master board control mode */
-  g_DRV_mode = DRV_MODE_MASTER_BOARD_CONTROL;
+  g_DRV_mode = STP_DEFAULT_DRIVE_MODE;
 
   return;
 }
@@ -315,7 +315,7 @@ void DRV_updateFromBluetooth(T_BLU_Data *p_bluetoothData)
   return;
 }
 
-void DRV_updateFromMaster(T_SFO_Context *p_commandsFifo, uint16_t p_deltaTime)
+void DRV_updateFromCommands(T_SFO_Context *p_commandsFifo, uint32_t p_deltaTime)
 {
   float      l_measuredSpeedFrontRight;
   float      l_measuredSpeedFrontLeft;
@@ -332,9 +332,9 @@ void DRV_updateFromMaster(T_SFO_Context *p_commandsFifo, uint16_t p_deltaTime)
   T_SFO_data l_command;
   int32_t    l_speed;
 
-  RTC_TimeTypeDef   l_time;
-  RTC_DateTypeDef   l_date;
-  static RTC_TimeTypeDef   l_lastTime;
+  RTC_TimeTypeDef        l_time;
+  RTC_DateTypeDef        l_date;
+  static RTC_TimeTypeDef l_lastTime;
 
   /* Ignore master board data only whenever a manual mode is selected */
   if (g_DRV_mode != DRV_MODE_MASTER_BOARD_CONTROL)

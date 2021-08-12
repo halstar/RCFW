@@ -51,8 +51,7 @@
 /* Private macro -------------------------------------------------------------*/
 /* USER CODE BEGIN PM */
 
-#define MAIN_MIN_BATTERY_LEVEL_IN_MV 10000
-#define MAIN_LOOP_DELAY_IN_MS        10000
+#define MAIN_LOOP_DELAY_IN_MS 10000
 
 /* USER CODE END PM */
 
@@ -79,8 +78,9 @@ static uint32_t g_MAIN_padUpPressedStartTimeInS;
 static uint32_t g_MAIN_padDownPressedStartTimeInS;
 static uint32_t g_MAIN_padLeftPressedStartTimeInS;
 static uint32_t g_MAIN_padRightPressedStartTimeInS;
-static uint32_t g_MAIN_swResetPollinglastReadTimeInS;
-static uint32_t g_MAIN_batteryPollinglastReadTimeInS;
+static uint32_t g_MAIN_swResetPollingLastReadTimeInS;
+static uint32_t g_MAIN_batteryPollingLastReadTimeInS;
+static uint32_t g_MAIN_ledModeUpdateLastReadTimeInS;
 
 T_MAIN_PRINT_OUTPUT g_MAIN_printOutput;
 
@@ -167,6 +167,8 @@ static void MAIN_updateSwReset(void)
     HAL_Delay(1000);
     LOG_info("SW reset will be triggered in 1s");
     HAL_Delay(1000);
+    LOG_info("Resetting...");
+    HAL_Delay(100);
 
     HAL_NVIC_SystemReset();
   }
@@ -268,7 +270,7 @@ static void MAIN_updateLedMode(T_DRV_MODE p_driveMode, uint32_t p_voltageInMv)
 {
   /* Regarding LED mode, battery check is prioritary on user requests. */
   /* Ignore 0 value as we could get it at startup or while debugging.  */
-  if ((p_voltageInMv != 0) && (p_voltageInMv < MAIN_MIN_BATTERY_LEVEL_IN_MV))
+  if ((p_voltageInMv != 0) && (p_voltageInMv < STP_MIN_BATTERY_LEVEL_IN_MV))
   {
     LOG_warning("Battery is getting low: %u mV", p_voltageInMv);
 
@@ -365,17 +367,29 @@ int main(void)
   MX_TIM6_Init();
   /* USER CODE BEGIN 2 */
 
+  /* Setup local variables */
+  l_halReturnCode   = HAL_OK;
+  l_driveMode       = STP_DEFAULT_DRIVE_MODE;
+  l_currentTimeInS  = 0;
+  l_voltageInMv     = 0;
+  l_lastTimeInMs    = 0;
+  l_currentTimeInMs = 0;
+  l_deltaTimeInMs   = 0;
+
+  SFO_init        (&l_commandsFifo );
+  BLU_initData    (&l_bluetoothData);
+  UTI_resetRtcTime(&l_rtcTime      );
+  UTI_resetRtcDate(&l_rtcDate      );
+
   /* Setup global variables */
   g_MAIN_padUpPressedStartTimeInS      = 0;
   g_MAIN_padDownPressedStartTimeInS    = 0;
   g_MAIN_padLeftPressedStartTimeInS    = 0;
   g_MAIN_padRightPressedStartTimeInS   = 0;
-  g_MAIN_swResetPollinglastReadTimeInS = 0;
-  g_MAIN_batteryPollinglastReadTimeInS = 0;
+  g_MAIN_swResetPollingLastReadTimeInS = 0;
+  g_MAIN_batteryPollingLastReadTimeInS = 0;
+  g_MAIN_ledModeUpdateLastReadTimeInS  = 0;
   g_MAIN_printOutput                   = MAIN_PRINT_OUTPUT_TO_CONSOLE;
-
-  /* Initialize commands string FIFO */
-  SFO_init(&l_commandsFifo);
 
   /* Setup console */
   CON_init(&huart1);
@@ -482,9 +496,8 @@ int main(void)
     LOG_info("Started PWM channels");
   }
 
-  /* Initialize bluetooth control and data */
-  BLU_init    ();
-  BLU_initData(&l_bluetoothData);
+  /* Initialize bluetooth control */
+  BLU_init();
 
   /* Initialize driving module */
   DRV_init(&htim8, &htim4, &htim5, &htim2, &htim3);
@@ -501,6 +514,8 @@ int main(void)
 
   while (1)
   {
+    l_driveMode = DRV_getMode();
+
     l_halReturnCode = HAL_RTC_GetTime(&hrtc, &l_rtcTime, RTC_FORMAT_BCD);
 
     if (l_halReturnCode != HAL_OK)
@@ -525,22 +540,33 @@ int main(void)
 
     l_currentTimeInS = UTI_turnRtcTimeToSeconds(&l_rtcTime);
 
-    if (l_currentTimeInS - g_MAIN_swResetPollinglastReadTimeInS >= STP_SW_RESET_POLLING_PERIOD_IN_S)
+    if (l_currentTimeInS - g_MAIN_swResetPollingLastReadTimeInS >= STP_SW_RESET_POLLING_PERIOD_IN_S)
     {
       MAIN_updateSwReset();
 
-      g_MAIN_swResetPollinglastReadTimeInS = l_currentTimeInS;
+      g_MAIN_swResetPollingLastReadTimeInS = l_currentTimeInS;
     }
     else
     {
       ; /* Nothing to do */
     }
 
-    if (l_currentTimeInS - g_MAIN_batteryPollinglastReadTimeInS >= STP_BATTERY_POLLING_PERIOD_IN_S)
+    if (l_currentTimeInS - g_MAIN_batteryPollingLastReadTimeInS >= STP_BATTERY_POLLING_PERIOD_IN_S)
     {
       BAT_update(&l_voltageInMv);
 
-      g_MAIN_batteryPollinglastReadTimeInS = l_currentTimeInS;
+      g_MAIN_batteryPollingLastReadTimeInS = l_currentTimeInS;
+    }
+    else
+    {
+      ; /* Nothing to do */
+    }
+
+    if (l_currentTimeInS - g_MAIN_ledModeUpdateLastReadTimeInS >= STP_LED_UPDATE_MODE_PERIOD_IN_S)
+    {
+      MAIN_updateLedMode (l_driveMode, l_voltageInMv);
+
+      g_MAIN_ledModeUpdateLastReadTimeInS = l_currentTimeInS;
     }
     else
     {
@@ -548,14 +574,8 @@ int main(void)
     }
 
     BLU_receiveData        (&l_bluetoothData);
+    MAIN_updateLogSetup    (&l_bluetoothData, l_currentTimeInS);
     DRV_updateFromBluetooth(&l_bluetoothData);
-
-    l_driveMode = DRV_getMode();
-
-    MAIN_updateLedMode (l_driveMode     , l_voltageInMv   );
-    MAIN_updateLogSetup(&l_bluetoothData, l_currentTimeInS);
-
-    UTI_delayUs(MAIN_LOOP_DELAY_IN_MS);
 
     CON_updateFifo(&l_commandsFifo);
     MAS_updateFifo(&l_commandsFifo);
@@ -564,7 +584,9 @@ int main(void)
     l_deltaTimeInMs   = l_lastTimeInMs - l_currentTimeInMs;
     l_lastTimeInMs    = l_currentTimeInMs;
 
-    DRV_updateFromMaster(&l_commandsFifo, l_deltaTimeInMs);
+    DRV_updateFromCommands(&l_commandsFifo, l_deltaTimeInMs);
+
+    UTI_delayUs(MAIN_LOOP_DELAY_IN_MS);
 
     /* USER CODE END WHILE */
 
@@ -1290,6 +1312,14 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
   {
     ; /* Nothing to do */
   }
+
+  return;
+}
+
+void HAL_UART_TxCpltCallback(UART_HandleTypeDef *huart)
+{
+  /* Nothing to do */
+  return;
 }
 
 void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
@@ -1307,6 +1337,8 @@ void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
   {
     ; /* Nothing to do */
   }
+
+  return;
 }
 
 /* USER CODE END 4 */
@@ -1326,6 +1358,8 @@ void Error_Handler(void)
   while (1)
   {
   }
+
+  return;
   /* USER CODE END Error_Handler_Debug */
 }
 

@@ -3,15 +3,18 @@
 
 #include "log.h"
 #include "main.h"
+#include "drive.h"
 
 #define STP_DEFAULT_IS_LOG_ON    true
 #define STP_DEFAULT_LOG_LEVEL    LOG_LEVEL_DEBUG
 #define STP_DEFAULT_PRINT_OUTPUT MAIN_PRINT_OUTPUT_TO_CONSOLE
+#define STP_DEFAULT_DRIVE_MODE   DRV_MODE_MASTER_BOARD_CONTROL
 
 #define STP_PAD_BUTTONS_DEBOUNCE_PERIOD_IN_S 2
 
-#define STP_BATTERY_POLLING_PERIOD_IN_S 10
 #define STP_SW_RESET_POLLING_PERIOD_IN_S 1
+#define STP_BATTERY_POLLING_PERIOD_IN_S 10
+#define STP_LED_UPDATE_MODE_PERIOD_IN_S  1
 
 #define STP_MASTER_MIN_SPEED   0
 #define STP_MASTER_MAX_SPEED 100
@@ -30,5 +33,6 @@
 /* the latter actually using only 2 motors, while the other movements use 4 motors.   */
 #define STP_BUTTONS_FIXED_SPEED   (STP_JOYSTICKS_FIXED_SPEED * 2)
 
+#define STP_MIN_BATTERY_LEVEL_IN_MV 10000
 
 #endif /* __SETUP_H */
