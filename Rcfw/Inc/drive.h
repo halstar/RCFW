@@ -24,7 +24,8 @@ void DRV_init(TIM_HandleTypeDef *p_pwmTimerHandle,
 void       DRV_updateEncoder      (TIM_HandleTypeDef *p_encoderTimerHandle                                    );
 void       DRV_updateFromBluetooth(T_BLU_Data        *p_bluetoothData                                         );
 void       DRV_updateFromCommands (T_SFO_Context     *p_commandsFifo, uint32_t p_deltaTimeInMs, bool p_logInfo);
+void       DRV_reportVelocity     (void                                                                       );
 T_DRV_MODE DRV_getMode            (void                                                                       );
-void       DRV_logInfo            (void                                                                       );
+void       DRV_logInfo            (bool               p_compactLog                                            );
 
 #endif /* __DRIVE_H */

@@ -6,4 +6,5 @@
 * Use STM32CubeMX code generator & HAL layer to rework SPI/bluetooth?
 * Add support for embedded MPU-6050 inertial unit? (use case TBD...),
 * Redesign/refactor drive.s as it's getting too big,
+* While starting in debug/fixed speed, deal with unconnected PS2 controller,
 * Tune up PID values.

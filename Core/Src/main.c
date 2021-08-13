@@ -82,6 +82,8 @@ static uint32_t g_MAIN_swResetPollingLastTimeInS;
 static uint32_t g_MAIN_batteryPollingLastTimeInS;
 static uint32_t g_MAIN_ledModeUpdateLastTimeInS;
 static uint32_t g_MAIN_driveLogInfoLastTimeInS;
+static uint32_t g_MAIN_velocityReportLastTimeInS;
+
 
 T_MAIN_PRINT_OUTPUT g_MAIN_printOutput;
 
@@ -391,6 +393,7 @@ int main(void)
   g_MAIN_batteryPollingLastTimeInS   = 0;
   g_MAIN_ledModeUpdateLastTimeInS    = 0;
   g_MAIN_driveLogInfoLastTimeInS     = 0;
+  g_MAIN_velocityReportLastTimeInS   = 0;
   g_MAIN_printOutput                 = MAIN_PRINT_OUTPUT_TO_CONSOLE;
 
   /* Setup console */
@@ -504,8 +507,6 @@ int main(void)
   /* Initialize driving module */
   DRV_init(&htim8, &htim4, &htim5, &htim2, &htim3);
 
-  DRV_logInfo();
-
   /* USER CODE END 2 */
 
   /* Infinite loop */
@@ -599,6 +600,18 @@ int main(void)
     else
     {
       DRV_updateFromCommands(&l_commandsFifo, l_deltaTimeInMs, false);
+    }
+
+    if ((STP_VELOCITY_REPORT_PERIOD_IN_S != 0) &&
+        (l_currentTimeInS - g_MAIN_velocityReportLastTimeInS >= STP_VELOCITY_REPORT_PERIOD_IN_S))
+    {
+      DRV_reportVelocity();
+
+      g_MAIN_velocityReportLastTimeInS = l_currentTimeInS;
+    }
+    else
+    {
+      ; /* Nothing to do */
     }
 
     UTI_delayUs(MAIN_LOOP_DELAY_IN_MS);

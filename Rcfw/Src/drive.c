@@ -1,5 +1,6 @@
 #include <stdbool.h>
 #include <stdlib.h>
+#include <stdio.h>
 #include <math.h>
 
 #include "drive.h"
@@ -14,15 +15,15 @@
 #include "utils.h"
 #include "circular_buffer.h"
 #include "string_fifo.h"
+#include "master_control.h"
 
 static bool          g_DRV_areMotorsOn;
 static T_DRV_MODE    g_DRV_mode;
-static T_PID_Handle  g_DRV_pidFrontRight        , g_DRV_pidFrontLeft        , g_DRV_pidRearLeft        , g_DRV_pidRearRight        ;
-static T_MTR_Handle  g_DRV_motorFrontRight      , g_DRV_motorFrontLeft      , g_DRV_motorRearLeft      , g_DRV_motorRearRight      ;
-static T_ENC_Handle  g_DRV_encoderFrontRight    , g_DRV_encoderFrontLeft    , g_DRV_encoderRearLeft    , g_DRV_encoderRearRight    ;
-static T_CBU_Context g_DRV_speedBufferFrontRight, g_DRV_speedBufferFrontLeft, g_DRV_speedBufferRearLeft, g_DRV_speedBufferRearRight;
-
-extern RTC_HandleTypeDef hrtc;
+static T_PID_Handle  g_DRV_pidFrontRight         , g_DRV_pidFrontLeft         , g_DRV_pidRearLeft         , g_DRV_pidRearRight         ;
+static T_MTR_Handle  g_DRV_motorFrontRight       , g_DRV_motorFrontLeft       , g_DRV_motorRearLeft       , g_DRV_motorRearRight       ;
+static T_ENC_Handle  g_DRV_encoderFrontRight     , g_DRV_encoderFrontLeft     , g_DRV_encoderRearLeft     , g_DRV_encoderRearRight     ;
+static T_CBU_Context g_DRV_speedBufferFrontRight , g_DRV_speedBufferFrontLeft , g_DRV_speedBufferRearLeft , g_DRV_speedBufferRearRight ;
+static float         g_DRV_averageSpeedFrontRight, g_DRV_averageSpeedFrontLeft, g_DRV_averageSpeedRearLeft, g_DRV_averageSpeedRearRight;
 
 static void DVR_getSpeedFromCommand(char *p_string, uint32_t *p_speed);
 
@@ -148,11 +149,19 @@ void DRV_init(TIM_HandleTypeDef *p_pwmTimerHandle,
   CBU_init(&g_DRV_speedBufferRearLeft  );
   CBU_init(&g_DRV_speedBufferRearRight );
 
+  /* Setup average speeds */
+  g_DRV_averageSpeedFrontRight = 0;
+  g_DRV_averageSpeedFrontLeft  = 0;
+  g_DRV_averageSpeedRearLeft   = 0;
+  g_DRV_averageSpeedRearRight  = 0;
+
   /* Activate motors or not by default (de-activating them is used for debug) */
   g_DRV_areMotorsOn = STP_DEFAULT_MOTORS_MODE;
 
   /* Start with default drive mode (different in debug and in release) */
   g_DRV_mode = STP_DEFAULT_DRIVE_MODE;
+
+  DRV_logInfo(false);
 
   return;
 }
@@ -358,10 +367,6 @@ void DRV_updateFromCommands(T_SFO_Context *p_commandsFifo, uint32_t p_deltaTimeI
   float      l_measuredSpeedFrontLeft;
   float      l_measuredSpeedRearRight;
   float      l_measuredSpeedRearLeft;
-  float      l_averageSpeedFrontRight;
-  float      l_averageSpeedFrontLeft;
-  float      l_averageSpeedRearRight;
-  float      l_averageSpeedRearLeft;
   float      l_pidSpeedFrontRight;
   float      l_pidSpeedFrontLeft;
   float      l_pidSpeedRearRight;
@@ -559,32 +564,25 @@ void DRV_updateFromCommands(T_SFO_Context *p_commandsFifo, uint32_t p_deltaTimeI
     CBU_push(&g_DRV_speedBufferRearRight , l_measuredSpeedRearRight );
     CBU_push(&g_DRV_speedBufferRearLeft  , l_measuredSpeedRearLeft  );
 
-    l_averageSpeedFrontRight = CBU_getAverage(&g_DRV_speedBufferFrontRight);
-    l_averageSpeedFrontLeft  = CBU_getAverage(&g_DRV_speedBufferFrontLeft );
-    l_averageSpeedRearRight  = CBU_getAverage(&g_DRV_speedBufferRearRight );
-    l_averageSpeedRearLeft   = CBU_getAverage(&g_DRV_speedBufferRearLeft  );
+    g_DRV_averageSpeedFrontRight = CBU_getAverage(&g_DRV_speedBufferFrontRight);
+    g_DRV_averageSpeedFrontLeft  = CBU_getAverage(&g_DRV_speedBufferFrontLeft );
+    g_DRV_averageSpeedRearRight  = CBU_getAverage(&g_DRV_speedBufferRearRight );
+    g_DRV_averageSpeedRearLeft   = CBU_getAverage(&g_DRV_speedBufferRearLeft  );
 
     if (p_logInfo == true)
     {
-      DRV_logInfo();
-
-      LOG_info("Average speed FR / FL / RR / RL      : %2d / %2d / %2d / %2d",
-               (int32_t)l_averageSpeedFrontRight,
-               (int32_t)l_averageSpeedFrontLeft,
-               (int32_t)l_averageSpeedRearRight,
-               (int32_t)l_averageSpeedRearLeft);
-
-      PID_logInfo(&g_DRV_pidFrontRight, true);
-      PID_logInfo(&g_DRV_pidFrontLeft , true);
-      PID_logInfo(&g_DRV_pidRearRight , true);
-      PID_logInfo(&g_DRV_pidRearLeft  , true);
+      DRV_logInfo(true);
+    }
+    else
+    {
+      ; /* Nothing to do */
     }
 
     /* Update PIDs */
-    l_pidSpeedFrontRight = PID_update(&g_DRV_pidFrontRight, l_averageSpeedFrontRight, p_deltaTimeInMs);
-    l_pidSpeedFrontLeft  = PID_update(&g_DRV_pidFrontLeft , l_averageSpeedFrontLeft , p_deltaTimeInMs);
-    l_pidSpeedRearRight  = PID_update(&g_DRV_pidRearRight , l_averageSpeedRearRight , p_deltaTimeInMs);
-    l_pidSpeedRearLeft   = PID_update(&g_DRV_pidRearLeft  , l_averageSpeedRearLeft  , p_deltaTimeInMs);
+    l_pidSpeedFrontRight = PID_update(&g_DRV_pidFrontRight, g_DRV_averageSpeedFrontRight, p_deltaTimeInMs);
+    l_pidSpeedFrontLeft  = PID_update(&g_DRV_pidFrontLeft , g_DRV_averageSpeedFrontLeft , p_deltaTimeInMs);
+    l_pidSpeedRearRight  = PID_update(&g_DRV_pidRearRight , g_DRV_averageSpeedRearRight , p_deltaTimeInMs);
+    l_pidSpeedRearLeft   = PID_update(&g_DRV_pidRearLeft  , g_DRV_averageSpeedRearLeft  , p_deltaTimeInMs);
 
     if (g_DRV_areMotorsOn == false)
     {
@@ -603,12 +601,29 @@ void DRV_updateFromCommands(T_SFO_Context *p_commandsFifo, uint32_t p_deltaTimeI
   return;
 }
 
+void DRV_reportVelocity(void)
+{
+  char l_buffer[CST_MASTER_VELOCITY_STRING_LENGTH];
+
+  (void)snprintf(l_buffer,
+                 CST_MASTER_VELOCITY_STRING_LENGTH,
+                 "FR%2d FL%2d RR%2d RL%2d\r",
+                 (int)g_DRV_averageSpeedFrontRight,
+                 (int)g_DRV_averageSpeedFrontLeft,
+                 (int)g_DRV_averageSpeedRearRight,
+                 (int)g_DRV_averageSpeedRearLeft);
+
+  MAS_sendString(l_buffer, CST_MASTER_VELOCITY_STRING_LENGTH);
+
+  return;
+}
+
 T_DRV_MODE DRV_getMode(void)
 {
   return g_DRV_mode;
 }
 
-void DRV_logInfo(void)
+void DRV_logInfo(bool p_compactLog)
 {
   T_MTR_DIRECTION l_direction;
   uint32_t        l_speed;
@@ -639,6 +654,12 @@ void DRV_logInfo(void)
   {
     LOG_info("Drive motors: OFF");
   }
+
+  LOG_info("Average speed FR / FL / RR / RL      : %2d / %2d / %2d / %2d",
+           (int)g_DRV_averageSpeedFrontRight,
+           (int)g_DRV_averageSpeedFrontLeft,
+           (int)g_DRV_averageSpeedRearRight,
+           (int)g_DRV_averageSpeedRearLeft);
 
   l_direction = MTR_getDirection(&g_DRV_motorFrontLeft  );
   l_speed     = MTR_getSpeed    (&g_DRV_motorFrontLeft  );
