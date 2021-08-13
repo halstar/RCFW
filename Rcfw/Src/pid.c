@@ -5,10 +5,19 @@
 #include "utils.h"
 #include "log.h"
 
-void PID_init(T_PID_Handle *p_handle, float p_kp, float p_ki, float p_kd, float p_targetValue, float p_minValue, float p_maxValue, float p_antiWindUpFactor)
+void  PID_init(T_PID_Handle *p_handle,
+               char         *p_name,
+               float         p_kp,
+               float         p_ki,
+               float         p_kd,
+               float         p_targetValue,
+               float         p_minValue,
+               float         p_maxValue,
+               float         p_antiWindUpFactor)
 {
-  LOG_info("Initializing PID");
+  LOG_info("Initializing PID module for %s", p_name);
 
+  p_handle->name            = p_name;
   p_handle->kp              = p_kp;
   p_handle->ki              = p_ki;
   p_handle->kd              = p_kd;
@@ -17,8 +26,8 @@ void PID_init(T_PID_Handle *p_handle, float p_kp, float p_ki, float p_kd, float 
   p_handle->maxValue        = p_maxValue;
   p_handle->antiWindUpValue = p_antiWindUpFactor * UTI_MAX(abs(p_handle->minValue), abs(p_handle->maxValue));
 
-  PID_reset  (p_handle);
-  PID_logInfo(p_handle);
+  PID_reset  (p_handle       );
+  PID_logInfo(p_handle, false);
 
   return;
 }
@@ -136,12 +145,26 @@ float PID_update(T_PID_Handle *p_handle, float p_currentValue, uint32_t p_timeDe
   return p_handle->computedValue;
 }
 
-void PID_logInfo(T_PID_Handle *p_handle)
+void PID_logInfo(T_PID_Handle *p_handle, bool p_compactLog)
 {
-  LOG_info(" kp = %6.2f -  ki = %6.2f -     kd = %6.2f", p_handle->kp         , p_handle->ki      , p_handle->kd             );
-  LOG_info("  p = %6.2f -   i = %6.2f -      d = %6.2f", p_handle->pValue     , p_handle->iValue  , p_handle->dValue         );
-  LOG_info("min = %6.2f - max = %6.2f - a.w.up = %6.2f", p_handle->minValue   , p_handle->maxValue, p_handle->antiWindUpValue);
-  LOG_info("  t = %6.2f - val = %6.2f               ", p_handle->targetValue, p_handle->computedValue                      );
+  if (p_compactLog == false)
+  {
+    LOG_info("% PID detailed data:", p_handle->name);
+    LOG_info(" kp = %6.2f -  ki = %6.2f -     kd = %6.2f", p_handle->kp         , p_handle->ki      , p_handle->kd             );
+    LOG_info("  p = %6.2f -   i = %6.2f -      d = %6.2f", p_handle->pValue     , p_handle->iValue  , p_handle->dValue         );
+    LOG_info("min = %6.2f - max = %6.2f - a.w.up = %6.2f", p_handle->minValue   , p_handle->maxValue, p_handle->antiWindUpValue);
+    LOG_info("  t = %6.2f - val = %6.2f               "  , p_handle->targetValue, p_handle->computedValue                      );
+  }
+  else
+  {
+    LOG_info("%s PID: p = %6.2f - i = %6.2f - d = %6.2f - t = %6.2f - val = %6.2f",
+             p_handle->name,
+             p_handle->pValue,
+             p_handle->iValue,
+             p_handle->dValue,
+             p_handle->targetValue,
+             p_handle->computedValue);
+  }
 
   return;
 }

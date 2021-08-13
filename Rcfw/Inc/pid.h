@@ -1,10 +1,13 @@
 #ifndef __PID_H
 #define __PID_H
 
+#include <stdbool.h>
+
 #include "stm32f1xx_hal.h"
 
 typedef struct T_PID_Handle
 {
+  char *name;
   /* Configuration values */
   float kp;
   float ki;
@@ -12,7 +15,7 @@ typedef struct T_PID_Handle
   float targetValue;
   float minValue;
   float maxValue;
-  float   antiWindUpValue;
+  float antiWindUpValue;
   /* Computation values */
   float pValue;
   float iValue;
@@ -21,7 +24,16 @@ typedef struct T_PID_Handle
   float lastError;
 } T_PID_Handle;
 
-void  PID_init               (T_PID_Handle *p_handle, float p_kp, float p_ki, float p_kd, float p_targetValue, float p_minValue, float p_maxValue, float p_antiWindUpFactor);
+void  PID_init(T_PID_Handle *p_handle,
+               char         *p_name,
+               float         p_kp,
+               float         p_ki,
+               float         p_kd,
+               float         p_targetValue,
+               float         p_minValue,
+               float         p_maxValue,
+               float         p_antiWindUpFactor);
+
 void  PID_reset              (T_PID_Handle *p_handle);
 void  PID_setKp              (T_PID_Handle *p_handle, float p_kp);
 void  PID_setKi              (T_PID_Handle *p_handle, float p_ki);
@@ -38,6 +50,6 @@ float PID_getMinValue        (T_PID_Handle *p_handle);
 float PID_getMaxValue        (T_PID_Handle *p_handle);
 float PID_getAntiWindUpValue (T_PID_Handle *p_handle);
 float PID_update             (T_PID_Handle *p_handle, float p_currentValue, uint32_t p_timeDelta);
-void  PID_logInfo            (T_PID_Handle *p_handle);
+void  PID_logInfo            (T_PID_Handle *p_handle, bool p_compactLog);
 
 #endif /* __PID_H */

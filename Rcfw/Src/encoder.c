@@ -2,7 +2,10 @@
 
 #include "log.h"
 
-void ENC_init(T_ENC_Handle *p_handle, char *p_name, bool p_invertOnUpdate, TIM_HandleTypeDef *p_encoderTimerHandle)
+void ENC_init(T_ENC_Handle      *p_handle,
+              char              *p_name,
+              bool               p_invertOnUpdate,
+              TIM_HandleTypeDef *p_encoderTimerHandle)
 {
   LOG_info("Initializing Encoder module for %s", p_name);
 
