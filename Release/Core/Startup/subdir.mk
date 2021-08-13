@@ -15,6 +15,6 @@ S_DEPS += \
 
 
 # Each subdirectory must supply rules for building sources it contributes
-Core/Startup/startup_stm32f103rctx.o: ../Core/Startup/startup_stm32f103rctx.s Core/Startup/subdir.mk
-	arm-none-eabi-gcc -mcpu=cortex-m3 -c -I"C:/ST/STM32CubeIDE_Workspace/RCFW/Rcfw/Inc" -x assembler-with-cpp -MMD -MP -MF"Core/Startup/startup_stm32f103rctx.d" -MT"$@" --specs=nano.specs -mfloat-abi=soft -mthumb -o "$@" "$<"
+Core/Startup/%.o: ../Core/Startup/%.s Core/Startup/subdir.mk
+	arm-none-eabi-gcc -mcpu=cortex-m3 -c -I"C:/ST/STM32CubeIDE_Workspace/RCFW/Rcfw/Inc" -x assembler-with-cpp -MMD -MP -MF"$(@:%.o=%.d)" -MT"$@" --specs=nano.specs -mfloat-abi=soft -mthumb -o "$@" "$<"
 

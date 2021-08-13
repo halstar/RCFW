@@ -148,10 +148,10 @@ void DRV_init(TIM_HandleTypeDef *p_pwmTimerHandle,
   CBU_init(&g_DRV_speedBufferRearLeft  );
   CBU_init(&g_DRV_speedBufferRearRight );
 
-  /* Activate motors by default (de-activating them is used for debug)  */
-  g_DRV_areMotorsOn = true;
+  /* Activate motors or not by default (de-activating them is used for debug) */
+  g_DRV_areMotorsOn = STP_DEFAULT_MOTORS_MODE;
 
-  /* Start with master board control mode */
+  /* Start with default drive mode (different in debug and in release) */
   g_DRV_mode = STP_DEFAULT_DRIVE_MODE;
 
   return;

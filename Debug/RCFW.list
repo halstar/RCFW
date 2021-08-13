@@ -35,15 +35,15 @@ Idx Name          Size      VMA       LMA       File off  Algn
                   CONTENTS, READONLY, DEBUGGING, OCTETS
  15 .debug_ranges 00001330  00000000  00000000  00051200  2**3
                   CONTENTS, READONLY, DEBUGGING, OCTETS
- 16 .debug_macro  0001f0b1  00000000  00000000  00052530  2**0
+ 16 .debug_macro  0001f0b7  00000000  00000000  00052530  2**0
                   CONTENTS, READONLY, DEBUGGING, OCTETS
- 17 .debug_line   0001c933  00000000  00000000  000715e1  2**0
+ 17 .debug_line   0001c933  00000000  00000000  000715e7  2**0
                   CONTENTS, READONLY, DEBUGGING, OCTETS
- 18 .debug_str    000a69fd  00000000  00000000  0008df14  2**0
+ 18 .debug_str    000a6a1b  00000000  00000000  0008df1a  2**0
                   CONTENTS, READONLY, DEBUGGING, OCTETS
- 19 .comment      00000053  00000000  00000000  00134911  2**0
+ 19 .comment      00000053  00000000  00000000  00134935  2**0
                   CONTENTS, READONLY
- 20 .debug_frame  00006b38  00000000  00000000  00134964  2**2
+ 20 .debug_frame  00006b38  00000000  00000000  00134988  2**2
                   CONTENTS, READONLY, DEBUGGING, OCTETS
 
 Disassembly of section .text:
@@ -1996,7 +1996,7 @@ int main(void)
  80014e6:	2300      	movs	r3, #0
  80014e8:	f887 3037 	strb.w	r3, [r7, #55]	; 0x37
   l_driveMode       = STP_DEFAULT_DRIVE_MODE;
- 80014ec:	2302      	movs	r3, #2
+ 80014ec:	2300      	movs	r3, #0
  80014ee:	f887 3036 	strb.w	r3, [r7, #54]	; 0x36
   l_currentTimeInS  = 0;
  80014f2:	2300      	movs	r3, #0
@@ -2474,12 +2474,13 @@ int main(void)
  800184a:	f00a f844 	bl	800b8d6 <UTI_turnRtcTimeToSeconds>
  800184e:	6338      	str	r0, [r7, #48]	; 0x30
 
-    if (l_currentTimeInS - g_MAIN_swResetPollingLastTimeInS >= STP_SW_RESET_POLLING_PERIOD_IN_S)
+    if ((STP_SW_RESET_POLLING_PERIOD_IN_S != 0) &&
  8001850:	4b3d      	ldr	r3, [pc, #244]	; (8001948 <main+0x4a4>)
  8001852:	681b      	ldr	r3, [r3, #0]
  8001854:	6b3a      	ldr	r2, [r7, #48]	; 0x30
  8001856:	429a      	cmp	r2, r3
  8001858:	d004      	beq.n	8001864 <main+0x3c0>
+        (l_currentTimeInS - g_MAIN_swResetPollingLastTimeInS >= STP_SW_RESET_POLLING_PERIOD_IN_S))
     {
       MAIN_updateSwReset();
  800185a:	f7ff fd29 	bl	80012b0 <MAIN_updateSwReset>
@@ -2488,16 +2489,17 @@ int main(void)
  800185e:	4a3a      	ldr	r2, [pc, #232]	; (8001948 <main+0x4a4>)
  8001860:	6b3b      	ldr	r3, [r7, #48]	; 0x30
  8001862:	6013      	str	r3, [r2, #0]
-    else
     {
       ; /* Nothing to do */
     }
 
-    if (l_currentTimeInS - g_MAIN_batteryPollingLastTimeInS >= STP_BATTERY_POLLING_PERIOD_IN_S)
+    if ((STP_BATTERY_POLLING_PERIOD_IN_S != 0) &&
+        (l_currentTimeInS - g_MAIN_batteryPollingLastTimeInS >= STP_BATTERY_POLLING_PERIOD_IN_S))
  8001864:	4b39      	ldr	r3, [pc, #228]	; (800194c <main+0x4a8>)
  8001866:	681b      	ldr	r3, [r3, #0]
  8001868:	6b3a      	ldr	r2, [r7, #48]	; 0x30
  800186a:	1ad3      	subs	r3, r2, r3
+    if ((STP_BATTERY_POLLING_PERIOD_IN_S != 0) &&
  800186c:	2b09      	cmp	r3, #9
  800186e:	d906      	bls.n	800187e <main+0x3da>
     {
@@ -2515,12 +2517,13 @@ int main(void)
       ; /* Nothing to do */
     }
 
-    if (l_currentTimeInS - g_MAIN_ledModeUpdateLastTimeInS >= STP_LED_UPDATE_MODE_PERIOD_IN_S)
+    if ((STP_LED_UPDATE_MODE_PERIOD_IN_S != 0) &&
  800187e:	4b34      	ldr	r3, [pc, #208]	; (8001950 <main+0x4ac>)
  8001880:	681b      	ldr	r3, [r3, #0]
  8001882:	6b3a      	ldr	r2, [r7, #48]	; 0x30
  8001884:	429a      	cmp	r2, r3
  8001886:	d009      	beq.n	800189c <main+0x3f8>
+        (l_currentTimeInS - g_MAIN_ledModeUpdateLastTimeInS >= STP_LED_UPDATE_MODE_PERIOD_IN_S))
     {
       MAIN_updateLedMode (l_driveMode, l_voltageInMv);
  8001888:	683a      	ldr	r2, [r7, #0]
@@ -2575,11 +2578,13 @@ int main(void)
  80018e0:	8dfb      	ldrh	r3, [r7, #46]	; 0x2e
  80018e2:	87fb      	strh	r3, [r7, #62]	; 0x3e
 
-    if (l_currentTimeInS - g_MAIN_driveLogInfoLastTimeInS >= STP_DRIVE_LOG_INFO_PERIOD_IN_S)
+    if ((STP_DRIVE_LOG_INFO_PERIOD_IN_S != 0) &&
+        (l_currentTimeInS - g_MAIN_driveLogInfoLastTimeInS >= STP_DRIVE_LOG_INFO_PERIOD_IN_S))
  80018e4:	4b1b      	ldr	r3, [pc, #108]	; (8001954 <main+0x4b0>)
  80018e6:	681b      	ldr	r3, [r3, #0]
  80018e8:	6b3a      	ldr	r2, [r7, #48]	; 0x30
  80018ea:	1ad3      	subs	r3, r2, r3
+    if ((STP_DRIVE_LOG_INFO_PERIOD_IN_S != 0) &&
  80018ec:	2b02      	cmp	r3, #2
  80018ee:	d90a      	bls.n	8001906 <main+0x462>
     {
@@ -23427,16 +23432,16 @@ void DRV_init(TIM_HandleTypeDef *p_pwmTimerHandle,
  80096aa:	481e      	ldr	r0, [pc, #120]	; (8009724 <DRV_init+0x1f4>)
  80096ac:	f7ff fe2c 	bl	8009308 <CBU_init>
 
-  /* Activate motors by default (de-activating them is used for debug)  */
-  g_DRV_areMotorsOn = true;
+  /* Activate motors or not by default (de-activating them is used for debug) */
+  g_DRV_areMotorsOn = STP_DEFAULT_MOTORS_MODE;
  80096b0:	4b1d      	ldr	r3, [pc, #116]	; (8009728 <DRV_init+0x1f8>)
- 80096b2:	2201      	movs	r2, #1
+ 80096b2:	2200      	movs	r2, #0
  80096b4:	701a      	strb	r2, [r3, #0]
 
-  /* Start with master board control mode */
+  /* Start with default drive mode (different in debug and in release) */
   g_DRV_mode = STP_DEFAULT_DRIVE_MODE;
  80096b6:	4b1d      	ldr	r3, [pc, #116]	; (800972c <DRV_init+0x1fc>)
- 80096b8:	2202      	movs	r2, #2
+ 80096b8:	2200      	movs	r2, #0
  80096ba:	701a      	strb	r2, [r3, #0]
 
   return;
@@ -25215,7 +25220,7 @@ static void DVR_getSpeedFromCommand(char *p_string, uint32_t *p_speed)
  800a3b2:	2b64      	cmp	r3, #100	; 0x64
  800a3b4:	d905      	bls.n	800a3c2 <DVR_getSpeedFromCommand+0x26>
   {
-    LOG_error("Drive got out of range speed: %d", l_speed);
+    LOG_error("Drive got out of range speed: %u", l_speed);
  800a3b6:	68fa      	ldr	r2, [r7, #12]
  800a3b8:	490b      	ldr	r1, [pc, #44]	; (800a3e8 <DVR_getSpeedFromCommand+0x4c>)
  800a3ba:	2003      	movs	r0, #3

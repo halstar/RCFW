@@ -542,7 +542,8 @@ int main(void)
 
     l_currentTimeInS = UTI_turnRtcTimeToSeconds(&l_rtcTime);
 
-    if (l_currentTimeInS - g_MAIN_swResetPollingLastTimeInS >= STP_SW_RESET_POLLING_PERIOD_IN_S)
+    if ((STP_SW_RESET_POLLING_PERIOD_IN_S != 0) &&
+        (l_currentTimeInS - g_MAIN_swResetPollingLastTimeInS >= STP_SW_RESET_POLLING_PERIOD_IN_S))
     {
       MAIN_updateSwReset();
 
@@ -553,7 +554,8 @@ int main(void)
       ; /* Nothing to do */
     }
 
-    if (l_currentTimeInS - g_MAIN_batteryPollingLastTimeInS >= STP_BATTERY_POLLING_PERIOD_IN_S)
+    if ((STP_BATTERY_POLLING_PERIOD_IN_S != 0) &&
+        (l_currentTimeInS - g_MAIN_batteryPollingLastTimeInS >= STP_BATTERY_POLLING_PERIOD_IN_S))
     {
       BAT_update(&l_voltageInMv);
 
@@ -564,7 +566,8 @@ int main(void)
       ; /* Nothing to do */
     }
 
-    if (l_currentTimeInS - g_MAIN_ledModeUpdateLastTimeInS >= STP_LED_UPDATE_MODE_PERIOD_IN_S)
+    if ((STP_LED_UPDATE_MODE_PERIOD_IN_S != 0) &&
+        (l_currentTimeInS - g_MAIN_ledModeUpdateLastTimeInS >= STP_LED_UPDATE_MODE_PERIOD_IN_S))
     {
       MAIN_updateLedMode (l_driveMode, l_voltageInMv);
 
@@ -586,7 +589,8 @@ int main(void)
     l_deltaTimeInMs   = l_lastTimeInMs - l_currentTimeInMs;
     l_lastTimeInMs    = l_currentTimeInMs;
 
-    if (l_currentTimeInS - g_MAIN_driveLogInfoLastTimeInS >= STP_DRIVE_LOG_INFO_PERIOD_IN_S)
+    if ((STP_DRIVE_LOG_INFO_PERIOD_IN_S != 0) &&
+        (l_currentTimeInS - g_MAIN_driveLogInfoLastTimeInS >= STP_DRIVE_LOG_INFO_PERIOD_IN_S))
     {
       DRV_updateFromCommands(&l_commandsFifo, l_deltaTimeInMs, true);
 

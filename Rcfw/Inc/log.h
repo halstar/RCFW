@@ -28,7 +28,7 @@ void LOG_log          (T_LOG_LEVEL p_level, const char *p_format, ...);
   #define LOG_warning(...) LOG_log(LOG_LEVEL_WARN , __VA_ARGS__)
   #define LOG_error(...)   LOG_log(LOG_LEVEL_ERROR, __VA_ARGS__)
 
-#else
+#else /* RELEASE */
 
   #define LOG_debug(...)
   #define LOG_info(...)
