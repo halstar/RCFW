@@ -49,3 +49,9 @@ int16_t ENC_getCount(T_ENC_Handle *p_handle)
   return l_count;
 }
 
+void ENC_logInfo(T_ENC_Handle *p_handle)
+{
+  LOG_debug("%s encoder count: %u", p_handle->name, p_handle->value);
+
+  return;
+}

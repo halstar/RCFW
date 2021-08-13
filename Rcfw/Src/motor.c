@@ -77,7 +77,7 @@ void MTR_setSpeed(T_MTR_Handle *p_handle, uint32_t p_speed)
   }
   else
   {
-    LOG_debug("Setting  %s motor p_speed to %u", p_handle->name, p_speed);
+    LOG_debug("Setting  %s motor speed to %u", p_handle->name, p_speed);
 
     __HAL_TIM_SET_COMPARE(p_handle->pwmTimerHandle, p_handle->pwmChannel, p_speed);
 
@@ -90,4 +90,28 @@ void MTR_setSpeed(T_MTR_Handle *p_handle, uint32_t p_speed)
 uint32_t MTR_getSpeed(T_MTR_Handle *p_handle)
 {
   return p_handle->speed;
+}
+
+void MTR_logInfo(T_MTR_Handle *p_handle)
+{
+  if (p_handle->direction == MTR_DIRECTION_STOP)
+  {
+    LOG_debug("%s motor direction: STOP", p_handle->name);
+  }
+  else if (p_handle->direction == MTR_DIRECTION_FORWARD)
+  {
+    LOG_debug("%s motor direction: FORWARD", p_handle->name);
+  }
+  else if (p_handle->direction == MTR_DIRECTION_BACKWARD)
+  {
+    LOG_debug("%s motor direction: BACKWARD", p_handle->name);
+  }
+  else
+  {
+    LOG_error("%s motor unsupported direction: %u", p_handle->name, p_handle->direction);
+  }
+
+  LOG_debug("%s motor speed    : %u", p_handle->name, p_handle->speed);
+
+  return;
 }

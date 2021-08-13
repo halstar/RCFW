@@ -498,14 +498,16 @@ void DRV_updateFromCommands(T_SFO_Context *p_commandsFifo, uint32_t p_deltaTimeI
 
     if (p_logInfo == true)
     {
-      /* Log information for only one PID, to make display lighter */
-      PID_logInfo(&g_DRV_pidFrontRight);
+      DRV_logInfo();
 
-      LOG_info("%d, %d, %d, %d",
+      LOG_info("Average speed FR / FL / RR / RL      : %2d / %2d / %2d / %2d",
                (int32_t)l_averageSpeedFrontRight,
                (int32_t)l_averageSpeedFrontLeft,
                (int32_t)l_averageSpeedRearRight,
                (int32_t)l_averageSpeedRearLeft);
+
+      /* Log information for only one PID, to make display lighter */
+      PID_logInfo(&g_DRV_pidFrontRight);
     }
 
     /* Update PIDs */
@@ -540,18 +542,19 @@ void DRV_logInfo(void)
 {
   T_MTR_DIRECTION l_direction;
   uint32_t        l_speed;
+  uint32_t        l_count;
 
   if (g_DRV_mode == DRV_MODE_MANUAL_FIXED_SPEED)
   {
-    LOG_info("Mode  : MANUAL FIXED SPEED");
+    LOG_info("Drive mode  : MANUAL FIXED SPEED");
   }
   else if (g_DRV_mode == DRV_MODE_MANUAL_VARIABLE_SPEED)
   {
-    LOG_info("Mode  : MANUAL VARIABLE SPEED");
+    LOG_info("Drive mode  : MANUAL VARIABLE SPEED");
   }
   else if (g_DRV_mode == DRV_MODE_MASTER_BOARD_CONTROL)
   {
-    LOG_info("Mode  : MASTER BOARD CONTROL");
+    LOG_info("Drive mode  : MASTER BOARD CONTROL");
   }
   else
   {
@@ -560,32 +563,36 @@ void DRV_logInfo(void)
 
   if (g_DRV_areMotorsOn == true)
   {
-    LOG_info("Motors: ON");
+    LOG_info("Drive motors: ON");
   }
   else
   {
-    LOG_info("Motors: OFF");
+    LOG_info("Drive motors: OFF");
   }
 
-  l_direction = MTR_getDirection(&g_DRV_motorFrontLeft);
-  l_speed     = MTR_getSpeed    (&g_DRV_motorFrontLeft);
+  l_direction = MTR_getDirection(&g_DRV_motorFrontLeft  );
+  l_speed     = MTR_getSpeed    (&g_DRV_motorFrontLeft  );
+  l_count     = ENC_getCount    (&g_DRV_encoderFrontLeft);
 
-  LOG_info("%s motor direction/speed: %u/%u", CST_FRONT_LEFT_MOTOR_NAME, l_direction, l_speed);
+  LOG_info("%s direction / speed / count: %2u / %2u / %2u", CST_FRONT_LEFT_MOTOR_NAME, l_direction, l_speed, l_count);
 
-  l_direction = MTR_getDirection(&g_DRV_motorFrontRight);
-  l_speed     = MTR_getSpeed    (&g_DRV_motorFrontRight);
+  l_direction = MTR_getDirection(&g_DRV_motorFrontRight  );
+  l_speed     = MTR_getSpeed    (&g_DRV_motorFrontRight  );
+  l_count     = ENC_getCount    (&g_DRV_encoderFrontRight);
 
-  LOG_info("%s motor direction/speed: %u/%u", CST_FRONT_RIGHT_MOTOR_NAME, l_direction, l_speed);
+  LOG_info("%s direction / speed / count: %2u / %2u / %2u", CST_FRONT_RIGHT_MOTOR_NAME, l_direction, l_speed, l_count);
 
-  l_direction = MTR_getDirection(&g_DRV_motorRearLeft);
-  l_speed     = MTR_getSpeed    (&g_DRV_motorRearLeft);
+  l_direction = MTR_getDirection(&g_DRV_motorRearRight  );
+  l_speed     = MTR_getSpeed    (&g_DRV_motorRearRight  );
+  l_count     = ENC_getCount    (&g_DRV_encoderRearRight);
 
-  LOG_info("%s motor direction/speed: %u/%u", CST_REAR_LEFT_MOTOR_NAME, l_direction, l_speed);
+  LOG_info("%s direction / speed / count: %2u / %2u / %2u", CST_REAR_RIGHT_MOTOR_NAME, l_direction, l_speed, l_count);
 
-  l_direction = MTR_getDirection(&g_DRV_motorRearRight);
-  l_speed     = MTR_getSpeed    (&g_DRV_motorRearRight);
+  l_direction = MTR_getDirection(&g_DRV_motorRearLeft  );
+  l_speed     = MTR_getSpeed    (&g_DRV_motorRearLeft  );
+  l_count     = ENC_getCount    (&g_DRV_encoderRearLeft);
 
-  LOG_info("%s motor direction/speed: %u/%u", CST_REAR_RIGHT_MOTOR_NAME, l_direction, l_speed);
+  LOG_info("%s direction / speed / count: %2u / %2u / %2u", CST_REAR_LEFT_MOTOR_NAME, l_direction, l_speed, l_count);
 
   return;
 }

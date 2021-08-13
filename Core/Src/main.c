@@ -90,18 +90,18 @@ T_MAIN_PRINT_OUTPUT g_MAIN_printOutput;
 /* Private function prototypes -----------------------------------------------*/
 void SystemClock_Config(void);
 static void MX_GPIO_Init(void);
-static void MX_TIM1_Init(void);
 static void MX_USART1_UART_Init(void);
 static void MX_UART4_Init(void);
 static void MX_ADC1_Init(void);
-static void MX_TIM8_Init(void);
 static void MX_RTC_Init(void);
-static void MX_TIM7_Init(void);
+static void MX_TIM1_Init(void);
 static void MX_TIM2_Init(void);
 static void MX_TIM3_Init(void);
 static void MX_TIM4_Init(void);
 static void MX_TIM5_Init(void);
 static void MX_TIM6_Init(void);
+static void MX_TIM7_Init(void);
+static void MX_TIM8_Init(void);
 /* USER CODE BEGIN PFP */
 
 static void MAIN_displayRcfwBanner(void                                           );
@@ -354,18 +354,18 @@ int main(void)
 
   /* Initialize all configured peripherals */
   MX_GPIO_Init();
-  MX_TIM1_Init();
   MX_USART1_UART_Init();
   MX_UART4_Init();
   MX_ADC1_Init();
-  MX_TIM8_Init();
   MX_RTC_Init();
-  MX_TIM7_Init();
+  MX_TIM1_Init();
   MX_TIM2_Init();
   MX_TIM3_Init();
   MX_TIM4_Init();
   MX_TIM5_Init();
   MX_TIM6_Init();
+  MX_TIM7_Init();
+  MX_TIM8_Init();
   /* USER CODE BEGIN 2 */
 
   /* Setup local variables */
