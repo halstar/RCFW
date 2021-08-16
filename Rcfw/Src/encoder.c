@@ -27,7 +27,7 @@ void ENC_reset(T_ENC_Handle *p_handle)
   return;
 }
 
-void ENC_update(T_ENC_Handle *p_handle, int16_t p_value)
+void ENC_update(T_ENC_Handle *p_handle, int32_t p_value)
 {
   if (p_handle->invertOnUpdate == false)
   {
@@ -41,9 +41,9 @@ void ENC_update(T_ENC_Handle *p_handle, int16_t p_value)
   return;
 }
 
-int16_t ENC_getCount(T_ENC_Handle *p_handle)
+int32_t ENC_getCount(T_ENC_Handle *p_handle)
 {
-  int16_t l_count;
+  int32_t l_count;
 
   l_count = p_handle->value;
 

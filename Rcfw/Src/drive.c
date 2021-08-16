@@ -1,13 +1,13 @@
 #include <stdbool.h>
 #include <stdlib.h>
 #include <stdio.h>
-#include <math.h>
 
 #include "drive.h"
 
 #include "pid.h"
 #include "motor.h"
 #include "encoder.h"
+#include "wheel.h"
 #include "main.h"
 #include "log.h"
 #include "const.h"
@@ -17,16 +17,23 @@
 #include "string_fifo.h"
 #include "master_control.h"
 
-static bool          g_DRV_areMotorsOn;
-static T_DRV_MODE    g_DRV_mode;
-static T_PID_Handle  g_DRV_pidFrontRight         , g_DRV_pidFrontLeft         , g_DRV_pidRearLeft         , g_DRV_pidRearRight         ;
-static T_MTR_Handle  g_DRV_motorFrontRight       , g_DRV_motorFrontLeft       , g_DRV_motorRearLeft       , g_DRV_motorRearRight       ;
-static T_ENC_Handle  g_DRV_encoderFrontRight     , g_DRV_encoderFrontLeft     , g_DRV_encoderRearLeft     , g_DRV_encoderRearRight     ;
-static T_CBU_Context g_DRV_speedBufferFrontRight , g_DRV_speedBufferFrontLeft , g_DRV_speedBufferRearLeft , g_DRV_speedBufferRearRight ;
-static float         g_DRV_averageSpeedFrontRight, g_DRV_averageSpeedFrontLeft, g_DRV_averageSpeedRearLeft, g_DRV_averageSpeedRearRight;
+typedef struct T_DRV_Context
+{
+  uint32_t     selectPressedStartTimeInS;
+  bool         isBluetoothOn;
+  bool         areMotorsOn;
+  T_DRV_MODE   mode;
+  T_WHL_Handle wheelFrontRight;
+  T_WHL_Handle wheelFrontLeft;
+  T_WHL_Handle wheelRearLeft;
+  T_WHL_Handle wheelRearRight;
+} T_DRV_Context;
+
+static T_DRV_Context g_DRV_context;
 
 static void DVR_getSpeedFromCommand(char *p_string, uint32_t *p_speed);
 
+static void DRV_toggleMotorsState          (void);
 static void DRV_setDirectionsStop          (void);
 static void DRV_setDirectionsForward       (void);
 static void DRV_setDirectionsBackward      (void);
@@ -52,6 +59,7 @@ static void DRV_translateLeft    (uint32_t p_speed);
 static void DRV_translateRight   (uint32_t p_speed);
 
 void DRV_init(TIM_HandleTypeDef *p_pwmTimerHandle,
+              TIM_HandleTypeDef *p_msTimerHandle,
               TIM_HandleTypeDef *p_rearLeftEncoderTimerHandle,
               TIM_HandleTypeDef *p_rearRightEncoderTimerHandle,
               TIM_HandleTypeDef *p_frontRightEncoderTimerHandle,
@@ -59,107 +67,69 @@ void DRV_init(TIM_HandleTypeDef *p_pwmTimerHandle,
 {
   LOG_info("Initializing Drive module");
 
-  /* Setup PIDs with a target speed to 0 */
-  PID_init(&g_DRV_pidFrontRight,
-            CST_FRONT_RIGHT_MOTOR_NAME,
-            STP_DRIVE_PID_P_FACTOR,
-            STP_DRIVE_PID_I_FACTOR,
-            STP_DRIVE_PID_D_FACTOR,
-            0,
-            STP_DRIVE_MIN_SPEED,
-            STP_DRIVE_MAX_SPEED,
-            STP_DRIVE_PID_ANTI_WIND_UP_FACTOR);
+  g_DRV_context.selectPressedStartTimeInS = 0;
 
-  PID_init(&g_DRV_pidFrontLeft,
-            CST_FRONT_LEFT_MOTOR_NAME,
-            STP_DRIVE_PID_P_FACTOR,
-            STP_DRIVE_PID_I_FACTOR,
-            STP_DRIVE_PID_D_FACTOR,
-            0,
-            STP_DRIVE_MIN_SPEED,
-            STP_DRIVE_MAX_SPEED,
-            STP_DRIVE_PID_ANTI_WIND_UP_FACTOR);
-
-  PID_init(&g_DRV_pidRearLeft,
-            CST_REAR_LEFT_MOTOR_NAME,
-            STP_DRIVE_PID_P_FACTOR,
-            STP_DRIVE_PID_I_FACTOR,
-            STP_DRIVE_PID_D_FACTOR,
-            0,
-            STP_DRIVE_MIN_SPEED,
-            STP_DRIVE_MAX_SPEED,
-            STP_DRIVE_PID_ANTI_WIND_UP_FACTOR);
-
-  PID_init(&g_DRV_pidRearRight,
-            CST_REAR_RIGHT_MOTOR_NAME,
-            STP_DRIVE_PID_P_FACTOR,
-            STP_DRIVE_PID_I_FACTOR,
-            STP_DRIVE_PID_D_FACTOR,
-            0,
-            STP_DRIVE_MIN_SPEED,
-            STP_DRIVE_MAX_SPEED,
-            STP_DRIVE_PID_ANTI_WIND_UP_FACTOR);
-
-  /* Setup motors (with a 0 speed & stopped direction, at this point) */
-  MTR_init(&g_DRV_motorFrontRight,
-            CST_FRONT_RIGHT_MOTOR_NAME,
+  /* Setup all 4 wheels */
+  WHL_init(&g_DRV_context.wheelFrontRight,
+            CST_FRONT_RIGHT_WHEEL_NAME,
             MOTOR_FRONT_RIGHT_OUT_1_GPIO_Port,
             MOTOR_FRONT_RIGHT_OUT_1_Pin,
             MOTOR_FRONT_RIGHT_OUT_2_GPIO_Port,
             MOTOR_FRONT_RIGHT_OUT_2_Pin,
             p_pwmTimerHandle,
-            TIM_CHANNEL_4);
+            TIM_CHANNEL_4,
+            true,
+            p_frontRightEncoderTimerHandle,
+            p_msTimerHandle,
+            STP_DEFAULT_MOTORS_MODE);
 
-  MTR_init(&g_DRV_motorFrontLeft,
-            CST_FRONT_LEFT_MOTOR_NAME,
+  WHL_init(&g_DRV_context.wheelFrontLeft,
+            CST_FRONT_LEFT_WHEEL_NAME,
             MOTOR_FRONT_LEFT_OUT_1_GPIO_Port,
             MOTOR_FRONT_LEFT_OUT_1_Pin,
             MOTOR_FRONT_LEFT_OUT_2_GPIO_Port,
             MOTOR_FRONT_LEFT_OUT_2_Pin,
             p_pwmTimerHandle,
-            TIM_CHANNEL_3);
+            TIM_CHANNEL_3,
+            false,
+            p_frontLeftEncoderTimerHandle,
+            p_msTimerHandle,
+            STP_DEFAULT_MOTORS_MODE);
 
-  MTR_init(&g_DRV_motorRearLeft,
-            CST_REAR_LEFT_MOTOR_NAME,
+  WHL_init(&g_DRV_context.wheelRearLeft,
+            CST_REAR_LEFT_WHEEL_NAME,
             MOTOR_REAR_LEFT_OUT_1_GPIO_Port,
             MOTOR_REAR_LEFT_OUT_1_Pin,
             MOTOR_REAR_LEFT_OUT_2_GPIO_Port,
             MOTOR_REAR_LEFT_OUT_2_Pin,
             p_pwmTimerHandle,
-            TIM_CHANNEL_2);
+            TIM_CHANNEL_2,
+            false,
+            p_rearLeftEncoderTimerHandle,
+            p_msTimerHandle,
+            STP_DEFAULT_MOTORS_MODE);
 
-  MTR_init(&g_DRV_motorRearRight,
-            CST_REAR_RIGHT_MOTOR_NAME,
+  WHL_init(&g_DRV_context.wheelRearRight,
+            CST_REAR_RIGHT_WHEEL_NAME,
             MOTOR_REAR_RIGHT_OUT_1_GPIO_Port,
             MOTOR_REAR_RIGHT_OUT_1_Pin,
             MOTOR_REAR_RIGHT_OUT_2_GPIO_Port,
             MOTOR_REAR_RIGHT_OUT_2_Pin,
             p_pwmTimerHandle,
-            TIM_CHANNEL_1);
+            TIM_CHANNEL_1,
+            true,
+            p_rearRightEncoderTimerHandle,
+            p_msTimerHandle,
+            STP_DEFAULT_MOTORS_MODE);
 
-  /* Setup encoders */
-  ENC_init(&g_DRV_encoderFrontRight, CST_FRONT_RIGHT_MOTOR_NAME, true , p_frontRightEncoderTimerHandle);
-  ENC_init(&g_DRV_encoderFrontLeft , CST_FRONT_LEFT_MOTOR_NAME , false, p_frontLeftEncoderTimerHandle );
-  ENC_init(&g_DRV_encoderRearLeft  , CST_REAR_LEFT_MOTOR_NAME  , false, p_rearLeftEncoderTimerHandle  );
-  ENC_init(&g_DRV_encoderRearRight , CST_REAR_RIGHT_MOTOR_NAME , true , p_rearRightEncoderTimerHandle );
-
-  /* Setup speed buffers */
-  CBU_init(&g_DRV_speedBufferFrontRight);
-  CBU_init(&g_DRV_speedBufferFrontLeft );
-  CBU_init(&g_DRV_speedBufferRearLeft  );
-  CBU_init(&g_DRV_speedBufferRearRight );
-
-  /* Setup average speeds */
-  g_DRV_averageSpeedFrontRight = 0;
-  g_DRV_averageSpeedFrontLeft  = 0;
-  g_DRV_averageSpeedRearLeft   = 0;
-  g_DRV_averageSpeedRearRight  = 0;
+  /* Consider that bluetooth controller is OFF by default. Pressing START is needed. */
+  g_DRV_context.isBluetoothOn = false;
 
   /* Activate motors or not by default (de-activating them is used for debug) */
-  g_DRV_areMotorsOn = STP_DEFAULT_MOTORS_MODE;
+  g_DRV_context.areMotorsOn = STP_DEFAULT_MOTORS_MODE;
 
   /* Start with default drive mode (different in debug and in release) */
-  g_DRV_mode = STP_DEFAULT_DRIVE_MODE;
+  g_DRV_context.mode = STP_DEFAULT_DRIVE_MODE;
 
   DRV_logInfo(false);
 
@@ -173,29 +143,29 @@ void DRV_updateEncoder(TIM_HandleTypeDef *p_encoderTimerHandle)
   l_count = __HAL_TIM_GET_COUNTER(p_encoderTimerHandle);
 
   /* Check the handle of the triggering timer and update encoder accordingly */
-  if (p_encoderTimerHandle == g_DRV_encoderRearLeft.timerHandle)
+  if (p_encoderTimerHandle == g_DRV_context.wheelFrontRight.encoder.timerHandle)
   {
-    ENC_update(&g_DRV_encoderRearLeft, l_count);
+    WHL_updateEncoder(&g_DRV_context.wheelFrontRight, l_count);
 
-    // LOG_debug("%s encoder: %d", CST_REAR_LEFT_MOTOR_NAME, ENC_getCount(&g_DRV_encoderRearLeft));
+    // LOG_debug("%s encoder: %d", CST_FRONT_RIGHT_WHEEL_NAME, l_count);
   }
-  else if (p_encoderTimerHandle == g_DRV_encoderRearRight.timerHandle)
+  else if (p_encoderTimerHandle == g_DRV_context.wheelFrontLeft.encoder.timerHandle)
   {
-    ENC_update(&g_DRV_encoderRearRight, l_count);
+    WHL_updateEncoder(&g_DRV_context.wheelFrontLeft, l_count);
 
-    // LOG_debug("%s encoder: %d", CST_REAR_RIGHT_MOTOR_NAME, ENC_getCount(&g_DRV_encoderRearRight));
+    // LOG_debug("%s encoder: %d", CST_FRONT_LEFT_WHEEL_NAME, l_count);
   }
-  else if (p_encoderTimerHandle == g_DRV_encoderFrontRight.timerHandle)
+  else if (p_encoderTimerHandle == g_DRV_context.wheelRearRight.encoder.timerHandle)
   {
-    ENC_update(&g_DRV_encoderFrontRight, l_count);
+    WHL_updateEncoder(&g_DRV_context.wheelRearRight, l_count);
 
-    // LOG_debug("%s encoder: %d", CST_FRONT_RIGHT_MOTOR_NAME, ENC_getCount(&g_DRV_encoderFrontRight));
+    // LOG_debug("%s encoder: %d", CST_REAR_RIGHT_WHEEL_NAME, l_count);
   }
-  else if (p_encoderTimerHandle == g_DRV_encoderFrontLeft.timerHandle)
+  else if (p_encoderTimerHandle == g_DRV_context.wheelRearLeft.encoder.timerHandle)
   {
-    ENC_update(&g_DRV_encoderFrontLeft, l_count);
+    WHL_updateEncoder(&g_DRV_context.wheelRearLeft, l_count);
 
-    // LOG_debug("%s encoder: %d", CST_FRONT_LEFT_MOTOR_NAME, ENC_getCount(&g_DRV_encoderFrontLeft));
+    // LOG_debug("%s encoder: %d", CST_REAR_LEFT_WHEEL_NAME, l_count);
   }
   else
   {
@@ -205,178 +175,185 @@ void DRV_updateEncoder(TIM_HandleTypeDef *p_encoderTimerHandle)
   return;
 }
 
-void DRV_updateFromBluetooth(T_BLU_Data *p_bluetoothData)
+void DRV_updateFromBluetooth(T_BLU_Data *p_bluetoothData, uint32_t p_timeInS)
 {
   uint32_t l_speed;
 
-  /* Check possible requested mode change */
-  switch (p_bluetoothData->button)
+  if (p_bluetoothData->button == BLU_BUTTON_START)
   {
-    case BLU_BUTTON_PINK_SQUARE:
-      if (g_DRV_mode != DRV_MODE_MANUAL_FIXED_SPEED)
-      {
-        LOG_info("Drive mode now DRV_MODE_MANUAL_FIXED_SPEED");
-        g_DRV_mode = DRV_MODE_MANUAL_FIXED_SPEED;
-      }
-      else
-      {
-        ; /* Nothing to do */
-      }
-      break;
-
-    case BLU_BUTTON_BLUE_CROSS:
-      if (g_DRV_mode != DRV_MODE_MANUAL_VARIABLE_SPEED)
-      {
-        LOG_info("Drive mode now DRV_MODE_MANUAL_VARIABLE_SPEED");
-        g_DRV_mode = DRV_MODE_MANUAL_VARIABLE_SPEED;
-      }
-      else
-      {
-        ; /* Nothing to do */
-      }
-      break;
-
-    case BLU_BUTTON_RED_CIRCLE:
-      if (g_DRV_mode != DRV_MODE_MASTER_BOARD_CONTROL)
-      {
-        LOG_info("Drive mode now DRV_MODE_MASTER_BOARD_CONTROL");
-        g_DRV_mode = DRV_MODE_MASTER_BOARD_CONTROL;
-      }
-      else
-      {
-        ; /* Nothing to do */
-      }
-      break;
-
-    case BLU_BUTTON_SELECT:
-      if (g_DRV_areMotorsOn == true)
-      {
-        LOG_info("Drive turning motor OFF");
-        g_DRV_areMotorsOn = false;
-      }
-      else
-      {
-        ; /* Nothing to do */
-      }
-      break;
-
-    case BLU_BUTTON_START:
-      if (g_DRV_areMotorsOn == false)
-      {
-        LOG_info("Drive turning motors ON");
-        g_DRV_areMotorsOn = true;
-      }
-      else
-      {
-        ; /* Nothing to do */
-      }
-      break;
-
-    case BLU_BUTTON_NONE:
-    default:
-      ; /* Nothing to do */
-      break;
-  }
-
-  /* Master board control mode is an automated mode, so that we will */
-  /* ignore any direction/button press received via bluetooth.       */
-  if (g_DRV_mode == DRV_MODE_MASTER_BOARD_CONTROL)
-  {
-    ; /* Nothing to do */
-  }
-  /* Manual mode, applying directions received by bluetooth */
-  else
-  {
-    if (p_bluetoothData->leftY > STP_JOYSTICKS_THRESHOLD)
+    if (g_DRV_context.isBluetoothOn == false)
     {
-      l_speed = g_DRV_mode == DRV_MODE_MANUAL_FIXED_SPEED ? STP_JOYSTICKS_FIXED_SPEED : p_bluetoothData->leftY;
-
-      DRV_moveForward(l_speed);
-    }
-    else if (p_bluetoothData->rightY > STP_JOYSTICKS_THRESHOLD)
-    {
-      l_speed = g_DRV_mode == DRV_MODE_MANUAL_FIXED_SPEED ? STP_JOYSTICKS_FIXED_SPEED : p_bluetoothData->rightY;
-
-      DRV_moveForward(l_speed);
-    }
-    else if (p_bluetoothData->leftY < -STP_JOYSTICKS_THRESHOLD)
-    {
-      l_speed = g_DRV_mode == DRV_MODE_MANUAL_FIXED_SPEED ? STP_JOYSTICKS_FIXED_SPEED : -p_bluetoothData->leftY;
-
-      DRV_moveBackward(l_speed);
-    }
-    else if (p_bluetoothData->rightY < -STP_JOYSTICKS_THRESHOLD)
-    {
-      l_speed = g_DRV_mode == DRV_MODE_MANUAL_FIXED_SPEED ? STP_JOYSTICKS_FIXED_SPEED : -p_bluetoothData->rightY;
-
-      DRV_moveBackward(l_speed);
-    }
-    else if (p_bluetoothData->leftX < -STP_JOYSTICKS_THRESHOLD)
-    {
-      l_speed = g_DRV_mode == DRV_MODE_MANUAL_FIXED_SPEED ? STP_JOYSTICKS_FIXED_SPEED : -p_bluetoothData->leftX;
-
-      DRV_turnLeft(l_speed);
-    }
-    else if (p_bluetoothData->leftX > STP_JOYSTICKS_THRESHOLD)
-    {
-      l_speed = g_DRV_mode == DRV_MODE_MANUAL_FIXED_SPEED ? STP_JOYSTICKS_FIXED_SPEED : p_bluetoothData->leftX;
-
-      DRV_turnRight(l_speed);
-    }
-    else if (p_bluetoothData->rightX < -STP_JOYSTICKS_THRESHOLD)
-    {
-      l_speed = g_DRV_mode == DRV_MODE_MANUAL_FIXED_SPEED ? STP_JOYSTICKS_FIXED_SPEED : -p_bluetoothData->rightX;
-
-      DRV_translateLeft(l_speed);
-    }
-    else if (p_bluetoothData->rightX > STP_JOYSTICKS_THRESHOLD)
-    {
-      l_speed = g_DRV_mode == DRV_MODE_MANUAL_FIXED_SPEED ? STP_JOYSTICKS_FIXED_SPEED : p_bluetoothData->rightX;
-
-      DRV_translateRight(l_speed);
-    }
-    else if (p_bluetoothData->button == BLU_BUTTON_L1)
-    {
-      DRV_moveForwardLeft(STP_BUTTONS_FIXED_SPEED);
-    }
-    else if (p_bluetoothData->button == BLU_BUTTON_L2)
-    {
-      DRV_moveBackwardRight(STP_BUTTONS_FIXED_SPEED);
-    }
-    else if (p_bluetoothData->button == BLU_BUTTON_R1)
-    {
-      DRV_moveForwardRight(STP_BUTTONS_FIXED_SPEED);
-    }
-    else if (p_bluetoothData->button == BLU_BUTTON_R2)
-    {
-      DRV_moveBackwardLeft(STP_BUTTONS_FIXED_SPEED);
+      LOG_info("Bluetooth controller detected ON");
+      g_DRV_context.isBluetoothOn = true;
     }
     else
     {
-      /* Most of the time, we will get here */
-      DRV_stop();
+      ; /* Nothing to do */
+    }
+  }
+  else if (g_DRV_context.isBluetoothOn == false)
+  {
+    ; /* Nothing to do */
+  }
+  else
+  {
+    /* Check possible requested mode change */
+    switch (p_bluetoothData->button)
+    {
+      case BLU_BUTTON_PINK_SQUARE:
+        if (g_DRV_context.mode != DRV_MODE_MANUAL_FIXED_SPEED)
+        {
+          DRV_stop();
+          g_DRV_context.mode = DRV_MODE_MANUAL_FIXED_SPEED;
+          LOG_info("Drive mode now DRV_MODE_MANUAL_FIXED_SPEED");
+        }
+        else
+        {
+          ; /* Nothing to do */
+        }
+        break;
+
+      case BLU_BUTTON_BLUE_CROSS:
+        if (g_DRV_context.mode != DRV_MODE_MANUAL_VARIABLE_SPEED)
+        {
+          DRV_stop();
+          g_DRV_context.mode = DRV_MODE_MANUAL_VARIABLE_SPEED;
+          LOG_info("Drive mode now DRV_MODE_MANUAL_VARIABLE_SPEED");
+        }
+        else
+        {
+          ; /* Nothing to do */
+        }
+        break;
+
+      case BLU_BUTTON_RED_CIRCLE:
+        if (g_DRV_context.mode != DRV_MODE_MASTER_BOARD_CONTROL)
+        {
+          DRV_stop();
+          g_DRV_context.mode = DRV_MODE_MASTER_BOARD_CONTROL;
+          LOG_info("Drive mode now DRV_MODE_MASTER_BOARD_CONTROL");
+        }
+        else
+        {
+          ; /* Nothing to do */
+        }
+        break;
+
+      case BLU_BUTTON_SELECT:
+        if (g_DRV_context.selectPressedStartTimeInS == 0)
+        {
+          g_DRV_context.selectPressedStartTimeInS = p_timeInS;
+
+          DRV_toggleMotorsState();
+        }
+        else if (p_timeInS - g_DRV_context.selectPressedStartTimeInS < STP_BUTTONS_DEBOUNCE_PERIOD_IN_S)
+        {
+          ; /* Nothing to do */
+        }
+        else
+        {
+          g_DRV_context.selectPressedStartTimeInS = 0;
+        }
+        break;
+
+      case BLU_BUTTON_NONE:
+      default:
+        ; /* Nothing to do */
+        break;
+    }
+
+    /* Master board control mode is an automated mode, so that we will */
+    /* ignore any direction/button press received via bluetooth.       */
+    if (g_DRV_context.mode == DRV_MODE_MASTER_BOARD_CONTROL)
+    {
+      ; /* Nothing to do */
+    }
+    /* Manual mode, applying directions received by bluetooth */
+    else
+    {
+      if (p_bluetoothData->leftY > STP_JOYSTICKS_THRESHOLD)
+      {
+        l_speed = g_DRV_context.mode == DRV_MODE_MANUAL_FIXED_SPEED ? STP_JOYSTICKS_FIXED_SPEED : p_bluetoothData->leftY;
+
+        DRV_moveForward(l_speed);
+      }
+      else if (p_bluetoothData->rightY > STP_JOYSTICKS_THRESHOLD)
+      {
+        l_speed = g_DRV_context.mode == DRV_MODE_MANUAL_FIXED_SPEED ? STP_JOYSTICKS_FIXED_SPEED : p_bluetoothData->rightY;
+
+        DRV_moveForward(l_speed);
+      }
+      else if (p_bluetoothData->leftY < -STP_JOYSTICKS_THRESHOLD)
+      {
+        l_speed = g_DRV_context.mode == DRV_MODE_MANUAL_FIXED_SPEED ? STP_JOYSTICKS_FIXED_SPEED : -p_bluetoothData->leftY;
+
+        DRV_moveBackward(l_speed);
+      }
+      else if (p_bluetoothData->rightY < -STP_JOYSTICKS_THRESHOLD)
+      {
+        l_speed = g_DRV_context.mode == DRV_MODE_MANUAL_FIXED_SPEED ? STP_JOYSTICKS_FIXED_SPEED : -p_bluetoothData->rightY;
+
+        DRV_moveBackward(l_speed);
+      }
+      else if (p_bluetoothData->leftX < -STP_JOYSTICKS_THRESHOLD)
+      {
+        l_speed = g_DRV_context.mode == DRV_MODE_MANUAL_FIXED_SPEED ? STP_JOYSTICKS_FIXED_SPEED : -p_bluetoothData->leftX;
+
+        DRV_turnLeft(l_speed);
+      }
+      else if (p_bluetoothData->leftX > STP_JOYSTICKS_THRESHOLD)
+      {
+        l_speed = g_DRV_context.mode == DRV_MODE_MANUAL_FIXED_SPEED ? STP_JOYSTICKS_FIXED_SPEED : p_bluetoothData->leftX;
+
+        DRV_turnRight(l_speed);
+      }
+      else if (p_bluetoothData->rightX < -STP_JOYSTICKS_THRESHOLD)
+      {
+        l_speed = g_DRV_context.mode == DRV_MODE_MANUAL_FIXED_SPEED ? STP_JOYSTICKS_FIXED_SPEED : -p_bluetoothData->rightX;
+
+        DRV_translateLeft(l_speed);
+      }
+      else if (p_bluetoothData->rightX > STP_JOYSTICKS_THRESHOLD)
+      {
+        l_speed = g_DRV_context.mode == DRV_MODE_MANUAL_FIXED_SPEED ? STP_JOYSTICKS_FIXED_SPEED : p_bluetoothData->rightX;
+
+        DRV_translateRight(l_speed);
+      }
+      else if (p_bluetoothData->button == BLU_BUTTON_L1)
+      {
+        DRV_moveForwardLeft(STP_BUTTONS_FIXED_SPEED);
+      }
+      else if (p_bluetoothData->button == BLU_BUTTON_L2)
+      {
+        DRV_moveBackwardRight(STP_BUTTONS_FIXED_SPEED);
+      }
+      else if (p_bluetoothData->button == BLU_BUTTON_R1)
+      {
+        DRV_moveForwardRight(STP_BUTTONS_FIXED_SPEED);
+      }
+      else if (p_bluetoothData->button == BLU_BUTTON_R2)
+      {
+        DRV_moveBackwardLeft(STP_BUTTONS_FIXED_SPEED);
+      }
+      else
+      {
+        /* Most of the time, we will get here */
+        DRV_stop();
+      }
     }
   }
 
   return;
 }
 
-void DRV_updateFromCommands(T_SFO_Context *p_commandsFifo, uint32_t p_deltaTimeInMs, bool p_logInfo)
+void DRV_updateFromCommands(T_SFO_Handle *p_commandsFifo, bool p_logInfo)
 {
-  float      l_measuredSpeedFrontRight;
-  float      l_measuredSpeedFrontLeft;
-  float      l_measuredSpeedRearRight;
-  float      l_measuredSpeedRearLeft;
-  float      l_pidSpeedFrontRight;
-  float      l_pidSpeedFrontLeft;
-  float      l_pidSpeedRearRight;
-  float      l_pidSpeedRearLeft;
   T_SFO_data l_command;
   uint32_t   l_speed;
   float      l_value;
 
   /* Ignore master board data only whenever a manual mode is selected */
-  if (g_DRV_mode != DRV_MODE_MASTER_BOARD_CONTROL)
+  if (g_DRV_context.mode != DRV_MODE_MASTER_BOARD_CONTROL)
   {
     ; /* Nothing to do */
   }
@@ -395,10 +372,10 @@ void DRV_updateFromCommands(T_SFO_Context *p_commandsFifo, uint32_t p_deltaTimeI
       {
         DRV_setDirectionsStop();
 
-        PID_setTargetValue(&g_DRV_pidFrontRight, 0);
-        PID_setTargetValue(&g_DRV_pidFrontLeft , 0);
-        PID_setTargetValue(&g_DRV_pidRearRight , 0);
-        PID_setTargetValue(&g_DRV_pidRearLeft  , 0);
+        WHL_setPidTarget(&g_DRV_context.wheelFrontRight, 0);
+        WHL_setPidTarget(&g_DRV_context.wheelFrontLeft , 0);
+        WHL_setPidTarget(&g_DRV_context.wheelRearRight , 0);
+        WHL_setPidTarget(&g_DRV_context.wheelRearLeft  , 0);
       }
       /* Forward Straight */
       else if ((l_command[0] == 'F') && (l_command[1] == 'S'))
@@ -407,10 +384,10 @@ void DRV_updateFromCommands(T_SFO_Context *p_commandsFifo, uint32_t p_deltaTimeI
 
         DRV_setDirectionsForward();
 
-        PID_setTargetValue(&g_DRV_pidFrontRight, l_speed);
-        PID_setTargetValue(&g_DRV_pidFrontLeft , l_speed);
-        PID_setTargetValue(&g_DRV_pidRearRight , l_speed);
-        PID_setTargetValue(&g_DRV_pidRearLeft  , l_speed);
+        WHL_setPidTarget(&g_DRV_context.wheelFrontRight, l_speed);
+        WHL_setPidTarget(&g_DRV_context.wheelFrontLeft , l_speed);
+        WHL_setPidTarget(&g_DRV_context.wheelRearRight , l_speed);
+        WHL_setPidTarget(&g_DRV_context.wheelRearLeft  , l_speed);
       }
       /* Move Backward */
       else if ((l_command[0] == 'B') && (l_command[1] == 'S'))
@@ -419,10 +396,10 @@ void DRV_updateFromCommands(T_SFO_Context *p_commandsFifo, uint32_t p_deltaTimeI
 
         DRV_setDirectionsBackward();
 
-        PID_setTargetValue(&g_DRV_pidFrontRight, l_speed);
-        PID_setTargetValue(&g_DRV_pidFrontLeft , l_speed);
-        PID_setTargetValue(&g_DRV_pidRearRight , l_speed);
-        PID_setTargetValue(&g_DRV_pidRearLeft  , l_speed);
+        WHL_setPidTarget(&g_DRV_context.wheelFrontRight, l_speed);
+        WHL_setPidTarget(&g_DRV_context.wheelFrontLeft , l_speed);
+        WHL_setPidTarget(&g_DRV_context.wheelRearRight , l_speed);
+        WHL_setPidTarget(&g_DRV_context.wheelRearLeft  , l_speed);
       }
       /* TuRn (i.e. Rotate) Left */
       else if ((l_command[0] == 'R') && (l_command[1] == 'L'))
@@ -431,10 +408,10 @@ void DRV_updateFromCommands(T_SFO_Context *p_commandsFifo, uint32_t p_deltaTimeI
 
         DRV_setDirectionsTurnLeft();
 
-        PID_setTargetValue(&g_DRV_pidFrontRight, l_speed);
-        PID_setTargetValue(&g_DRV_pidFrontLeft , l_speed);
-        PID_setTargetValue(&g_DRV_pidRearRight , l_speed);
-        PID_setTargetValue(&g_DRV_pidRearLeft  , l_speed);
+        WHL_setPidTarget(&g_DRV_context.wheelFrontRight, l_speed);
+        WHL_setPidTarget(&g_DRV_context.wheelFrontLeft , l_speed);
+        WHL_setPidTarget(&g_DRV_context.wheelRearRight , l_speed);
+        WHL_setPidTarget(&g_DRV_context.wheelRearLeft  , l_speed);
       }
       /* TuRn (i.e. Rotate) Right */
       else if ((l_command[0] == 'R') && (l_command[1] == 'R'))
@@ -443,10 +420,10 @@ void DRV_updateFromCommands(T_SFO_Context *p_commandsFifo, uint32_t p_deltaTimeI
 
         DRV_setDirectionsTurnRight();
 
-        PID_setTargetValue(&g_DRV_pidFrontRight, l_speed);
-        PID_setTargetValue(&g_DRV_pidFrontLeft , l_speed);
-        PID_setTargetValue(&g_DRV_pidRearRight , l_speed);
-        PID_setTargetValue(&g_DRV_pidRearLeft  , l_speed);
+        WHL_setPidTarget(&g_DRV_context.wheelFrontRight, l_speed);
+        WHL_setPidTarget(&g_DRV_context.wheelFrontLeft , l_speed);
+        WHL_setPidTarget(&g_DRV_context.wheelRearRight , l_speed);
+        WHL_setPidTarget(&g_DRV_context.wheelRearLeft  , l_speed);
       }
       /* Translate Left */
       else if ((l_command[0] == 'T') && (l_command[1] == 'L'))
@@ -455,10 +432,10 @@ void DRV_updateFromCommands(T_SFO_Context *p_commandsFifo, uint32_t p_deltaTimeI
 
         DRV_setDirectionsTranslateLeft();
 
-        PID_setTargetValue(&g_DRV_pidFrontRight, l_speed);
-        PID_setTargetValue(&g_DRV_pidFrontLeft , l_speed);
-        PID_setTargetValue(&g_DRV_pidRearRight , l_speed);
-        PID_setTargetValue(&g_DRV_pidRearLeft  , l_speed);
+        WHL_setPidTarget(&g_DRV_context.wheelFrontRight, l_speed);
+        WHL_setPidTarget(&g_DRV_context.wheelFrontLeft , l_speed);
+        WHL_setPidTarget(&g_DRV_context.wheelRearRight , l_speed);
+        WHL_setPidTarget(&g_DRV_context.wheelRearLeft  , l_speed);
       }
       /* Translate Right */
       else if ((l_command[0] == 'T') && (l_command[1] == 'R'))
@@ -467,10 +444,10 @@ void DRV_updateFromCommands(T_SFO_Context *p_commandsFifo, uint32_t p_deltaTimeI
 
         DRV_setDirectionsTranslateRight();
 
-        PID_setTargetValue(&g_DRV_pidFrontRight, l_speed);
-        PID_setTargetValue(&g_DRV_pidFrontLeft , l_speed);
-        PID_setTargetValue(&g_DRV_pidRearRight , l_speed);
-        PID_setTargetValue(&g_DRV_pidRearLeft  , l_speed);
+        WHL_setPidTarget(&g_DRV_context.wheelFrontRight, l_speed);
+        WHL_setPidTarget(&g_DRV_context.wheelFrontLeft , l_speed);
+        WHL_setPidTarget(&g_DRV_context.wheelRearRight , l_speed);
+        WHL_setPidTarget(&g_DRV_context.wheelRearLeft  , l_speed);
       }
       /* Forward Left */
       else if ((l_command[0] == 'F') && (l_command[1] == 'L'))
@@ -479,10 +456,10 @@ void DRV_updateFromCommands(T_SFO_Context *p_commandsFifo, uint32_t p_deltaTimeI
 
         DRV_setDirectionsForwardLeft();
 
-        PID_setTargetValue(&g_DRV_pidFrontRight, l_speed);
-        PID_setTargetValue(&g_DRV_pidFrontLeft ,       0);
-        PID_setTargetValue(&g_DRV_pidRearRight ,       0);
-        PID_setTargetValue(&g_DRV_pidRearLeft  , l_speed);
+        WHL_setPidTarget(&g_DRV_context.wheelFrontRight, l_speed);
+        WHL_setPidTarget(&g_DRV_context.wheelFrontLeft ,       0);
+        WHL_setPidTarget(&g_DRV_context.wheelRearRight ,       0);
+        WHL_setPidTarget(&g_DRV_context.wheelRearLeft  , l_speed);
       }
       /* Forward Right */
       else if ((l_command[0] == 'F') && (l_command[1] == 'R'))
@@ -491,10 +468,10 @@ void DRV_updateFromCommands(T_SFO_Context *p_commandsFifo, uint32_t p_deltaTimeI
 
         DRV_setDirectionsForwardRight();
 
-        PID_setTargetValue(&g_DRV_pidFrontRight,       0);
-        PID_setTargetValue(&g_DRV_pidFrontLeft , l_speed);
-        PID_setTargetValue(&g_DRV_pidRearRight , l_speed);
-        PID_setTargetValue(&g_DRV_pidRearLeft  ,       0);
+        WHL_setPidTarget(&g_DRV_context.wheelFrontRight,       0);
+        WHL_setPidTarget(&g_DRV_context.wheelFrontLeft , l_speed);
+        WHL_setPidTarget(&g_DRV_context.wheelRearRight , l_speed);
+        WHL_setPidTarget(&g_DRV_context.wheelRearLeft  ,       0);
       }
       /* Backward Left */
       else if ((l_command[0] == 'B') && (l_command[1] == 'L'))
@@ -503,10 +480,10 @@ void DRV_updateFromCommands(T_SFO_Context *p_commandsFifo, uint32_t p_deltaTimeI
 
         DRV_setDirectionsBackwardLeft();
 
-        PID_setTargetValue(&g_DRV_pidFrontRight,       0);
-        PID_setTargetValue(&g_DRV_pidFrontLeft , l_speed);
-        PID_setTargetValue(&g_DRV_pidRearRight , l_speed);
-        PID_setTargetValue(&g_DRV_pidRearLeft  ,       0);
+        WHL_setPidTarget(&g_DRV_context.wheelFrontRight,       0);
+        WHL_setPidTarget(&g_DRV_context.wheelFrontLeft , l_speed);
+        WHL_setPidTarget(&g_DRV_context.wheelRearRight , l_speed);
+        WHL_setPidTarget(&g_DRV_context.wheelRearLeft  ,       0);
       }
       /* Forward Right */
       else if ((l_command[0] == 'B') && (l_command[1] == 'R'))
@@ -515,59 +492,43 @@ void DRV_updateFromCommands(T_SFO_Context *p_commandsFifo, uint32_t p_deltaTimeI
 
         DRV_setDirectionsBackwardRight();
 
-        PID_setTargetValue(&g_DRV_pidFrontRight, l_speed);
-        PID_setTargetValue(&g_DRV_pidFrontLeft ,       0);
-        PID_setTargetValue(&g_DRV_pidRearRight ,       0);
-        PID_setTargetValue(&g_DRV_pidRearLeft  , l_speed);
+        WHL_setPidTarget(&g_DRV_context.wheelFrontRight, l_speed);
+        WHL_setPidTarget(&g_DRV_context.wheelFrontLeft ,       0);
+        WHL_setPidTarget(&g_DRV_context.wheelRearRight ,       0);
+        WHL_setPidTarget(&g_DRV_context.wheelRearLeft  , l_speed);
       }
       else if ((l_command[0] == 'K') && (l_command[1] == 'P'))
       {
         l_value = atof(&l_command[2]);
 
-        PID_setKp(&g_DRV_pidFrontRight, l_value);
-        PID_setKp(&g_DRV_pidFrontLeft , l_value);
-        PID_setKp(&g_DRV_pidRearRight , l_value);
-        PID_setKp(&g_DRV_pidRearLeft  , l_value);
+        WHL_setPidKp(&g_DRV_context.wheelFrontRight, l_value);
+        WHL_setPidKp(&g_DRV_context.wheelFrontLeft , l_value);
+        WHL_setPidKp(&g_DRV_context.wheelRearRight , l_value);
+        WHL_setPidKp(&g_DRV_context.wheelRearLeft  , l_value);
       }
       else if ((l_command[0] == 'K') && (l_command[1] == 'I'))
       {
         l_value = atof(&l_command[2]);
 
-        PID_setKi(&g_DRV_pidFrontRight, l_value);
-        PID_setKi(&g_DRV_pidFrontLeft , l_value);
-        PID_setKi(&g_DRV_pidRearRight , l_value);
-        PID_setKi(&g_DRV_pidRearLeft  , l_value);
+        WHL_setPidKi(&g_DRV_context.wheelFrontRight, l_value);
+        WHL_setPidKi(&g_DRV_context.wheelFrontLeft , l_value);
+        WHL_setPidKi(&g_DRV_context.wheelRearRight , l_value);
+        WHL_setPidKi(&g_DRV_context.wheelRearLeft  , l_value);
       }
       else if ((l_command[0] == 'K') && (l_command[1] == 'D'))
       {
         l_value = atof(&l_command[2]);
 
-        PID_setKd(&g_DRV_pidFrontRight, l_value);
-        PID_setKd(&g_DRV_pidFrontLeft , l_value);
-        PID_setKd(&g_DRV_pidRearRight , l_value);
-        PID_setKd(&g_DRV_pidRearLeft  , l_value);
+        WHL_setPidKd(&g_DRV_context.wheelFrontRight, l_value);
+        WHL_setPidKd(&g_DRV_context.wheelFrontLeft , l_value);
+        WHL_setPidKd(&g_DRV_context.wheelRearRight , l_value);
+        WHL_setPidKd(&g_DRV_context.wheelRearLeft  , l_value);
       }
       else
       {
         LOG_error("Drive got unsupported command: '%s'", l_command);
       }
     }
-
-    /* Get measurements */
-    l_measuredSpeedFrontRight = fabs((float)ENC_getCount(&g_DRV_encoderFrontRight) / (float)p_deltaTimeInMs * STP_DRIVE_PID_ENCODER_TO_SPEED_FACTOR);
-    l_measuredSpeedFrontLeft  = fabs((float)ENC_getCount(&g_DRV_encoderFrontLeft ) / (float)p_deltaTimeInMs * STP_DRIVE_PID_ENCODER_TO_SPEED_FACTOR);
-    l_measuredSpeedRearRight  = fabs((float)ENC_getCount(&g_DRV_encoderRearRight ) / (float)p_deltaTimeInMs * STP_DRIVE_PID_ENCODER_TO_SPEED_FACTOR);
-    l_measuredSpeedRearLeft   = fabs((float)ENC_getCount(&g_DRV_encoderRearLeft  ) / (float)p_deltaTimeInMs * STP_DRIVE_PID_ENCODER_TO_SPEED_FACTOR);
-
-    CBU_push(&g_DRV_speedBufferFrontRight, l_measuredSpeedFrontRight);
-    CBU_push(&g_DRV_speedBufferFrontLeft , l_measuredSpeedFrontLeft );
-    CBU_push(&g_DRV_speedBufferRearRight , l_measuredSpeedRearRight );
-    CBU_push(&g_DRV_speedBufferRearLeft  , l_measuredSpeedRearLeft  );
-
-    g_DRV_averageSpeedFrontRight = CBU_getAverage(&g_DRV_speedBufferFrontRight);
-    g_DRV_averageSpeedFrontLeft  = CBU_getAverage(&g_DRV_speedBufferFrontLeft );
-    g_DRV_averageSpeedRearRight  = CBU_getAverage(&g_DRV_speedBufferRearRight );
-    g_DRV_averageSpeedRearLeft   = CBU_getAverage(&g_DRV_speedBufferRearLeft  );
 
     if (p_logInfo == true)
     {
@@ -578,24 +539,11 @@ void DRV_updateFromCommands(T_SFO_Context *p_commandsFifo, uint32_t p_deltaTimeI
       ; /* Nothing to do */
     }
 
-    /* Update PIDs */
-    l_pidSpeedFrontRight = PID_update(&g_DRV_pidFrontRight, g_DRV_averageSpeedFrontRight, p_deltaTimeInMs);
-    l_pidSpeedFrontLeft  = PID_update(&g_DRV_pidFrontLeft , g_DRV_averageSpeedFrontLeft , p_deltaTimeInMs);
-    l_pidSpeedRearRight  = PID_update(&g_DRV_pidRearRight , g_DRV_averageSpeedRearRight , p_deltaTimeInMs);
-    l_pidSpeedRearLeft   = PID_update(&g_DRV_pidRearLeft  , g_DRV_averageSpeedRearLeft  , p_deltaTimeInMs);
-
-    if (g_DRV_areMotorsOn == false)
-    {
-      ; /* Nothing to do */
-    }
-    else
-    {
-      /* Update motors */
-      MTR_setSpeed(&g_DRV_motorFrontRight, l_pidSpeedFrontRight);
-      MTR_setSpeed(&g_DRV_motorFrontLeft , l_pidSpeedFrontLeft );
-      MTR_setSpeed(&g_DRV_motorRearRight , l_pidSpeedRearRight );
-      MTR_setSpeed(&g_DRV_motorRearLeft  , l_pidSpeedRearLeft  );
-    }
+    /* Update all 4 wheels PIDs, adjusting speeds, to reach targets */
+    WHL_updatePidSpeed(&g_DRV_context.wheelFrontRight);
+    WHL_updatePidSpeed(&g_DRV_context.wheelFrontLeft );
+    WHL_updatePidSpeed(&g_DRV_context.wheelRearRight );
+    WHL_updatePidSpeed(&g_DRV_context.wheelRearLeft  );
   }
 
   return;
@@ -603,15 +551,24 @@ void DRV_updateFromCommands(T_SFO_Context *p_commandsFifo, uint32_t p_deltaTimeI
 
 void DRV_reportVelocity(void)
 {
-  char l_buffer[CST_MASTER_VELOCITY_STRING_LENGTH];
+  float l_averageSpeedFrontRight;
+  float l_averageSpeedFrontLeft;
+  float l_averageSpeedRearRight;
+  float l_averageSpeedRearLeft;
+  char  l_buffer[CST_MASTER_VELOCITY_STRING_LENGTH];
+
+  l_averageSpeedFrontRight = WHL_getAverageSpeed(&g_DRV_context.wheelFrontRight);
+  l_averageSpeedFrontLeft  = WHL_getAverageSpeed(&g_DRV_context.wheelFrontLeft );
+  l_averageSpeedRearRight  = WHL_getAverageSpeed(&g_DRV_context.wheelRearRight );
+  l_averageSpeedRearLeft   = WHL_getAverageSpeed(&g_DRV_context.wheelRearLeft  );
 
   (void)snprintf(l_buffer,
                  CST_MASTER_VELOCITY_STRING_LENGTH,
                  "FR%2d FL%2d RR%2d RL%2d\r",
-                 (int)g_DRV_averageSpeedFrontRight,
-                 (int)g_DRV_averageSpeedFrontLeft,
-                 (int)g_DRV_averageSpeedRearRight,
-                 (int)g_DRV_averageSpeedRearLeft);
+            (int)l_averageSpeedFrontRight,
+            (int)l_averageSpeedFrontLeft ,
+            (int)l_averageSpeedRearRight ,
+            (int)l_averageSpeedRearLeft  );
 
   MAS_sendString(l_buffer, CST_MASTER_VELOCITY_STRING_LENGTH);
 
@@ -620,33 +577,29 @@ void DRV_reportVelocity(void)
 
 T_DRV_MODE DRV_getMode(void)
 {
-  return g_DRV_mode;
+  return g_DRV_context.mode;
 }
 
 void DRV_logInfo(bool p_compactLog)
 {
-  T_MTR_DIRECTION l_direction;
-  uint32_t        l_speed;
-  uint32_t        l_count;
-
-  if (g_DRV_mode == DRV_MODE_MANUAL_FIXED_SPEED)
+  if (g_DRV_context.mode == DRV_MODE_MANUAL_FIXED_SPEED)
   {
     LOG_info("Drive mode  : MANUAL FIXED SPEED");
   }
-  else if (g_DRV_mode == DRV_MODE_MANUAL_VARIABLE_SPEED)
+  else if (g_DRV_context.mode == DRV_MODE_MANUAL_VARIABLE_SPEED)
   {
     LOG_info("Drive mode  : MANUAL VARIABLE SPEED");
   }
-  else if (g_DRV_mode == DRV_MODE_MASTER_BOARD_CONTROL)
+  else if (g_DRV_context.mode == DRV_MODE_MASTER_BOARD_CONTROL)
   {
     LOG_info("Drive mode  : MASTER BOARD CONTROL");
   }
   else
   {
-    LOG_error("Unsupported drive mode: %u", g_DRV_mode);
+    LOG_error("Unsupported drive mode: %u", g_DRV_context.mode);
   }
 
-  if (g_DRV_areMotorsOn == true)
+  if (g_DRV_context.areMotorsOn == true)
   {
     LOG_info("Drive motors: ON");
   }
@@ -655,35 +608,10 @@ void DRV_logInfo(bool p_compactLog)
     LOG_info("Drive motors: OFF");
   }
 
-  LOG_info("Average speed FR / FL / RR / RL      : %2d / %2d / %2d / %2d",
-           (int)g_DRV_averageSpeedFrontRight,
-           (int)g_DRV_averageSpeedFrontLeft,
-           (int)g_DRV_averageSpeedRearRight,
-           (int)g_DRV_averageSpeedRearLeft);
-
-  l_direction = MTR_getDirection(&g_DRV_motorFrontLeft  );
-  l_speed     = MTR_getSpeed    (&g_DRV_motorFrontLeft  );
-  l_count     = ENC_getCount    (&g_DRV_encoderFrontLeft);
-
-  LOG_info("%s direction / speed / count: %2u / %2u / %2u", CST_FRONT_LEFT_MOTOR_NAME, l_direction, l_speed, l_count);
-
-  l_direction = MTR_getDirection(&g_DRV_motorFrontRight  );
-  l_speed     = MTR_getSpeed    (&g_DRV_motorFrontRight  );
-  l_count     = ENC_getCount    (&g_DRV_encoderFrontRight);
-
-  LOG_info("%s direction / speed / count: %2u / %2u / %2u", CST_FRONT_RIGHT_MOTOR_NAME, l_direction, l_speed, l_count);
-
-  l_direction = MTR_getDirection(&g_DRV_motorRearRight  );
-  l_speed     = MTR_getSpeed    (&g_DRV_motorRearRight  );
-  l_count     = ENC_getCount    (&g_DRV_encoderRearRight);
-
-  LOG_info("%s direction / speed / count: %2u / %2u / %2u", CST_REAR_RIGHT_MOTOR_NAME, l_direction, l_speed, l_count);
-
-  l_direction = MTR_getDirection(&g_DRV_motorRearLeft  );
-  l_speed     = MTR_getSpeed    (&g_DRV_motorRearLeft  );
-  l_count     = ENC_getCount    (&g_DRV_encoderRearLeft);
-
-  LOG_info("%s direction / speed / count: %2u / %2u / %2u", CST_REAR_LEFT_MOTOR_NAME, l_direction, l_speed, l_count);
+  WHL_logInfo(&g_DRV_context.wheelFrontRight);
+  WHL_logInfo(&g_DRV_context.wheelFrontLeft );
+  WHL_logInfo(&g_DRV_context.wheelRearRight );
+  WHL_logInfo(&g_DRV_context.wheelRearLeft  );
 
   return;
 }
@@ -712,104 +640,132 @@ static void DVR_getSpeedFromCommand(char *p_string, uint32_t *p_speed)
   return;
 }
 
+static void DRV_toggleMotorsState(void)
+{
+  if (g_DRV_context.areMotorsOn == false)
+  {
+    LOG_info("Drive turning motor ON");
+
+    WHL_turnMotorOn(&g_DRV_context.wheelFrontRight);
+    WHL_turnMotorOn(&g_DRV_context.wheelFrontLeft );
+    WHL_turnMotorOn(&g_DRV_context.wheelRearRight );
+    WHL_turnMotorOn(&g_DRV_context.wheelRearLeft  );
+
+    g_DRV_context.areMotorsOn = true;
+  }
+  else
+  {
+    LOG_info("Drive turning motor OFF");
+
+    WHL_turnMotorOff(&g_DRV_context.wheelFrontRight);
+    WHL_turnMotorOff(&g_DRV_context.wheelFrontLeft );
+    WHL_turnMotorOff(&g_DRV_context.wheelRearRight );
+    WHL_turnMotorOff(&g_DRV_context.wheelRearLeft  );
+
+    g_DRV_context.areMotorsOn = false;
+  }
+
+  return;
+}
+
 static void DRV_setDirectionsStop(void)
 {
-  MTR_setDirection(&g_DRV_motorFrontRight, MTR_DIRECTION_STOP);
-  MTR_setDirection(&g_DRV_motorFrontLeft , MTR_DIRECTION_STOP);
-  MTR_setDirection(&g_DRV_motorRearRight , MTR_DIRECTION_STOP);
-  MTR_setDirection(&g_DRV_motorRearLeft  , MTR_DIRECTION_STOP);
+  WHL_setDirection(&g_DRV_context.wheelFrontRight, MTR_DIRECTION_STOP);
+  WHL_setDirection(&g_DRV_context.wheelFrontLeft , MTR_DIRECTION_STOP);
+  WHL_setDirection(&g_DRV_context.wheelRearRight , MTR_DIRECTION_STOP);
+  WHL_setDirection(&g_DRV_context.wheelRearLeft  , MTR_DIRECTION_STOP);
 
   return;
 }
 
 static void DRV_setDirectionsForward(void)
 {
-  MTR_setDirection(&g_DRV_motorFrontRight, MTR_DIRECTION_FORWARD);
-  MTR_setDirection(&g_DRV_motorFrontLeft , MTR_DIRECTION_FORWARD);
-  MTR_setDirection(&g_DRV_motorRearRight , MTR_DIRECTION_FORWARD);
-  MTR_setDirection(&g_DRV_motorRearLeft  , MTR_DIRECTION_FORWARD);
+  WHL_setDirection(&g_DRV_context.wheelFrontRight, MTR_DIRECTION_FORWARD);
+  WHL_setDirection(&g_DRV_context.wheelFrontLeft , MTR_DIRECTION_FORWARD);
+  WHL_setDirection(&g_DRV_context.wheelRearRight , MTR_DIRECTION_FORWARD);
+  WHL_setDirection(&g_DRV_context.wheelRearLeft  , MTR_DIRECTION_FORWARD);
 
   return;
 }
 
 static void DRV_setDirectionsBackward(void)
 {
-  MTR_setDirection(&g_DRV_motorFrontRight, MTR_DIRECTION_BACKWARD);
-  MTR_setDirection(&g_DRV_motorFrontLeft , MTR_DIRECTION_BACKWARD);
-  MTR_setDirection(&g_DRV_motorRearRight , MTR_DIRECTION_BACKWARD);
-  MTR_setDirection(&g_DRV_motorRearLeft  , MTR_DIRECTION_BACKWARD);
+  WHL_setDirection(&g_DRV_context.wheelFrontRight, MTR_DIRECTION_BACKWARD);
+  WHL_setDirection(&g_DRV_context.wheelFrontLeft , MTR_DIRECTION_BACKWARD);
+  WHL_setDirection(&g_DRV_context.wheelRearRight , MTR_DIRECTION_BACKWARD);
+  WHL_setDirection(&g_DRV_context.wheelRearLeft  , MTR_DIRECTION_BACKWARD);
 
   return;
 }
 
 static void DRV_setDirectionsForwardRight(void)
 {
-  MTR_setDirection(&g_DRV_motorFrontLeft, MTR_DIRECTION_FORWARD);
-  MTR_setDirection(&g_DRV_motorRearRight, MTR_DIRECTION_FORWARD);
+  WHL_setDirection(&g_DRV_context.wheelFrontLeft, MTR_DIRECTION_FORWARD);
+  WHL_setDirection(&g_DRV_context.wheelRearRight, MTR_DIRECTION_FORWARD);
 
   return;
 }
 
 static void DRV_setDirectionsForwardLeft(void)
 {
-  MTR_setDirection(&g_DRV_motorFrontRight, MTR_DIRECTION_FORWARD);
-  MTR_setDirection(&g_DRV_motorRearLeft  , MTR_DIRECTION_FORWARD);
+  WHL_setDirection(&g_DRV_context.wheelFrontRight, MTR_DIRECTION_FORWARD);
+  WHL_setDirection(&g_DRV_context.wheelRearLeft  , MTR_DIRECTION_FORWARD);
 
   return;
 }
 
 static void DRV_setDirectionsBackwardRight(void)
 {
-  MTR_setDirection(&g_DRV_motorFrontRight, MTR_DIRECTION_BACKWARD);
-  MTR_setDirection(&g_DRV_motorRearLeft  , MTR_DIRECTION_BACKWARD);
+  WHL_setDirection(&g_DRV_context.wheelFrontRight, MTR_DIRECTION_BACKWARD);
+  WHL_setDirection(&g_DRV_context.wheelRearLeft  , MTR_DIRECTION_BACKWARD);
 
   return;
 }
 
 static void DRV_setDirectionsBackwardLeft(void)
 {
-  MTR_setDirection(&g_DRV_motorFrontLeft, MTR_DIRECTION_BACKWARD);
-  MTR_setDirection(&g_DRV_motorRearRight, MTR_DIRECTION_BACKWARD);
+  WHL_setDirection(&g_DRV_context.wheelFrontLeft, MTR_DIRECTION_BACKWARD);
+  WHL_setDirection(&g_DRV_context.wheelRearRight, MTR_DIRECTION_BACKWARD);
 
   return;
 }
 
 static void DRV_setDirectionsTurnLeft(void)
 {
-  MTR_setDirection(&g_DRV_motorFrontRight, MTR_DIRECTION_FORWARD );
-  MTR_setDirection(&g_DRV_motorFrontLeft , MTR_DIRECTION_BACKWARD);
-  MTR_setDirection(&g_DRV_motorRearRight , MTR_DIRECTION_FORWARD );
-  MTR_setDirection(&g_DRV_motorRearLeft  , MTR_DIRECTION_BACKWARD);
+  WHL_setDirection(&g_DRV_context.wheelFrontRight, MTR_DIRECTION_FORWARD );
+  WHL_setDirection(&g_DRV_context.wheelFrontLeft , MTR_DIRECTION_BACKWARD);
+  WHL_setDirection(&g_DRV_context.wheelRearRight , MTR_DIRECTION_FORWARD );
+  WHL_setDirection(&g_DRV_context.wheelRearLeft  , MTR_DIRECTION_BACKWARD);
 
   return;
 }
 
 static void DRV_setDirectionsTurnRight(void)
 {
-  MTR_setDirection(&g_DRV_motorFrontRight, MTR_DIRECTION_BACKWARD);
-  MTR_setDirection(&g_DRV_motorFrontLeft , MTR_DIRECTION_FORWARD );
-  MTR_setDirection(&g_DRV_motorRearRight , MTR_DIRECTION_BACKWARD);
-  MTR_setDirection(&g_DRV_motorRearLeft  , MTR_DIRECTION_FORWARD );
+  WHL_setDirection(&g_DRV_context.wheelFrontRight, MTR_DIRECTION_BACKWARD);
+  WHL_setDirection(&g_DRV_context.wheelFrontLeft , MTR_DIRECTION_FORWARD );
+  WHL_setDirection(&g_DRV_context.wheelRearRight , MTR_DIRECTION_BACKWARD);
+  WHL_setDirection(&g_DRV_context.wheelRearLeft  , MTR_DIRECTION_FORWARD );
 
   return;
 }
 
 static void DRV_setDirectionsTranslateLeft(void)
 {
-  MTR_setDirection(&g_DRV_motorFrontRight, MTR_DIRECTION_FORWARD );
-  MTR_setDirection(&g_DRV_motorFrontLeft , MTR_DIRECTION_BACKWARD);
-  MTR_setDirection(&g_DRV_motorRearRight , MTR_DIRECTION_BACKWARD);
-  MTR_setDirection(&g_DRV_motorRearLeft  , MTR_DIRECTION_FORWARD );
+  WHL_setDirection(&g_DRV_context.wheelFrontRight, MTR_DIRECTION_FORWARD );
+  WHL_setDirection(&g_DRV_context.wheelFrontLeft , MTR_DIRECTION_BACKWARD);
+  WHL_setDirection(&g_DRV_context.wheelRearRight , MTR_DIRECTION_BACKWARD);
+  WHL_setDirection(&g_DRV_context.wheelRearLeft  , MTR_DIRECTION_FORWARD );
 
   return;
 }
 
 static void DRV_setDirectionsTranslateRight(void)
 {
-  MTR_setDirection(&g_DRV_motorFrontRight, MTR_DIRECTION_BACKWARD);
-  MTR_setDirection(&g_DRV_motorFrontLeft , MTR_DIRECTION_FORWARD );
-  MTR_setDirection(&g_DRV_motorRearRight , MTR_DIRECTION_FORWARD );
-  MTR_setDirection(&g_DRV_motorRearLeft  , MTR_DIRECTION_BACKWARD);
+  WHL_setDirection(&g_DRV_context.wheelFrontRight, MTR_DIRECTION_BACKWARD);
+  WHL_setDirection(&g_DRV_context.wheelFrontLeft , MTR_DIRECTION_FORWARD );
+  WHL_setDirection(&g_DRV_context.wheelRearRight , MTR_DIRECTION_FORWARD );
+  WHL_setDirection(&g_DRV_context.wheelRearLeft  , MTR_DIRECTION_BACKWARD);
 
   return;
 }
@@ -818,240 +774,150 @@ static void DRV_stop(void)
 {
   DRV_setDirectionsStop();
 
-  MTR_setSpeed(&g_DRV_motorFrontRight, 0);
-  MTR_setSpeed(&g_DRV_motorFrontLeft , 0);
-  MTR_setSpeed(&g_DRV_motorRearRight , 0);
-  MTR_setSpeed(&g_DRV_motorRearLeft  , 0);
+  WHL_setSpeed(&g_DRV_context.wheelFrontRight, 0);
+  WHL_setSpeed(&g_DRV_context.wheelFrontLeft , 0);
+  WHL_setSpeed(&g_DRV_context.wheelRearRight , 0);
+  WHL_setSpeed(&g_DRV_context.wheelRearLeft  , 0);
 
   return;
 }
 
 static void DRV_moveForward(uint32_t p_speed)
 {
-  uint32_t l_speed = p_speed;
-
-  LOG_debug("Moving forward @%u", l_speed);
+  LOG_debug("Moving forward @%u", p_speed);
 
   DRV_setDirectionsForward();
 
-  if (g_DRV_areMotorsOn == false)
-  {
-    ; /* Nothing to do */
-  }
-  else
-  {
-    MTR_setSpeed(&g_DRV_motorFrontRight, l_speed);
-    MTR_setSpeed(&g_DRV_motorFrontLeft , l_speed);
-    MTR_setSpeed(&g_DRV_motorRearRight , l_speed);
-    MTR_setSpeed(&g_DRV_motorRearLeft  , l_speed);
-  }
+  WHL_setSpeed(&g_DRV_context.wheelFrontRight, p_speed);
+  WHL_setSpeed(&g_DRV_context.wheelFrontLeft , p_speed);
+  WHL_setSpeed(&g_DRV_context.wheelRearRight , p_speed);
+  WHL_setSpeed(&g_DRV_context.wheelRearLeft  , p_speed);
 
   return;
 }
 
 static void DRV_moveBackward(uint32_t p_speed)
 {
-  uint32_t l_speed = p_speed;
-
-  LOG_debug("Moving backward @%u", l_speed);
+  LOG_debug("Moving backward @%u", p_speed);
 
   DRV_setDirectionsBackward();
 
-  if (g_DRV_areMotorsOn == false)
-  {
-    ; /* Nothing to do */
-  }
-  else
-  {
-    MTR_setSpeed(&g_DRV_motorFrontRight, l_speed);
-    MTR_setSpeed(&g_DRV_motorFrontLeft , l_speed);
-    MTR_setSpeed(&g_DRV_motorRearRight , l_speed);
-    MTR_setSpeed(&g_DRV_motorRearLeft  , l_speed);
-  }
+  WHL_setSpeed(&g_DRV_context.wheelFrontRight, p_speed);
+  WHL_setSpeed(&g_DRV_context.wheelFrontLeft , p_speed);
+  WHL_setSpeed(&g_DRV_context.wheelRearRight , p_speed);
+  WHL_setSpeed(&g_DRV_context.wheelRearLeft  , p_speed);
 
   return;
 }
 
 static void DRV_moveForwardRight(uint32_t p_speed)
 {
-  uint32_t l_speed = p_speed;
-
-  LOG_debug("Moving forward-right @%u", l_speed);
+  LOG_debug("Moving forward-right @%u", p_speed);
 
   DRV_setDirectionsForwardRight();
 
-  if (g_DRV_areMotorsOn == false)
-  {
-    ; /* Nothing to do */
-  }
-  else
-  {
-    MTR_setSpeed(&g_DRV_motorFrontRight,       0);
-    MTR_setSpeed(&g_DRV_motorFrontLeft , l_speed);
-    MTR_setSpeed(&g_DRV_motorRearRight , l_speed);
-    MTR_setSpeed(&g_DRV_motorRearLeft  ,       0);
-  }
+  WHL_setSpeed(&g_DRV_context.wheelFrontRight,       0);
+  WHL_setSpeed(&g_DRV_context.wheelFrontLeft , p_speed);
+  WHL_setSpeed(&g_DRV_context.wheelRearRight , p_speed);
+  WHL_setSpeed(&g_DRV_context.wheelRearLeft  ,       0);
 
   return;
 }
 
 static void DRV_moveForwardLeft(uint32_t p_speed)
 {
-  uint32_t l_speed = p_speed;
-
-  LOG_debug("Moving forward-left @%u", l_speed);
+  LOG_debug("Moving forward-left @%u", p_speed);
 
   DRV_setDirectionsForwardLeft();
 
-  if (g_DRV_areMotorsOn == false)
-  {
-    ; /* Nothing to do */
-  }
-  else
-  {
-    MTR_setSpeed(&g_DRV_motorFrontRight, l_speed);
-    MTR_setSpeed(&g_DRV_motorFrontLeft ,       0);
-    MTR_setSpeed(&g_DRV_motorRearRight ,       0);
-    MTR_setSpeed(&g_DRV_motorRearLeft  , l_speed);
-  }
+  WHL_setSpeed(&g_DRV_context.wheelFrontRight, p_speed);
+  WHL_setSpeed(&g_DRV_context.wheelFrontLeft ,       0);
+  WHL_setSpeed(&g_DRV_context.wheelRearRight ,       0);
+  WHL_setSpeed(&g_DRV_context.wheelRearLeft  , p_speed);
 
   return;
 }
 
 static void DRV_moveBackwardRight(uint32_t p_speed)
 {
-  uint32_t l_speed = p_speed;
-
-  LOG_debug("Moving backward-right @%u", l_speed);
+  LOG_debug("Moving backward-right @%u", p_speed);
 
   DRV_setDirectionsBackwardRight();
 
-  if (g_DRV_areMotorsOn == false)
-  {
-    ; /* Nothing to do */
-  }
-  else
-  {
-    MTR_setSpeed(&g_DRV_motorFrontRight, l_speed);
-    MTR_setSpeed(&g_DRV_motorFrontLeft ,       0);
-    MTR_setSpeed(&g_DRV_motorRearRight ,       0);
-    MTR_setSpeed(&g_DRV_motorRearLeft  , l_speed);
-  }
+  WHL_setSpeed(&g_DRV_context.wheelFrontRight, p_speed);
+  WHL_setSpeed(&g_DRV_context.wheelFrontLeft ,       0);
+  WHL_setSpeed(&g_DRV_context.wheelRearRight ,       0);
+  WHL_setSpeed(&g_DRV_context.wheelRearLeft  , p_speed);
 
   return;
 }
 
 static void DRV_moveBackwardLeft(uint32_t p_speed)
 {
-  uint32_t l_speed = p_speed;
-
-  LOG_debug("Moving backward-left @%u", l_speed);
+  LOG_debug("Moving backward-left @%u", p_speed);
 
   DRV_setDirectionsBackwardLeft();
 
-  if (g_DRV_areMotorsOn == false)
-  {
-    ; /* Nothing to do */
-  }
-  else
-  {
-    MTR_setSpeed(&g_DRV_motorFrontRight,       0);
-    MTR_setSpeed(&g_DRV_motorFrontLeft , l_speed);
-    MTR_setSpeed(&g_DRV_motorRearRight , l_speed);
-    MTR_setSpeed(&g_DRV_motorRearLeft  ,       0);
-  }
+  WHL_setSpeed(&g_DRV_context.wheelFrontRight,       0);
+  WHL_setSpeed(&g_DRV_context.wheelFrontLeft , p_speed);
+  WHL_setSpeed(&g_DRV_context.wheelRearRight , p_speed);
+  WHL_setSpeed(&g_DRV_context.wheelRearLeft  ,       0);
 
   return;
 }
 
 static void DRV_turnLeft(uint32_t p_speed)
 {
-  uint32_t l_speed = p_speed;
-
-  LOG_debug("Turning left @%u", l_speed);
+  LOG_debug("Turning left @%u", p_speed);
 
   DRV_setDirectionsTurnLeft();
 
-  if (g_DRV_areMotorsOn == false)
-  {
-    ; /* Nothing to do */
-  }
-  else
-  {
-    MTR_setSpeed(&g_DRV_motorFrontRight, l_speed);
-    MTR_setSpeed(&g_DRV_motorFrontLeft , l_speed);
-    MTR_setSpeed(&g_DRV_motorRearRight , l_speed);
-    MTR_setSpeed(&g_DRV_motorRearLeft  , l_speed);
-  }
+  WHL_setSpeed(&g_DRV_context.wheelFrontRight, p_speed);
+  WHL_setSpeed(&g_DRV_context.wheelFrontLeft , p_speed);
+  WHL_setSpeed(&g_DRV_context.wheelRearRight , p_speed);
+  WHL_setSpeed(&g_DRV_context.wheelRearLeft  , p_speed);
 
   return;
 }
 
 static void DRV_turnRight(uint32_t p_speed)
 {
-  uint32_t l_speed = p_speed;
-
-  LOG_debug("Turning right @%u", l_speed);
+  LOG_debug("Turning right @%u", p_speed);
 
   DRV_setDirectionsTurnRight();
 
-  if (g_DRV_areMotorsOn == false)
-  {
-    ; /* Nothing to do */
-  }
-  else
-  {
-    MTR_setSpeed(&g_DRV_motorFrontRight, l_speed);
-    MTR_setSpeed(&g_DRV_motorFrontLeft , l_speed);
-    MTR_setSpeed(&g_DRV_motorRearRight , l_speed);
-    MTR_setSpeed(&g_DRV_motorRearLeft  , l_speed);
-  }
+  WHL_setSpeed(&g_DRV_context.wheelFrontRight, p_speed);
+  WHL_setSpeed(&g_DRV_context.wheelFrontLeft , p_speed);
+  WHL_setSpeed(&g_DRV_context.wheelRearRight , p_speed);
+  WHL_setSpeed(&g_DRV_context.wheelRearLeft  , p_speed);
 
   return;
 }
 
 static void DRV_translateLeft(uint32_t p_speed)
 {
-  uint32_t l_speed = p_speed;
-
-  LOG_debug("Translating left @%u", l_speed);
+  LOG_debug("Translating left @%u", p_speed);
 
   DRV_setDirectionsTranslateLeft();
 
-  if (g_DRV_areMotorsOn == false)
-  {
-    ; /* Nothing to do */
-  }
-  else
-  {
-    MTR_setSpeed(&g_DRV_motorFrontRight, l_speed);
-    MTR_setSpeed(&g_DRV_motorFrontLeft , l_speed);
-    MTR_setSpeed(&g_DRV_motorRearRight , l_speed);
-    MTR_setSpeed(&g_DRV_motorRearLeft  , l_speed);
-  }
+  WHL_setSpeed(&g_DRV_context.wheelFrontRight, p_speed);
+  WHL_setSpeed(&g_DRV_context.wheelFrontLeft , p_speed);
+  WHL_setSpeed(&g_DRV_context.wheelRearRight , p_speed);
+  WHL_setSpeed(&g_DRV_context.wheelRearLeft  , p_speed);
 
   return;
 }
 
 static void DRV_translateRight(uint32_t p_speed)
 {
-  uint32_t l_speed = p_speed;
-
-  LOG_debug("Translating right @%u", l_speed);
+  LOG_debug("Translating right @%u", p_speed);
 
   DRV_setDirectionsTranslateRight();
 
-  if (g_DRV_areMotorsOn == false)
-  {
-    ; /* Nothing to do */
-  }
-  else
-  {
-    MTR_setSpeed(&g_DRV_motorFrontRight, l_speed);
-    MTR_setSpeed(&g_DRV_motorFrontLeft , l_speed);
-    MTR_setSpeed(&g_DRV_motorRearRight , l_speed);
-    MTR_setSpeed(&g_DRV_motorRearLeft  , l_speed);
-  }
+  WHL_setSpeed(&g_DRV_context.wheelFrontRight, p_speed);
+  WHL_setSpeed(&g_DRV_context.wheelFrontLeft , p_speed);
+  WHL_setSpeed(&g_DRV_context.wheelRearRight , p_speed);
+  WHL_setSpeed(&g_DRV_context.wheelRearLeft  , p_speed);
 
   return;
 }

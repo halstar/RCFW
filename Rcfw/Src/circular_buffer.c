@@ -2,7 +2,7 @@
 
 #include "log.h"
 
-void CBU_init(T_CBU_Context *p_buffer)
+void CBU_init(T_CBU_Handle *p_buffer)
 {
   uint32_t l_index;
 
@@ -19,7 +19,7 @@ void CBU_init(T_CBU_Context *p_buffer)
   return;
 }
 
-void CBU_push(T_CBU_Context *p_buffer, float p_element)
+void CBU_push(T_CBU_Handle *p_buffer, float p_element)
 {
   if (p_buffer->index == CST_CIRCULAR_BUFFER_MAX_ELEMENTS - 1)
   {
@@ -44,12 +44,12 @@ void CBU_push(T_CBU_Context *p_buffer, float p_element)
   return;
 }
 
-uint32_t CBU_getCount(T_CBU_Context *p_buffer)
+uint32_t CBU_getCount(T_CBU_Handle *p_buffer)
 {
   return p_buffer->count;
 }
 
-float CBU_getAverage(T_CBU_Context *p_buffer)
+float CBU_getAverage(T_CBU_Handle *p_buffer)
 {
   uint32_t l_index;
   uint32_t l_count;
@@ -80,7 +80,7 @@ float CBU_getAverage(T_CBU_Context *p_buffer)
   return l_average;
 }
 
-void CBU_logInfo(T_CBU_Context *p_buffer)
+void CBU_logInfo(T_CBU_Handle *p_buffer)
 {
   uint32_t l_index;
   uint32_t l_count;

@@ -36,3 +36,4 @@
 "./Rcfw/Src/pid.o"
 "./Rcfw/Src/string_fifo.o"
 "./Rcfw/Src/utils.o"
+"./Rcfw/Src/wheel.o"

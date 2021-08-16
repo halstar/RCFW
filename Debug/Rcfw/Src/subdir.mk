@@ -17,7 +17,8 @@ C_SRCS += \
 ../Rcfw/Src/motor.c \
 ../Rcfw/Src/pid.c \
 ../Rcfw/Src/string_fifo.c \
-../Rcfw/Src/utils.c 
+../Rcfw/Src/utils.c \
+../Rcfw/Src/wheel.c 
 
 OBJS += \
 ./Rcfw/Src/battery_check.o \
@@ -32,7 +33,8 @@ OBJS += \
 ./Rcfw/Src/motor.o \
 ./Rcfw/Src/pid.o \
 ./Rcfw/Src/string_fifo.o \
-./Rcfw/Src/utils.o 
+./Rcfw/Src/utils.o \
+./Rcfw/Src/wheel.o 
 
 C_DEPS += \
 ./Rcfw/Src/battery_check.d \
@@ -47,7 +49,8 @@ C_DEPS += \
 ./Rcfw/Src/motor.d \
 ./Rcfw/Src/pid.d \
 ./Rcfw/Src/string_fifo.d \
-./Rcfw/Src/utils.d 
+./Rcfw/Src/utils.d \
+./Rcfw/Src/wheel.d 
 
 
 # Each subdirectory must supply rules for building sources it contributes

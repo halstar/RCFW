@@ -23,7 +23,7 @@
 
 #endif
 
-#define STP_PAD_BUTTONS_DEBOUNCE_PERIOD_IN_S 2
+#define STP_BUTTONS_DEBOUNCE_PERIOD_IN_S 2
 
 #ifdef DEBUG
 
@@ -54,7 +54,7 @@
 #define STP_DRIVE_PID_ANTI_WIND_UP_FACTOR        0.25f
 #define STP_DRIVE_PID_ENCODER_TO_SPEED_FACTOR 75000.0f
 
-#define STP_JOYSTICKS_THRESHOLD   10
+#define STP_JOYSTICKS_THRESHOLD   15
 #define STP_JOYSTICKS_FIXED_SPEED 20
 /* Double buttons fixed speed at it concerns forward/backward + left/right movements, */
 /* the latter actually using only 2 motors, while the other movements use 4 motors.   */

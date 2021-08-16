@@ -4,11 +4,16 @@
 #include "main.h"
 #include "log.h"
 
-static T_LED_MODE g_LED_mode = LED_MODE_BLINK_SLOW;
+typedef struct T_LED_Context
+{
+  T_LED_MODE mode;
+} T_LED_Context;
+
+static T_LED_Context g_LED_context;
 
 void LED_setMode(T_LED_MODE p_mode)
 {
-  if (p_mode != g_LED_mode)
+  if (p_mode != g_LED_context.mode)
   {
     switch (p_mode)
     {
@@ -37,7 +42,7 @@ void LED_setMode(T_LED_MODE p_mode)
         break;
     }
 
-    g_LED_mode = p_mode;
+    g_LED_context.mode = p_mode;
   }
   else
   {
@@ -49,14 +54,14 @@ void LED_setMode(T_LED_MODE p_mode)
 
 T_LED_MODE LED_getMode(void)
 {
-  return g_LED_mode;
+  return g_LED_context.mode;
 }
 
 void LED_update(void)
 {
   static uint32_t l_blinkCounter = 0;
 
-  switch (g_LED_mode)
+  switch (g_LED_context.mode)
   {
     case LED_MODE_FORCED_OFF:
       HAL_GPIO_WritePin(BLUE_LED_GPIO_Port, BLUE_LED_Pin, GPIO_PIN_SET);

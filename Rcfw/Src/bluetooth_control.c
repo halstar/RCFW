@@ -19,7 +19,12 @@
 #define BLU_LEFT_X_OFFSET      5
 #define BLU_LEFT_Y_OFFSET      6
 
-static T_BLU_Data g_BLU_lastData;
+typedef struct T_BLU_Context
+{
+  T_BLU_Data lastData;
+} T_BLU_Context;
+
+static T_BLU_Context g_BLU_context;
 
 static void         BLU_sendCommand(uint8_t  p_command);
 static void         BLU_readData   (uint8_t *p_buffer );
@@ -122,7 +127,7 @@ void BLU_init(void)
 {
   LOG_info("Initializing bluetooth control");
 
-  BLU_initData(&g_BLU_lastData);
+  BLU_initData(&g_BLU_context.lastData);
 
   return;
 }
@@ -160,11 +165,11 @@ void BLU_receiveData(T_BLU_Data *p_data)
     BLU_initData(&l_readData);
   }
   /* Use a confirmation mechanism, on 2 cycles, as glitches are observed */
-  else if ((l_readData.leftX  == g_BLU_lastData.leftX) &&
-           (l_readData.leftY  == g_BLU_lastData.leftY) &&
-           (l_readData.rightX == g_BLU_lastData.rightX) &&
-           (l_readData.rightY == g_BLU_lastData.rightY) &&
-           (l_readData.button == g_BLU_lastData.button))
+  else if ((l_readData.leftX  == g_BLU_context.lastData.leftX) &&
+           (l_readData.leftY  == g_BLU_context.lastData.leftY) &&
+           (l_readData.rightX == g_BLU_context.lastData.rightX) &&
+           (l_readData.rightY == g_BLU_context.lastData.rightY) &&
+           (l_readData.button == g_BLU_context.lastData.button))
   {
     /* Normalize directions data in range [-MAX..MAX] */
     p_data->leftX  = UTI_normalizeIntValue(l_readData.leftX , 0, 255, -STP_DRIVE_MAX_SPEED, STP_DRIVE_MAX_SPEED, false);
@@ -179,11 +184,11 @@ void BLU_receiveData(T_BLU_Data *p_data)
   }
 
   /* Saved received data for later use in confirmation mechanism */
-  g_BLU_lastData.leftX  = l_readData.leftX;
-  g_BLU_lastData.leftY  = l_readData.leftY;
-  g_BLU_lastData.rightX = l_readData.rightX;
-  g_BLU_lastData.rightY = l_readData.rightY;
-  g_BLU_lastData.button = l_readData.button;
+  g_BLU_context.lastData.leftX  = l_readData.leftX;
+  g_BLU_context.lastData.leftY  = l_readData.leftY;
+  g_BLU_context.lastData.rightX = l_readData.rightX;
+  g_BLU_context.lastData.rightY = l_readData.rightY;
+  g_BLU_context.lastData.button = l_readData.button;
 
   return;
 }

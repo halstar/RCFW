@@ -84,7 +84,6 @@ static uint32_t g_MAIN_ledModeUpdateLastTimeInS;
 static uint32_t g_MAIN_driveLogInfoLastTimeInS;
 static uint32_t g_MAIN_velocityReportLastTimeInS;
 
-
 T_MAIN_PRINT_OUTPUT g_MAIN_printOutput;
 
 /* USER CODE END PV */
@@ -190,7 +189,7 @@ static void MAIN_updateLogSetup(T_BLU_Data *p_data, uint32_t p_timeInS)
 
         LOG_increaseLevel();
       }
-      else if (p_timeInS - g_MAIN_padUpPressedStartTimeInS < STP_PAD_BUTTONS_DEBOUNCE_PERIOD_IN_S)
+      else if (p_timeInS - g_MAIN_padUpPressedStartTimeInS < STP_BUTTONS_DEBOUNCE_PERIOD_IN_S)
       {
         ; /* Nothing to do */
       }
@@ -207,7 +206,7 @@ static void MAIN_updateLogSetup(T_BLU_Data *p_data, uint32_t p_timeInS)
 
         LOG_decreaseLevel();
       }
-      else if (p_timeInS - g_MAIN_padDownPressedStartTimeInS < STP_PAD_BUTTONS_DEBOUNCE_PERIOD_IN_S)
+      else if (p_timeInS - g_MAIN_padDownPressedStartTimeInS < STP_BUTTONS_DEBOUNCE_PERIOD_IN_S)
       {
         ; /* Nothing to do */
       }
@@ -224,7 +223,7 @@ static void MAIN_updateLogSetup(T_BLU_Data *p_data, uint32_t p_timeInS)
 
         LOG_toggleOnOff();
       }
-      else if (p_timeInS - g_MAIN_padLeftPressedStartTimeInS < STP_PAD_BUTTONS_DEBOUNCE_PERIOD_IN_S)
+      else if (p_timeInS - g_MAIN_padLeftPressedStartTimeInS < STP_BUTTONS_DEBOUNCE_PERIOD_IN_S)
       {
         ; /* Nothing to do */
       }
@@ -241,7 +240,7 @@ static void MAIN_updateLogSetup(T_BLU_Data *p_data, uint32_t p_timeInS)
 
         MAIN_togglePrintOutput();
       }
-      else if (p_timeInS - g_MAIN_padRightPressedStartTimeInS < STP_PAD_BUTTONS_DEBOUNCE_PERIOD_IN_S)
+      else if (p_timeInS - g_MAIN_padRightPressedStartTimeInS < STP_BUTTONS_DEBOUNCE_PERIOD_IN_S)
       {
         ; /* Nothing to do */
       }
@@ -325,16 +324,13 @@ int main(void)
   /* UART4  UART  is used  to get control from master board - PC10 / PC11        */
 
   HAL_StatusTypeDef l_halReturnCode;
-  T_SFO_Context     l_commandsFifo;
+  T_SFO_Handle      l_commandsFifo;
   T_BLU_Data        l_bluetoothData;
   T_DRV_MODE        l_driveMode;
   RTC_TimeTypeDef   l_rtcTime;
   RTC_DateTypeDef   l_rtcDate;
   uint32_t          l_currentTimeInS;
   uint32_t          l_voltageInMv;
-  uint16_t          l_lastTimeInMs;
-  uint16_t          l_currentTimeInMs;
-  uint16_t          l_deltaTimeInMs;
 
   /* USER CODE END 1 */
 
@@ -371,13 +367,10 @@ int main(void)
   /* USER CODE BEGIN 2 */
 
   /* Setup local variables */
-  l_halReturnCode   = HAL_OK;
-  l_driveMode       = STP_DEFAULT_DRIVE_MODE;
-  l_currentTimeInS  = 0;
-  l_voltageInMv     = 0;
-  l_lastTimeInMs    = 0;
-  l_currentTimeInMs = 0;
-  l_deltaTimeInMs   = 0;
+  l_halReturnCode  = HAL_OK;
+  l_driveMode      = STP_DEFAULT_DRIVE_MODE;
+  l_currentTimeInS = 0;
+  l_voltageInMv    = 0;
 
   SFO_init        (&l_commandsFifo );
   BLU_initData    (&l_bluetoothData);
@@ -402,11 +395,15 @@ int main(void)
   /* Setup master connection */
   MAS_init(&huart4);
 
-  /* Temporary delay/workaound to deal with debugger connection issue */
+#ifdef DEBUG
+
+  /* Temporary delay/workaround to deal with debugger connection issue */
   for (int i = 0; i < 10; i++)
   {
     HAL_Delay(1000);
   }
+
+#endif
 
   /* Setup and start using logs */
   LOG_init    (&hrtc, STP_DEFAULT_IS_LOG_ON);
@@ -505,16 +502,12 @@ int main(void)
   BLU_init();
 
   /* Initialize driving module */
-  DRV_init(&htim8, &htim4, &htim5, &htim2, &htim3);
+  DRV_init(&htim8, &htim6, &htim4, &htim5, &htim2, &htim3);
 
   /* USER CODE END 2 */
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
-
-  /* Initialize time measurement for master board control */
-  l_lastTimeInMs = __HAL_TIM_GET_COUNTER(&htim6);
-
   while (1)
   {
     l_driveMode = DRV_getMode();
@@ -581,25 +574,21 @@ int main(void)
 
     BLU_receiveData        (&l_bluetoothData);
     MAIN_updateLogSetup    (&l_bluetoothData, l_currentTimeInS);
-    DRV_updateFromBluetooth(&l_bluetoothData);
+    DRV_updateFromBluetooth(&l_bluetoothData, l_currentTimeInS);
 
     CON_updateFifo(&l_commandsFifo);
     MAS_updateFifo(&l_commandsFifo);
 
-    l_currentTimeInMs = __HAL_TIM_GET_COUNTER(&htim6);
-    l_deltaTimeInMs   = l_lastTimeInMs - l_currentTimeInMs;
-    l_lastTimeInMs    = l_currentTimeInMs;
-
     if ((STP_DRIVE_LOG_INFO_PERIOD_IN_S != 0) &&
         (l_currentTimeInS - g_MAIN_driveLogInfoLastTimeInS >= STP_DRIVE_LOG_INFO_PERIOD_IN_S))
     {
-      DRV_updateFromCommands(&l_commandsFifo, l_deltaTimeInMs, true);
+      DRV_updateFromCommands(&l_commandsFifo, true);
 
       g_MAIN_driveLogInfoLastTimeInS = l_currentTimeInS;
     }
     else
     {
-      DRV_updateFromCommands(&l_commandsFifo, l_deltaTimeInMs, false);
+      DRV_updateFromCommands(&l_commandsFifo, false);
     }
 
     if ((STP_VELOCITY_REPORT_PERIOD_IN_S != 0) &&

@@ -8,18 +8,24 @@
 
 #include "stm32f1xx_hal.h"
 
-static bool               g_LOG_isOn;
-static T_LOG_LEVEL        g_LOG_level;
-static RTC_HandleTypeDef *g_LOG_rtcHandle;
-static const char        *g_LOG_levelStrings[4] =
+typedef struct T_LOG_Context
+{
+  bool               isOn;
+  T_LOG_LEVEL        level;
+  RTC_HandleTypeDef *rtcHandle;
+} T_LOG_Context;
+
+static T_LOG_Context g_LOG_context;
+
+static const char *g_LOG_levelStrings[4] =
 {
   "DEBUG", "INFO", "WARNING", "ERROR"
 };
 
 void LOG_init(RTC_HandleTypeDef *p_rctHandle, bool p_isLogOn)
 {
-  g_LOG_isOn      = p_isLogOn;
-  g_LOG_rtcHandle = p_rctHandle;
+  g_LOG_context.isOn      = p_isLogOn;
+  g_LOG_context.rtcHandle = p_rctHandle;
 
   LOG_info("LOG initialized");
 
@@ -28,15 +34,15 @@ void LOG_init(RTC_HandleTypeDef *p_rctHandle, bool p_isLogOn)
 
 void LOG_toggleOnOff(void)
 {
-  if (g_LOG_isOn == true)
+  if (g_LOG_context.isOn == true)
   {
     LOG_info("Turning LOG OFF");
 
-    g_LOG_isOn = false;
+    g_LOG_context.isOn = false;
   }
   else
   {
-    g_LOG_isOn = true;
+    g_LOG_context.isOn = true;
 
     LOG_info("Turning LOG ON");
   }
@@ -46,7 +52,7 @@ void LOG_toggleOnOff(void)
 
 void LOG_setLevel(T_LOG_LEVEL p_level)
 {
-  g_LOG_level = p_level;
+  g_LOG_context.level = p_level;
 
   return;
 }
@@ -54,11 +60,11 @@ void LOG_setLevel(T_LOG_LEVEL p_level)
 void LOG_increaseLevel(void)
 {
   /* Display more detailed logs */
-  if (g_LOG_level > LOG_LEVEL_DEBUG)
+  if (g_LOG_context.level > LOG_LEVEL_DEBUG)
   {
     LOG_info("Increasing LOG level");
 
-    g_LOG_level--;
+    g_LOG_context.level--;
   }
   else
   {
@@ -71,11 +77,11 @@ void LOG_increaseLevel(void)
 void LOG_decreaseLevel(void)
 {
   /* Display less detailed logs */
-  if (g_LOG_level < LOG_LEVEL_ERROR)
+  if (g_LOG_context.level < LOG_LEVEL_ERROR)
   {
     LOG_info("Decreasing LOG level");
 
-    g_LOG_level++;
+    g_LOG_context.level++;
   }
   else
   {
@@ -93,9 +99,9 @@ void LOG_log(T_LOG_LEVEL p_level, const char *p_format, ...)
   RTC_TimeTypeDef   l_time;
   RTC_DateTypeDef   l_date;
 
-  if ((g_LOG_isOn == true) && (p_level >= g_LOG_level))
+  if ((g_LOG_context.isOn == true) && (p_level >= g_LOG_context.level))
   {
-    l_halReturnCode = HAL_RTC_GetTime(g_LOG_rtcHandle, &l_time, RTC_FORMAT_BCD);
+    l_halReturnCode = HAL_RTC_GetTime(g_LOG_context.rtcHandle, &l_time, RTC_FORMAT_BCD);
 
     if (l_halReturnCode != HAL_OK)
     {
@@ -107,7 +113,7 @@ void LOG_log(T_LOG_LEVEL p_level, const char *p_format, ...)
       ; /* Nothing to do */
     }
 
-    l_halReturnCode = HAL_RTC_GetDate(g_LOG_rtcHandle, &l_date, RTC_FORMAT_BCD);
+    l_halReturnCode = HAL_RTC_GetDate(g_LOG_context.rtcHandle, &l_date, RTC_FORMAT_BCD);
 
     if (l_halReturnCode != HAL_OK)
     {

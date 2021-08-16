@@ -5,7 +5,6 @@
 
 #include "log.h"
 
-
 void SFO_initData(T_SFO_data *p_data)
 {
   (void)memset(p_data, 0, CST_STRING_FIFO_MAX_STRING_LENGTH);
@@ -13,7 +12,7 @@ void SFO_initData(T_SFO_data *p_data)
   return;
 }
 
-void SFO_init(T_SFO_Context *p_fifo)
+void SFO_init(T_SFO_Handle *p_fifo)
 {
   LOG_debug("String FIFO now empty");
 
@@ -24,7 +23,7 @@ void SFO_init(T_SFO_Context *p_fifo)
   return;
 }
 
-void SFO_push(T_SFO_Context *p_fifo, T_SFO_data *p_dataIn)
+void SFO_push(T_SFO_Handle *p_fifo, T_SFO_data *p_dataIn)
 {
   T_SFO_Element *l_element;
 
@@ -59,7 +58,7 @@ void SFO_push(T_SFO_Context *p_fifo, T_SFO_data *p_dataIn)
   return;
 }
 
-void SFO_pop(T_SFO_Context *p_fifo, T_SFO_data *p_dataOut)
+void SFO_pop(T_SFO_Handle *p_fifo, T_SFO_data *p_dataOut)
 {
   T_SFO_Element *l_element;
 
@@ -96,12 +95,12 @@ void SFO_pop(T_SFO_Context *p_fifo, T_SFO_data *p_dataOut)
   return;
 }
 
-uint32_t SFO_getCount(T_SFO_Context *p_fifo)
+uint32_t SFO_getCount(T_SFO_Handle *p_fifo)
 {
   return p_fifo->count;
 }
 
-void SFO_logInfo(T_SFO_Context *p_fifo)
+void SFO_logInfo(T_SFO_Handle *p_fifo)
 {
   T_SFO_Element *l_element;
 
