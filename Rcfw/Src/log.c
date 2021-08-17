@@ -2,17 +2,15 @@
 #include <string.h>
 #include <stdbool.h>
 
-#include "utils.h"
-#include "const.h"
 #include "log.h"
 
-#include "stm32f1xx_hal.h"
+#include "utils.h"
+#include "const.h"
 
 typedef struct T_LOG_Context
 {
-  bool               isOn;
-  T_LOG_LEVEL        level;
-  RTC_HandleTypeDef *rtcHandle;
+  bool        isOn;
+  T_LOG_LEVEL level;
 } T_LOG_Context;
 
 static T_LOG_Context g_LOG_context;
@@ -22,10 +20,9 @@ static const char *g_LOG_levelStrings[4] =
   "DEBUG", "INFO", "WARNING", "ERROR"
 };
 
-void LOG_init(RTC_HandleTypeDef *p_rctHandle, bool p_isLogOn)
+void LOG_init(bool p_isLogOn)
 {
-  g_LOG_context.isOn      = p_isLogOn;
-  g_LOG_context.rtcHandle = p_rctHandle;
+  g_LOG_context.isOn = p_isLogOn;
 
   LOG_info("LOG initialized");
 
@@ -93,37 +90,13 @@ void LOG_decreaseLevel(void)
 
 void LOG_log(T_LOG_LEVEL p_level, const char *p_format, ...)
 {
-  char              l_buffer[CST_CONSOLE_TX_MAX_STRING_LENGTH];
-  HAL_StatusTypeDef l_halReturnCode;
-  va_list           l_argumentsList;
-  RTC_TimeTypeDef   l_time;
-  RTC_DateTypeDef   l_date;
+  char            l_buffer[CST_CONSOLE_TX_MAX_STRING_LENGTH];
+  va_list         l_argumentsList;
+  RTC_TimeTypeDef l_time;
 
   if ((g_LOG_context.isOn == true) && (p_level >= g_LOG_context.level))
   {
-    l_halReturnCode = HAL_RTC_GetTime(g_LOG_context.rtcHandle, &l_time, RTC_FORMAT_BCD);
-
-    if (l_halReturnCode != HAL_OK)
-    {
-      /* As this method is for logging/debug, just reset time in case of failure */
-      UTI_resetRtcTime(&l_time);
-    }
-    else
-    {
-      ; /* Nothing to do */
-    }
-
-    l_halReturnCode = HAL_RTC_GetDate(g_LOG_context.rtcHandle, &l_date, RTC_FORMAT_BCD);
-
-    if (l_halReturnCode != HAL_OK)
-    {
-      /* As this method is for logging/debug, just reset date in case of failure */
-      UTI_resetRtcDate(&l_date);
-    }
-    else
-    {
-      ; /* Nothing to do */
-    }
+    UTI_getTimeRtc(&l_time);
 
     va_start(l_argumentsList, p_format);
 

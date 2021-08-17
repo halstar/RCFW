@@ -4,8 +4,6 @@
 #include <stdbool.h>
 #include <stdarg.h>
 
-#include "stm32f1xx_hal.h"
-
 typedef enum
 {
   LOG_LEVEL_DEBUG = 0,
@@ -14,7 +12,7 @@ typedef enum
   LOG_LEVEL_ERROR
 } T_LOG_LEVEL;
 
-void LOG_init         (RTC_HandleTypeDef *p_rctHandle, bool p_isLogOn);
+void LOG_init         (bool        p_isLogOn                         );
 void LOG_toggleOnOff  (void                                          );
 void LOG_setLevel     (T_LOG_LEVEL p_level                           );
 void LOG_increaseLevel(void                                          );

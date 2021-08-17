@@ -5,17 +5,49 @@
 
 typedef struct T_UTI_Context
 {
-  TIM_HandleTypeDef *delayTimerHandle;
+  TIM_HandleTypeDef *usDelayHandle;
+  TIM_HandleTypeDef *usTimerHandle;
+  RTC_HandleTypeDef *sTimerHandle ;
 } T_UTI_Context;
 
 static T_UTI_Context g_UTI_context;
 
+static void     UTI_resetRtcTime        (RTC_TimeTypeDef *p_time);
+static uint32_t UTI_turnRtcTimeToSeconds(RTC_TimeTypeDef *p_time);
 
-void UTI_init(TIM_HandleTypeDef *p_delayTimerHandle)
+void UTI_init(TIM_HandleTypeDef *p_usDelayHandle,
+              TIM_HandleTypeDef *p_usTimerHandle,
+              RTC_HandleTypeDef *p_sTimerHandle)
 {
+  HAL_StatusTypeDef l_halReturnCode;
+
   LOG_info("Initializing utilities");
 
-  g_UTI_context.delayTimerHandle = p_delayTimerHandle;
+  g_UTI_context.usDelayHandle = p_usDelayHandle;
+  g_UTI_context.usTimerHandle = p_usTimerHandle;
+  g_UTI_context.sTimerHandle  = p_sTimerHandle ;
+
+  l_halReturnCode = HAL_TIM_Base_Start(p_usDelayHandle);
+
+  if (l_halReturnCode != HAL_OK)
+  {
+    LOG_error("HAL_TIM_Base_Start() returned an error code: %d", l_halReturnCode);
+  }
+  else
+  {
+    LOG_info("Micro-second delay timer started");
+  }
+
+  l_halReturnCode = HAL_TIM_Base_Start_IT(p_usTimerHandle);
+
+  if (l_halReturnCode != HAL_OK)
+  {
+    LOG_error("HAL_TIM_Base_Start_IT() returned an error code: %d", l_halReturnCode);
+  }
+  else
+  {
+    LOG_info("Micro-second time measurment timer started");
+  }
 
   return;
 }
@@ -23,10 +55,10 @@ void UTI_init(TIM_HandleTypeDef *p_delayTimerHandle)
 void UTI_delayUs(uint16_t p_delay)
 {
   /* Reset the micro-seconds counter */
-  __HAL_TIM_SET_COUNTER(g_UTI_context.delayTimerHandle, 0);
+  __HAL_TIM_SET_COUNTER(g_UTI_context.usDelayHandle, 0);
 
   /* Wait for the counter to reach the input micro-seconds number */
-  while (__HAL_TIM_GET_COUNTER(g_UTI_context.delayTimerHandle) < p_delay)
+  while (__HAL_TIM_GET_COUNTER(g_UTI_context.usDelayHandle) < p_delay)
   {
     ; /* Nothing to do */
   }
@@ -34,29 +66,67 @@ void UTI_delayUs(uint16_t p_delay)
   return;
 }
 
-void UTI_resetRtcDate(RTC_DateTypeDef *p_date)
+void UTI_delayMs(uint32_t p_delay)
 {
-  p_date->Date    = 0;
-  p_date->Month   = 0;
-  p_date->WeekDay = 0;
-  p_date->Year    = 0;
+  HAL_Delay(p_delay);
 
   return;
 }
 
-
-void UTI_resetRtcTime(RTC_TimeTypeDef *p_time)
+uint32_t UTI_getTimeUs(void)
 {
-  p_time->Hours   = 0;
-  p_time->Minutes = 0;
-  p_time->Seconds = 0;
+  uint32_t l_currentTimeInUs;
 
-  return;
+  l_currentTimeInUs = __HAL_TIM_GET_COUNTER(g_UTI_context.usTimerHandle);
+
+  return l_currentTimeInUs;
 }
 
-uint32_t UTI_turnRtcTimeToSeconds(RTC_TimeTypeDef *p_time)
+uint32_t UTI_getTimeS(void)
 {
-  return p_time->Hours * 3600 + p_time->Minutes * 60 + p_time->Seconds;
+  RTC_TimeTypeDef l_rtcTime;
+  uint32_t        l_currentTimeInS;
+
+  UTI_getTimeRtc(&l_rtcTime);
+
+  l_currentTimeInS = UTI_turnRtcTimeToSeconds(&l_rtcTime);
+
+  return l_currentTimeInS;
+}
+
+void UTI_getTimeRtc(RTC_TimeTypeDef *p_time)
+{
+  HAL_StatusTypeDef l_halReturnCode;
+  RTC_TimeTypeDef   l_rtcTime;
+  RTC_DateTypeDef   l_rtcDate;
+
+  l_halReturnCode = HAL_RTC_GetTime(g_UTI_context.sTimerHandle, &l_rtcTime, RTC_FORMAT_BCD);
+
+  if (l_halReturnCode != HAL_OK)
+  {
+    /* As this method can be called by logging/debug, just reset time in case of failure */
+    UTI_resetRtcTime(&l_rtcTime);
+  }
+  else
+  {
+    ; /* Nothing to to */
+  }
+
+  l_halReturnCode = HAL_RTC_GetDate(g_UTI_context.sTimerHandle, &l_rtcDate, RTC_FORMAT_BCD);
+
+  if (l_halReturnCode != HAL_OK)
+  {
+    /* As this method can be called by logging/debug, just reset time in case of failure */
+    UTI_resetRtcTime(&l_rtcTime);
+  }
+  else
+  {
+    ; /* Nothing to to */
+  }
+
+  *p_time = l_rtcTime;
+
+  return;
 }
 
 int32_t UTI_clampIntValue(int32_t p_value, int32_t p_minValue, int32_t p_maxValue, bool p_clampToNearest, int32_t p_clampValue)
@@ -145,4 +215,18 @@ int32_t UTI_normalizeIntValue(int32_t p_value, int32_t p_inMinValue, int32_t p_i
   }
 
   return (int32_t)l_returnValue;
+}
+
+static void UTI_resetRtcTime(RTC_TimeTypeDef *p_time)
+{
+  p_time->Hours   = 0;
+  p_time->Minutes = 0;
+  p_time->Seconds = 0;
+
+  return;
+}
+
+static uint32_t UTI_turnRtcTimeToSeconds(RTC_TimeTypeDef *p_time)
+{
+  return p_time->Hours * 3600 + p_time->Minutes * 60 + p_time->Seconds;
 }

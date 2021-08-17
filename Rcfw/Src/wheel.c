@@ -4,6 +4,7 @@
 
 #include "stm32f1xx_hal.h"
 #include "setup.h"
+#include "utils.h"
 #include "log.h"
 
 void WHL_init(T_WHL_Handle      *p_handle,
@@ -16,10 +17,9 @@ void WHL_init(T_WHL_Handle      *p_handle,
               uint32_t           p_pwmChannel,
               bool               p_invertOnUpdate,
               TIM_HandleTypeDef *p_encoderTimerHandle,
-              TIM_HandleTypeDef *p_msTimerHandle,
               bool               p_isMotorOn)
 {
-  LOG_info("Initializing Wheel module for %s", p_name);
+  LOG_info("Initializing wheel module for %s", p_name);
 
   p_handle->name = p_name;
 
@@ -56,9 +56,8 @@ void WHL_init(T_WHL_Handle      *p_handle,
             STP_DRIVE_MAX_SPEED,
             STP_DRIVE_PID_ANTI_WIND_UP_FACTOR);
 
-  p_handle->isMotorOn     = p_isMotorOn;
-  p_handle->msTimerHandle = p_msTimerHandle;
-  p_handle->lastTimeInMs  = __HAL_TIM_GET_COUNTER(p_handle->msTimerHandle);
+  p_handle->isMotorOn    = p_isMotorOn;
+  p_handle->lastTimeInUs = UTI_getTimeUs();
 
   return;
 }
@@ -138,22 +137,22 @@ void WHL_setPidTarget(T_WHL_Handle *p_handle, uint32_t p_speed)
 
 void WHL_updatePidSpeed(T_WHL_Handle *p_handle)
 {
-  uint16_t l_currentTimeInMs;
-  uint16_t l_deltaTimeInMs;
+  uint32_t l_currentTimeInUs;
+  uint32_t l_deltaTimeInUs;
   float    l_measuredSpeed;
   float    l_pidSpeed;
 
-  l_currentTimeInMs      = __HAL_TIM_GET_COUNTER(p_handle->msTimerHandle);
-  l_deltaTimeInMs        = p_handle->lastTimeInMs - l_currentTimeInMs;
-  p_handle->lastTimeInMs = l_currentTimeInMs;
+  l_currentTimeInUs      = UTI_getTimeUs();
+  l_deltaTimeInUs        = p_handle->lastTimeInUs - l_currentTimeInUs;
+  p_handle->lastTimeInUs = l_currentTimeInUs;
 
-  l_measuredSpeed = fabs((float)ENC_getCount(&p_handle->encoder) / (float)l_deltaTimeInMs * STP_DRIVE_PID_ENCODER_TO_SPEED_FACTOR);
+  l_measuredSpeed = fabs((float)ENC_getCount(&p_handle->encoder) / (float)l_deltaTimeInUs * STP_DRIVE_PID_ENCODER_TO_SPEED_FACTOR);
 
   CBU_push(&p_handle->speedBuffer, l_measuredSpeed);
 
   p_handle->averageSpeed = CBU_getAverage(&p_handle->speedBuffer);
 
-  l_pidSpeed = PID_update(&p_handle->pid, p_handle->averageSpeed, l_deltaTimeInMs);
+  l_pidSpeed = PID_update(&p_handle->pid, p_handle->averageSpeed, l_deltaTimeInUs);
 
   WHL_setSpeed(p_handle, l_pidSpeed);
 

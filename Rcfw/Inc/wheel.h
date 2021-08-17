@@ -2,7 +2,6 @@
 #define __WHEEL_H
 
 #include "stm32f1xx_hal.h"
-
 #include "motor.h"
 #include "encoder.h"
 #include "pid.h"
@@ -17,8 +16,7 @@ typedef struct T_WHL_Handle
   T_CBU_Handle       speedBuffer;
   float              averageSpeed;
   bool               isMotorOn;
-  TIM_HandleTypeDef *msTimerHandle;
-  uint16_t           lastTimeInMs;
+  uint32_t           lastTimeInUs;
 } T_WHL_Handle;
 
 void WHL_init(T_WHL_Handle      *p_handle,
@@ -31,7 +29,6 @@ void WHL_init(T_WHL_Handle      *p_handle,
               uint32_t           p_pwmChannel,
               bool               p_invertOnUpdate,
               TIM_HandleTypeDef *p_encoderTimerHandle,
-              TIM_HandleTypeDef *p_msTimerHandle,
               bool               p_isMotorOn);
 
 void  WHL_turnMotorOn    (T_WHL_Handle *p_handle                             );

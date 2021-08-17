@@ -7,7 +7,7 @@ void ENC_init(T_ENC_Handle      *p_handle,
               bool               p_invertOnUpdate,
               TIM_HandleTypeDef *p_encoderTimerHandle)
 {
-  LOG_info("Initializing Encoder module for %s", p_name);
+  LOG_info("Initializing encoder module for %s", p_name);
 
   p_handle->name           = p_name;
   p_handle->invertOnUpdate = p_invertOnUpdate;

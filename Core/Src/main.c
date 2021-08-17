@@ -50,9 +50,6 @@
 
 /* Private macro -------------------------------------------------------------*/
 /* USER CODE BEGIN PM */
-
-#define MAIN_LOOP_DELAY_IN_MS 10000
-
 /* USER CODE END PM */
 
 /* Private variables ---------------------------------------------------------*/
@@ -74,15 +71,20 @@ UART_HandleTypeDef huart1;
 
 /* USER CODE BEGIN PV */
 
-static uint32_t g_MAIN_padUpPressedStartTimeInS;
-static uint32_t g_MAIN_padDownPressedStartTimeInS;
-static uint32_t g_MAIN_padLeftPressedStartTimeInS;
-static uint32_t g_MAIN_padRightPressedStartTimeInS;
-static uint32_t g_MAIN_swResetPollingLastTimeInS;
-static uint32_t g_MAIN_batteryPollingLastTimeInS;
-static uint32_t g_MAIN_ledModeUpdateLastTimeInS;
-static uint32_t g_MAIN_driveLogInfoLastTimeInS;
-static uint32_t g_MAIN_velocityReportLastTimeInS;
+typedef struct T_MAIN_Context
+{
+  uint32_t padUpPressedStartTimeInS;
+  uint32_t padDownPressedStartTimeInS;
+  uint32_t padLeftPressedStartTimeInS;
+  uint32_t padRightPressedStartTimeInS;
+  uint32_t swResetPollingLastTimeInS;
+  uint32_t batteryPollingLastTimeInS;
+  uint32_t ledModeUpdateLastTimeInS;
+  uint32_t driveLogInfoLastTimeInS;
+  uint32_t velocityReportLastTimeInS;
+} T_MAIN_Context;
+
+static T_MAIN_Context g_MAIN_context;
 
 T_MAIN_PRINT_OUTPUT g_MAIN_printOutput;
 
@@ -183,70 +185,70 @@ static void MAIN_updateLogSetup(T_BLU_Data *p_data, uint32_t p_timeInS)
   switch (p_data->button)
   {
     case BLU_BUTTON_PAD_UP:
-      if (g_MAIN_padUpPressedStartTimeInS == 0)
+      if (g_MAIN_context.padUpPressedStartTimeInS == 0)
       {
-        g_MAIN_padUpPressedStartTimeInS = p_timeInS;
+        g_MAIN_context.padUpPressedStartTimeInS = p_timeInS;
 
         LOG_increaseLevel();
       }
-      else if (p_timeInS - g_MAIN_padUpPressedStartTimeInS < STP_BUTTONS_DEBOUNCE_PERIOD_IN_S)
+      else if (p_timeInS - g_MAIN_context.padUpPressedStartTimeInS < STP_BUTTONS_DEBOUNCE_PERIOD_IN_S)
       {
         ; /* Nothing to do */
       }
       else
       {
-        g_MAIN_padUpPressedStartTimeInS = 0;
+        g_MAIN_context.padUpPressedStartTimeInS = 0;
       }
       break;
 
     case BLU_BUTTON_PAD_DOWN:
-      if (g_MAIN_padDownPressedStartTimeInS == 0)
+      if (g_MAIN_context.padDownPressedStartTimeInS == 0)
       {
-        g_MAIN_padDownPressedStartTimeInS = p_timeInS;
+        g_MAIN_context.padDownPressedStartTimeInS = p_timeInS;
 
         LOG_decreaseLevel();
       }
-      else if (p_timeInS - g_MAIN_padDownPressedStartTimeInS < STP_BUTTONS_DEBOUNCE_PERIOD_IN_S)
+      else if (p_timeInS - g_MAIN_context.padDownPressedStartTimeInS < STP_BUTTONS_DEBOUNCE_PERIOD_IN_S)
       {
         ; /* Nothing to do */
       }
       else
       {
-        g_MAIN_padDownPressedStartTimeInS = 0;
+        g_MAIN_context.padDownPressedStartTimeInS = 0;
       }
       break;
 
     case BLU_BUTTON_PAD_LEFT:
-      if (g_MAIN_padLeftPressedStartTimeInS == 0)
+      if (g_MAIN_context.padLeftPressedStartTimeInS == 0)
       {
-        g_MAIN_padLeftPressedStartTimeInS = p_timeInS;
+        g_MAIN_context.padLeftPressedStartTimeInS = p_timeInS;
 
         LOG_toggleOnOff();
       }
-      else if (p_timeInS - g_MAIN_padLeftPressedStartTimeInS < STP_BUTTONS_DEBOUNCE_PERIOD_IN_S)
+      else if (p_timeInS - g_MAIN_context.padLeftPressedStartTimeInS < STP_BUTTONS_DEBOUNCE_PERIOD_IN_S)
       {
         ; /* Nothing to do */
       }
       else
       {
-        g_MAIN_padLeftPressedStartTimeInS = 0;
+        g_MAIN_context.padLeftPressedStartTimeInS = 0;
       }
       break;
 
     case BLU_BUTTON_PAD_RIGHT:
-      if (g_MAIN_padRightPressedStartTimeInS == 0)
+      if (g_MAIN_context.padRightPressedStartTimeInS == 0)
       {
-        g_MAIN_padRightPressedStartTimeInS = p_timeInS;
+        g_MAIN_context.padRightPressedStartTimeInS = p_timeInS;
 
         MAIN_togglePrintOutput();
       }
-      else if (p_timeInS - g_MAIN_padRightPressedStartTimeInS < STP_BUTTONS_DEBOUNCE_PERIOD_IN_S)
+      else if (p_timeInS - g_MAIN_context.padRightPressedStartTimeInS < STP_BUTTONS_DEBOUNCE_PERIOD_IN_S)
       {
         ; /* Nothing to do */
       }
       else
       {
-        g_MAIN_padRightPressedStartTimeInS = 0;
+        g_MAIN_context.padRightPressedStartTimeInS = 0;
       }
       break;
 
@@ -257,8 +259,8 @@ static void MAIN_updateLogSetup(T_BLU_Data *p_data, uint32_t p_timeInS)
 
   if ((p_data->button != BLU_BUTTON_PAD_UP) && (p_data->button != BLU_BUTTON_PAD_DOWN))
   {
-    g_MAIN_padUpPressedStartTimeInS   = 0;
-    g_MAIN_padDownPressedStartTimeInS = 0;
+    g_MAIN_context.padUpPressedStartTimeInS   = 0;
+    g_MAIN_context.padDownPressedStartTimeInS = 0;
   }
   else
   {
@@ -313,22 +315,21 @@ int main(void)
 {
   /* USER CODE BEGIN 1 */
 
-  /* RTC  clock   is used  as a calendar base (e.g. for logs)                    */
-  /* TIM1 timer   is used  to update green LED              - PC13               */
-  /* TIM2 to TIM5 are used as input for motor's encoders                         */
-  /* TIM6 timer   is used  to produce a micro-second base for time measurement   */
-  /* TIM7 timer   is used  to produce a micro-second base for utilies/delay      */
-  /* TIM8 timer   is used  to produce motors' PWM    base                        */
-  /* ADC1 ADC     is used  to monitor battery level         - PA5                */
-  /* USART1 UART  is used  for USB/serial console           - PA9  / PA10        */
-  /* UART4  UART  is used  to get control from master board - PC10 / PC11        */
+  /* RTC  clock   is used  as a calendar base (e.g. for logs)                  */
+  /* TIM1 timer   is used  to update green LED              - PC13             */
+  /* TIM2 to TIM5 are used as input for motor's encoders                       */
+  /* TIM6 timer   is used  to produce a micro-second base for time measurement */
+  /* TIM7 timer   is used  to produce a micro-second base for delays           */
+  /* TIM8 timer   is used  to produce motors' PWM    base                      */
+  /* ADC1 ADC     is used  to monitor battery level         - PA5              */
+  /* USART1 UART  is used  for USB/serial console           - PA9  / PA10      */
+  /* UART4  UART  is used  to get control from master board - PC10 / PC11      */
+  /* PC0          is used  to trigger software reset                           */
 
   HAL_StatusTypeDef l_halReturnCode;
   T_SFO_Handle      l_commandsFifo;
   T_BLU_Data        l_bluetoothData;
   T_DRV_MODE        l_driveMode;
-  RTC_TimeTypeDef   l_rtcTime;
-  RTC_DateTypeDef   l_rtcDate;
   uint32_t          l_currentTimeInS;
   uint32_t          l_voltageInMv;
 
@@ -372,22 +373,20 @@ int main(void)
   l_currentTimeInS = 0;
   l_voltageInMv    = 0;
 
-  SFO_init        (&l_commandsFifo );
-  BLU_initData    (&l_bluetoothData);
-  UTI_resetRtcTime(&l_rtcTime      );
-  UTI_resetRtcDate(&l_rtcDate      );
+  SFO_init    (&l_commandsFifo );
+  BLU_initData(&l_bluetoothData);
 
   /* Setup global variables */
-  g_MAIN_padUpPressedStartTimeInS    = 0;
-  g_MAIN_padDownPressedStartTimeInS  = 0;
-  g_MAIN_padLeftPressedStartTimeInS  = 0;
-  g_MAIN_padRightPressedStartTimeInS = 0;
-  g_MAIN_swResetPollingLastTimeInS   = 0;
-  g_MAIN_batteryPollingLastTimeInS   = 0;
-  g_MAIN_ledModeUpdateLastTimeInS    = 0;
-  g_MAIN_driveLogInfoLastTimeInS     = 0;
-  g_MAIN_velocityReportLastTimeInS   = 0;
-  g_MAIN_printOutput                 = MAIN_PRINT_OUTPUT_TO_CONSOLE;
+  g_MAIN_context.padUpPressedStartTimeInS    = 0;
+  g_MAIN_context.padDownPressedStartTimeInS  = 0;
+  g_MAIN_context.padLeftPressedStartTimeInS  = 0;
+  g_MAIN_context.padRightPressedStartTimeInS = 0;
+  g_MAIN_context.swResetPollingLastTimeInS   = 0;
+  g_MAIN_context.batteryPollingLastTimeInS   = 0;
+  g_MAIN_context.ledModeUpdateLastTimeInS    = 0;
+  g_MAIN_context.driveLogInfoLastTimeInS     = 0;
+  g_MAIN_context.velocityReportLastTimeInS   = 0;
+  g_MAIN_printOutput                         = MAIN_PRINT_OUTPUT_TO_CONSOLE;
 
   /* Setup console */
   CON_init(&huart1);
@@ -400,48 +399,23 @@ int main(void)
   /* Temporary delay/workaround to deal with debugger connection issue */
   for (int i = 0; i < 10; i++)
   {
-    HAL_Delay(1000);
+    UTI_delayMs(1000);
   }
 
 #endif
 
   /* Setup and start using logs */
-  LOG_init    (&hrtc, STP_DEFAULT_IS_LOG_ON);
-  LOG_setLevel(STP_DEFAULT_LOG_LEVEL       );
-  LOG_info    ("Starting RCFW"             );
+  LOG_init    (STP_DEFAULT_IS_LOG_ON);
+  LOG_setLevel(STP_DEFAULT_LOG_LEVEL);
+  LOG_info    ("Starting RCFW"      );
 
   /* Display RCFW banner */
   MAIN_displayRcfwBanner();
 
-  /* Initialize Timer 6 */
-  l_halReturnCode = HAL_TIM_Base_Start(&htim6);
-
-  if (l_halReturnCode != HAL_OK)
-  {
-    LOG_error("HAL_TIM_Base_Start(&htim6) returned an error code: %d", l_halReturnCode);
-  }
-  else
-  {
-    LOG_info("Started TIMER 6 (time measurement)");
-  }
-
-  /* Initialize Timer 7 and delay function in utilities */
-  UTI_init(&htim7);
-
-  l_halReturnCode = HAL_TIM_Base_Start_IT(&htim7);
-
-  if (l_halReturnCode != HAL_OK)
-  {
-    LOG_error("HAL_TIM_Base_Start_IT(&htim7) returned an error code: %d", l_halReturnCode);
-  }
-  else
-  {
-    LOG_info("Started TIMER 7 (utilities/delay)");
-  }
+  /* Initialize utilities */
+  UTI_init(&htim7, &htim6, &hrtc);
 
   /* Initialize Timer 1 & green LED */
-  LED_setMode(LED_MODE_BLINK_FAST);
-
   l_halReturnCode = HAL_TIM_Base_Start_IT(&htim1);
 
   if (l_halReturnCode != HAL_OK)
@@ -452,6 +426,8 @@ int main(void)
   {
     LOG_info("Started TIMER 1 (green LED)");
   }
+
+  LED_setMode(LED_MODE_BLINK_FAST);
 
   /* Initialize Timers 2, 3, 4 & 5 */
   l_halReturnCode  = HAL_TIM_Encoder_Start_IT(&htim2, TIM_CHANNEL_ALL);
@@ -502,7 +478,7 @@ int main(void)
   BLU_init();
 
   /* Initialize driving module */
-  DRV_init(&htim8, &htim6, &htim4, &htim5, &htim2, &htim3);
+  DRV_init(&htim8, &htim4, &htim5, &htim2, &htim3);
 
   /* USER CODE END 2 */
 
@@ -512,36 +488,14 @@ int main(void)
   {
     l_driveMode = DRV_getMode();
 
-    l_halReturnCode = HAL_RTC_GetTime(&hrtc, &l_rtcTime, RTC_FORMAT_BCD);
-
-    if (l_halReturnCode != HAL_OK)
-    {
-      LOG_error("HAL_RTC_GetTime() returned an error code: %d", l_halReturnCode);
-    }
-    else
-    {
-      ; /* Nothing to to */
-    }
-
-    l_halReturnCode = HAL_RTC_GetDate(&hrtc, &l_rtcDate, RTC_FORMAT_BCD);
-
-    if (l_halReturnCode != HAL_OK)
-    {
-      LOG_error("HAL_RTC_GetDate() returned an error code: %d", l_halReturnCode);
-    }
-    else
-    {
-      ; /* Nothing to to */
-    }
-
-    l_currentTimeInS = UTI_turnRtcTimeToSeconds(&l_rtcTime);
+    l_currentTimeInS = UTI_getTimeS();
 
     if ((STP_SW_RESET_POLLING_PERIOD_IN_S != 0) &&
-        (l_currentTimeInS - g_MAIN_swResetPollingLastTimeInS >= STP_SW_RESET_POLLING_PERIOD_IN_S))
+        (l_currentTimeInS - g_MAIN_context.swResetPollingLastTimeInS >= STP_SW_RESET_POLLING_PERIOD_IN_S))
     {
       MAIN_updateSwReset();
 
-      g_MAIN_swResetPollingLastTimeInS = l_currentTimeInS;
+      g_MAIN_context.swResetPollingLastTimeInS = l_currentTimeInS;
     }
     else
     {
@@ -549,11 +503,11 @@ int main(void)
     }
 
     if ((STP_BATTERY_POLLING_PERIOD_IN_S != 0) &&
-        (l_currentTimeInS - g_MAIN_batteryPollingLastTimeInS >= STP_BATTERY_POLLING_PERIOD_IN_S))
+        (l_currentTimeInS - g_MAIN_context.batteryPollingLastTimeInS >= STP_BATTERY_POLLING_PERIOD_IN_S))
     {
       BAT_update(&l_voltageInMv);
 
-      g_MAIN_batteryPollingLastTimeInS = l_currentTimeInS;
+      g_MAIN_context.batteryPollingLastTimeInS = l_currentTimeInS;
     }
     else
     {
@@ -561,11 +515,11 @@ int main(void)
     }
 
     if ((STP_LED_UPDATE_MODE_PERIOD_IN_S != 0) &&
-        (l_currentTimeInS - g_MAIN_ledModeUpdateLastTimeInS >= STP_LED_UPDATE_MODE_PERIOD_IN_S))
+        (l_currentTimeInS - g_MAIN_context.ledModeUpdateLastTimeInS >= STP_LED_UPDATE_MODE_PERIOD_IN_S))
     {
       MAIN_updateLedMode (l_driveMode, l_voltageInMv);
 
-      g_MAIN_ledModeUpdateLastTimeInS = l_currentTimeInS;
+      g_MAIN_context.ledModeUpdateLastTimeInS = l_currentTimeInS;
     }
     else
     {
@@ -574,17 +528,17 @@ int main(void)
 
     BLU_receiveData        (&l_bluetoothData);
     MAIN_updateLogSetup    (&l_bluetoothData, l_currentTimeInS);
-    DRV_updateFromBluetooth(&l_bluetoothData, l_currentTimeInS);
+    DRV_updateFromBluetooth(&l_bluetoothData);
 
     CON_updateFifo(&l_commandsFifo);
     MAS_updateFifo(&l_commandsFifo);
 
     if ((STP_DRIVE_LOG_INFO_PERIOD_IN_S != 0) &&
-        (l_currentTimeInS - g_MAIN_driveLogInfoLastTimeInS >= STP_DRIVE_LOG_INFO_PERIOD_IN_S))
+        (l_currentTimeInS - g_MAIN_context.driveLogInfoLastTimeInS >= STP_DRIVE_LOG_INFO_PERIOD_IN_S))
     {
       DRV_updateFromCommands(&l_commandsFifo, true);
 
-      g_MAIN_driveLogInfoLastTimeInS = l_currentTimeInS;
+      g_MAIN_context.driveLogInfoLastTimeInS = l_currentTimeInS;
     }
     else
     {
@@ -592,18 +546,18 @@ int main(void)
     }
 
     if ((STP_VELOCITY_REPORT_PERIOD_IN_S != 0) &&
-        (l_currentTimeInS - g_MAIN_velocityReportLastTimeInS >= STP_VELOCITY_REPORT_PERIOD_IN_S))
+        (l_currentTimeInS - g_MAIN_context.velocityReportLastTimeInS >= STP_VELOCITY_REPORT_PERIOD_IN_S))
     {
       DRV_reportVelocity();
 
-      g_MAIN_velocityReportLastTimeInS = l_currentTimeInS;
+      g_MAIN_context.velocityReportLastTimeInS = l_currentTimeInS;
     }
     else
     {
       ; /* Nothing to do */
     }
 
-    UTI_delayUs(MAIN_LOOP_DELAY_IN_MS);
+    UTI_delayUs(STP_MAIN_LOOP_DELAY_IN_US);
 
     /* USER CODE END WHILE */
 

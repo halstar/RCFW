@@ -12,7 +12,7 @@ void MTR_init(T_MTR_Handle      *p_handle,
               TIM_HandleTypeDef *p_pwmTimerHandle,
               uint32_t           p_pwmChannel)
 {
-  LOG_info("Initializing Motor module for %s", p_name);
+  LOG_info("Initializing motor module for %s", p_name);
 
   p_handle->name           = p_name;
   p_handle->dirPin1Port    = p_dirPin1Port;

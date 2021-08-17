@@ -59,7 +59,6 @@ static void DRV_translateLeft    (uint32_t p_speed);
 static void DRV_translateRight   (uint32_t p_speed);
 
 void DRV_init(TIM_HandleTypeDef *p_pwmTimerHandle,
-              TIM_HandleTypeDef *p_msTimerHandle,
               TIM_HandleTypeDef *p_rearLeftEncoderTimerHandle,
               TIM_HandleTypeDef *p_rearRightEncoderTimerHandle,
               TIM_HandleTypeDef *p_frontRightEncoderTimerHandle,
@@ -80,7 +79,6 @@ void DRV_init(TIM_HandleTypeDef *p_pwmTimerHandle,
             TIM_CHANNEL_4,
             true,
             p_frontRightEncoderTimerHandle,
-            p_msTimerHandle,
             STP_DEFAULT_MOTORS_MODE);
 
   WHL_init(&g_DRV_context.wheelFrontLeft,
@@ -93,7 +91,6 @@ void DRV_init(TIM_HandleTypeDef *p_pwmTimerHandle,
             TIM_CHANNEL_3,
             false,
             p_frontLeftEncoderTimerHandle,
-            p_msTimerHandle,
             STP_DEFAULT_MOTORS_MODE);
 
   WHL_init(&g_DRV_context.wheelRearLeft,
@@ -106,7 +103,6 @@ void DRV_init(TIM_HandleTypeDef *p_pwmTimerHandle,
             TIM_CHANNEL_2,
             false,
             p_rearLeftEncoderTimerHandle,
-            p_msTimerHandle,
             STP_DEFAULT_MOTORS_MODE);
 
   WHL_init(&g_DRV_context.wheelRearRight,
@@ -119,7 +115,6 @@ void DRV_init(TIM_HandleTypeDef *p_pwmTimerHandle,
             TIM_CHANNEL_1,
             true,
             p_rearRightEncoderTimerHandle,
-            p_msTimerHandle,
             STP_DEFAULT_MOTORS_MODE);
 
   /* Consider that bluetooth controller is OFF by default. Pressing START is needed. */
@@ -175,8 +170,9 @@ void DRV_updateEncoder(TIM_HandleTypeDef *p_encoderTimerHandle)
   return;
 }
 
-void DRV_updateFromBluetooth(T_BLU_Data *p_bluetoothData, uint32_t p_timeInS)
+void DRV_updateFromBluetooth(T_BLU_Data *p_bluetoothData)
 {
+  uint32_t l_currentTimeInS;
   uint32_t l_speed;
 
   if (p_bluetoothData->button == BLU_BUTTON_START)
@@ -197,6 +193,8 @@ void DRV_updateFromBluetooth(T_BLU_Data *p_bluetoothData, uint32_t p_timeInS)
   }
   else
   {
+    l_currentTimeInS = UTI_getTimeS();
+
     /* Check possible requested mode change */
     switch (p_bluetoothData->button)
     {
@@ -242,11 +240,11 @@ void DRV_updateFromBluetooth(T_BLU_Data *p_bluetoothData, uint32_t p_timeInS)
       case BLU_BUTTON_SELECT:
         if (g_DRV_context.selectPressedStartTimeInS == 0)
         {
-          g_DRV_context.selectPressedStartTimeInS = p_timeInS;
+          g_DRV_context.selectPressedStartTimeInS = l_currentTimeInS;
 
           DRV_toggleMotorsState();
         }
-        else if (p_timeInS - g_DRV_context.selectPressedStartTimeInS < STP_BUTTONS_DEBOUNCE_PERIOD_IN_S)
+        else if (l_currentTimeInS - g_DRV_context.selectPressedStartTimeInS < STP_BUTTONS_DEBOUNCE_PERIOD_IN_S)
         {
           ; /* Nothing to do */
         }

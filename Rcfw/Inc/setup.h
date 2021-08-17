@@ -23,7 +23,8 @@
 
 #endif
 
-#define STP_BUTTONS_DEBOUNCE_PERIOD_IN_S 2
+#define STP_MAIN_LOOP_DELAY_IN_US       10000
+#define STP_BUTTONS_DEBOUNCE_PERIOD_IN_S    2
 
 #ifdef DEBUG
 
