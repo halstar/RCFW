@@ -52,15 +52,22 @@ void UTI_init(TIM_HandleTypeDef *p_usDelayHandle,
   return;
 }
 
-void UTI_delayUs(uint16_t p_delay)
+void UTI_delayUs(uint32_t p_delay)
 {
-  /* Reset the micro-seconds counter */
-  __HAL_TIM_SET_COUNTER(g_UTI_context.usDelayHandle, 0);
-
-  /* Wait for the counter to reach the input micro-seconds number */
-  while (__HAL_TIM_GET_COUNTER(g_UTI_context.usDelayHandle) < p_delay)
+  if (p_delay > UINT32_MAX)
   {
-    ; /* Nothing to do */
+    LOG_error("Input delay, %u, is greater than maximum allowed value: %u", p_delay, UINT32_MAX);
+  }
+  else
+  {
+    /* Reset the micro-seconds counter */
+    __HAL_TIM_SET_COUNTER(g_UTI_context.usDelayHandle, 0);
+
+    /* Wait for the counter to reach the input micro-seconds number */
+    while (__HAL_TIM_GET_COUNTER(g_UTI_context.usDelayHandle) < p_delay)
+    {
+      ; /* Nothing to do */
+    }
   }
 
   return;

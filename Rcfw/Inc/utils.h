@@ -12,7 +12,7 @@ void UTI_init(TIM_HandleTypeDef *p_usDelayHandle,
               TIM_HandleTypeDef *p_usTimerHandle,
               RTC_HandleTypeDef *p_sTimerHandle);
 
-void     UTI_delayUs          (uint16_t          p_delay);
+void     UTI_delayUs          (uint32_t          p_delay);
 void     UTI_delayMs          (uint32_t          p_delay);
 uint32_t UTI_getTimeUs        (void                     );
 uint32_t UTI_getTimeS         (void                     );

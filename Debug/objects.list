@@ -34,6 +34,7 @@
 "./Rcfw/Src/master_control.o"
 "./Rcfw/Src/motor.o"
 "./Rcfw/Src/pid.o"
+"./Rcfw/Src/robot.o"
 "./Rcfw/Src/string_fifo.o"
 "./Rcfw/Src/utils.o"
 "./Rcfw/Src/wheel.o"

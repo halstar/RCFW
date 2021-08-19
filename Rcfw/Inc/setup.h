@@ -2,14 +2,14 @@
 #define __SETUP_H
 
 #include "log.h"
-#include "main.h"
+#include "robot.h"
 #include "drive.h"
 
 #ifdef DEBUG
 
   #define STP_DEFAULT_IS_LOG_ON    true
   #define STP_DEFAULT_LOG_LEVEL    LOG_LEVEL_DEBUG
-  #define STP_DEFAULT_PRINT_OUTPUT MAIN_PRINT_OUTPUT_TO_CONSOLE
+  #define STP_DEFAULT_PRINT_OUTPUT RBT_PRINT_OUTPUT_TO_CONSOLE
   #define STP_DEFAULT_DRIVE_MODE   DRV_MODE_MANUAL_FIXED_SPEED
   #define STP_DEFAULT_MOTORS_MODE  false
 

@@ -42,13 +42,7 @@ extern "C" {
 
 /* Exported constants --------------------------------------------------------*/
 /* USER CODE BEGIN EC */
-typedef enum
-{
-  MAIN_PRINT_OUTPUT_TO_CONSOLE = 0,
-  MAIN_PRINT_OUTPUT_TO_MASTER,
-} T_MAIN_PRINT_OUTPUT;
 
-extern T_MAIN_PRINT_OUTPUT g_MAIN_printOutput;
 /* USER CODE END EC */
 
 /* Exported macro ------------------------------------------------------------*/

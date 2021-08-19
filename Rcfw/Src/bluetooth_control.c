@@ -26,13 +26,13 @@ typedef struct T_BLU_Context
 
 static T_BLU_Context g_BLU_context;
 
-static void         BLU_sendCommand(uint8_t  p_command);
-static void         BLU_readData   (uint8_t *p_buffer );
-static T_BLU_BUTTON BLU_getButton  (uint8_t *p_buffer );
+static void         BLU_sendCommand(uint32_t  p_command);
+static void         BLU_readData   (uint8_t  *p_buffer );
+static T_BLU_BUTTON BLU_getButton  (uint8_t  *p_buffer );
 
-static void BLU_sendCommand(uint8_t p_command)
+static void BLU_sendCommand(uint32_t p_command)
 {
-  volatile uint16_t l_bitValue;
+  uint32_t l_bitValue;
 
   for (l_bitValue = 0x01; l_bitValue < 0x0100; l_bitValue <<= 1)
   {
@@ -58,8 +58,8 @@ static void BLU_sendCommand(uint8_t p_command)
 
 static void BLU_readData(uint8_t *p_buffer)
 {
-  volatile uint8_t  l_index;
-  volatile uint16_t l_bitValue;
+  uint32_t l_index;
+  uint32_t l_bitValue;
 
   /* Reset buffer */
   for (l_index = 0; l_index < BLU_DATA_BUFFER_LENGTH; l_index++)
@@ -101,8 +101,8 @@ static void BLU_readData(uint8_t *p_buffer)
 
 static T_BLU_BUTTON BLU_getButton(uint8_t *p_buffer)
 {
-  uint16_t l_buttonRawValue;
-  uint8_t  l_index;
+  uint32_t l_buttonRawValue;
+  uint32_t l_index;
 
   l_buttonRawValue = (p_buffer[BLU_BUTTON_HIGH_OFFSET] << 8) | p_buffer[BLU_BUTTON_LOW_OFFSET];
 
