@@ -1,7 +1,6 @@
 #include <stdio.h>
-#include <string.h>
 
-#include "robot.h"
+#include "rcfw.h"
 
 #include "stm32f1xx_hal.h"
 #include "log.h"
@@ -16,13 +15,13 @@
 #include "master_control.h"
 #include "bluetooth_control.h"
 
-static void RBT_displayRcfwBanner(void);
-static void RBT_togglePrintOutput(void);
-static void RBT_updateSwReset    (void);
-static void RBT_updateLogSetup   (T_BLU_Data *p_data,      uint32_t p_timeInS    );
-static void RBT_updateLedMode    (T_DRV_MODE  p_driveMode, uint32_t p_voltageInMv);
+static void RCF_displayRcfwBanner(void);
+static void RCF_togglePrintOutput(void);
+static void RCF_updateSwReset    (void);
+static void RCF_updateLogSetup   (T_BLU_Data *p_data,      uint32_t p_timeInS    );
+static void RCF_updateLedMode    (T_DRV_MODE  p_driveMode, uint32_t p_voltageInMv);
 
-typedef struct T_RBT_Context
+typedef struct T_RCF_Context
 {
   T_SFO_Handle commandsFifo;
   T_BLU_Data   bluetoothData;
@@ -35,13 +34,13 @@ typedef struct T_RBT_Context
   uint32_t     ledModeUpdateLastTimeInS;
   uint32_t     driveLogInfoLastTimeInS;
   uint32_t     velocityReportLastTimeInS;
-} T_RBT_Context;
+} T_RCF_Context;
 
-static T_RBT_Context g_RBT_context;
+static T_RCF_Context g_RCF_context;
 
-T_RBT_PRINT_OUTPUT g_RBT_printOutput;
+T_RCF_PRINT_OUTPUT g_RCF_printOutput;
 
-void RBT_init(T_RBT_Handle       *p_handle,
+void RCF_init(T_RCF_Handle       *p_handle,
               TIM_HandleTypeDef  *p_htim1 ,
               TIM_HandleTypeDef  *p_htim2 ,
               TIM_HandleTypeDef  *p_htim3 ,
@@ -57,7 +56,7 @@ void RBT_init(T_RBT_Handle       *p_handle,
 {
   HAL_StatusTypeDef l_halReturnCode;
 
-  LOG_info("Initializing robot module");
+  LOG_info("Initializing RCFW module");
 
   p_handle->htim1  = p_htim1 ;
   p_handle->htim2  = p_htim2 ;
@@ -76,19 +75,19 @@ void RBT_init(T_RBT_Handle       *p_handle,
   l_halReturnCode = HAL_OK;
 
   /* Setup global variables */
-  SFO_init    (&g_RBT_context.commandsFifo );
-  BLU_initData(&g_RBT_context.bluetoothData);
+  SFO_init    (&g_RCF_context.commandsFifo );
+  BLU_initData(&g_RCF_context.bluetoothData);
 
-  g_RBT_context.padUpPressedStartTimeInS    = 0;
-  g_RBT_context.padDownPressedStartTimeInS  = 0;
-  g_RBT_context.padLeftPressedStartTimeInS  = 0;
-  g_RBT_context.padRightPressedStartTimeInS = 0;
-  g_RBT_context.swResetPollingLastTimeInS   = 0;
-  g_RBT_context.batteryPollingLastTimeInS   = 0;
-  g_RBT_context.ledModeUpdateLastTimeInS    = 0;
-  g_RBT_context.driveLogInfoLastTimeInS     = 0;
-  g_RBT_context.velocityReportLastTimeInS   = 0;
-  g_RBT_printOutput                         = RBT_PRINT_OUTPUT_TO_CONSOLE;
+  g_RCF_context.padUpPressedStartTimeInS    = 0;
+  g_RCF_context.padDownPressedStartTimeInS  = 0;
+  g_RCF_context.padLeftPressedStartTimeInS  = 0;
+  g_RCF_context.padRightPressedStartTimeInS = 0;
+  g_RCF_context.swResetPollingLastTimeInS   = 0;
+  g_RCF_context.batteryPollingLastTimeInS   = 0;
+  g_RCF_context.ledModeUpdateLastTimeInS    = 0;
+  g_RCF_context.driveLogInfoLastTimeInS     = 0;
+  g_RCF_context.velocityReportLastTimeInS   = 0;
+  g_RCF_printOutput                         = RCF_PRINT_OUTPUT_TO_CONSOLE;
 
   /* Setup console */
   CON_init(p_handle->huart1);
@@ -112,7 +111,7 @@ void RBT_init(T_RBT_Handle       *p_handle,
   LOG_info    ("Starting RCFW"      );
 
   /* Display RCFW banner */
-  RBT_displayRcfwBanner();
+  RCF_displayRcfwBanner();
 
   /* Initialize utilities */
   UTI_init(p_handle->htim7, p_handle->htim6, p_handle->hrtc);
@@ -185,7 +184,7 @@ void RBT_init(T_RBT_Handle       *p_handle,
   return;
 }
 
-void RBT_update(T_RBT_Handle *p_handle)
+void RCF_update(T_RCF_Handle *p_handle)
 {
   T_DRV_MODE l_driveMode;
   uint32_t   l_currentTimeInS;
@@ -201,11 +200,11 @@ void RBT_update(T_RBT_Handle *p_handle)
   l_currentTimeInS = UTI_getTimeS();
 
   if ((STP_SW_RESET_POLLING_PERIOD_IN_S != 0) &&
-      (l_currentTimeInS - g_RBT_context.swResetPollingLastTimeInS >= STP_SW_RESET_POLLING_PERIOD_IN_S))
+      (l_currentTimeInS - g_RCF_context.swResetPollingLastTimeInS >= STP_SW_RESET_POLLING_PERIOD_IN_S))
   {
-    RBT_updateSwReset();
+    RCF_updateSwReset();
 
-    g_RBT_context.swResetPollingLastTimeInS = l_currentTimeInS;
+    g_RCF_context.swResetPollingLastTimeInS = l_currentTimeInS;
   }
   else
   {
@@ -213,11 +212,11 @@ void RBT_update(T_RBT_Handle *p_handle)
   }
 
   if ((STP_BATTERY_POLLING_PERIOD_IN_S != 0) &&
-      (l_currentTimeInS - g_RBT_context.batteryPollingLastTimeInS >= STP_BATTERY_POLLING_PERIOD_IN_S))
+      (l_currentTimeInS - g_RCF_context.batteryPollingLastTimeInS >= STP_BATTERY_POLLING_PERIOD_IN_S))
   {
     BAT_update(&l_voltageInMv);
 
-    g_RBT_context.batteryPollingLastTimeInS = l_currentTimeInS;
+    g_RCF_context.batteryPollingLastTimeInS = l_currentTimeInS;
   }
   else
   {
@@ -225,42 +224,42 @@ void RBT_update(T_RBT_Handle *p_handle)
   }
 
   if ((STP_LED_UPDATE_MODE_PERIOD_IN_S != 0) &&
-      (l_currentTimeInS - g_RBT_context.ledModeUpdateLastTimeInS >= STP_LED_UPDATE_MODE_PERIOD_IN_S))
+      (l_currentTimeInS - g_RCF_context.ledModeUpdateLastTimeInS >= STP_LED_UPDATE_MODE_PERIOD_IN_S))
   {
-    RBT_updateLedMode (l_driveMode, l_voltageInMv);
+    RCF_updateLedMode (l_driveMode, l_voltageInMv);
 
-    g_RBT_context.ledModeUpdateLastTimeInS = l_currentTimeInS;
+    g_RCF_context.ledModeUpdateLastTimeInS = l_currentTimeInS;
   }
   else
   {
     ; /* Nothing to do */
   }
 
-  BLU_receiveData        (&g_RBT_context.bluetoothData);
-  RBT_updateLogSetup     (&g_RBT_context.bluetoothData, l_currentTimeInS);
-  DRV_updateFromBluetooth(&g_RBT_context.bluetoothData);
+  BLU_receiveData        (&g_RCF_context.bluetoothData);
+  RCF_updateLogSetup     (&g_RCF_context.bluetoothData, l_currentTimeInS);
+  DRV_updateFromBluetooth(&g_RCF_context.bluetoothData);
 
-  CON_updateFifo(&g_RBT_context.commandsFifo);
-  MAS_updateFifo(&g_RBT_context.commandsFifo);
+  CON_updateFifo(&g_RCF_context.commandsFifo);
+  MAS_updateFifo(&g_RCF_context.commandsFifo);
 
   if ((STP_DRIVE_LOG_INFO_PERIOD_IN_S != 0) &&
-      (l_currentTimeInS - g_RBT_context.driveLogInfoLastTimeInS >= STP_DRIVE_LOG_INFO_PERIOD_IN_S))
+      (l_currentTimeInS - g_RCF_context.driveLogInfoLastTimeInS >= STP_DRIVE_LOG_INFO_PERIOD_IN_S))
   {
-    DRV_updateFromCommands(&g_RBT_context.commandsFifo, true);
+    DRV_updateFromCommands(&g_RCF_context.commandsFifo, true);
 
-    g_RBT_context.driveLogInfoLastTimeInS = l_currentTimeInS;
+    g_RCF_context.driveLogInfoLastTimeInS = l_currentTimeInS;
   }
   else
   {
-    DRV_updateFromCommands(&g_RBT_context.commandsFifo, false);
+    DRV_updateFromCommands(&g_RCF_context.commandsFifo, false);
   }
 
   if ((STP_VELOCITY_REPORT_PERIOD_IN_S != 0) &&
-      (l_currentTimeInS - g_RBT_context.velocityReportLastTimeInS >= STP_VELOCITY_REPORT_PERIOD_IN_S))
+      (l_currentTimeInS - g_RCF_context.velocityReportLastTimeInS >= STP_VELOCITY_REPORT_PERIOD_IN_S))
   {
     DRV_reportVelocity();
 
-    g_RBT_context.velocityReportLastTimeInS = l_currentTimeInS;
+    g_RCF_context.velocityReportLastTimeInS = l_currentTimeInS;
   }
   else
   {
@@ -269,7 +268,7 @@ void RBT_update(T_RBT_Handle *p_handle)
   return;
 }
 
-static void RBT_displayRcfwBanner(void)
+static void RCF_displayRcfwBanner(void)
 {
   /* Used ASCII art generator from https://patorjk.com with font called "Colossal" */
   LOG_info("");
@@ -286,25 +285,25 @@ static void RBT_displayRcfwBanner(void)
   return;
 }
 
-static void RBT_togglePrintOutput(void)
+static void RCF_togglePrintOutput(void)
 {
-  if (g_RBT_printOutput == RBT_PRINT_OUTPUT_TO_CONSOLE)
+  if (g_RCF_printOutput == RCF_PRINT_OUTPUT_TO_CONSOLE)
   {
     LOG_info("Directing print to MASTER");
 
-    g_RBT_printOutput = RBT_PRINT_OUTPUT_TO_MASTER;
+    g_RCF_printOutput = RCF_PRINT_OUTPUT_TO_MASTER;
   }
   else
   {
     LOG_info("Directing print to CONSOLE");
 
-    g_RBT_printOutput = RBT_PRINT_OUTPUT_TO_CONSOLE;
+    g_RCF_printOutput = RCF_PRINT_OUTPUT_TO_CONSOLE;
   }
 
   return;
 }
 
-static void RBT_updateSwReset(void)
+static void RCF_updateSwReset(void)
 {
   GPIO_PinState l_pinState;
 
@@ -331,75 +330,75 @@ static void RBT_updateSwReset(void)
   return;
 }
 
-static void RBT_updateLogSetup(T_BLU_Data *p_data, uint32_t p_timeInS)
+static void RCF_updateLogSetup(T_BLU_Data *p_data, uint32_t p_timeInS)
 {
   switch (p_data->button)
   {
     case BLU_BUTTON_PAD_UP:
-      if (g_RBT_context.padUpPressedStartTimeInS == 0)
+      if (g_RCF_context.padUpPressedStartTimeInS == 0)
       {
-        g_RBT_context.padUpPressedStartTimeInS = p_timeInS;
+        g_RCF_context.padUpPressedStartTimeInS = p_timeInS;
 
         LOG_increaseLevel();
       }
-      else if (p_timeInS - g_RBT_context.padUpPressedStartTimeInS < STP_BUTTONS_DEBOUNCE_PERIOD_IN_S)
+      else if (p_timeInS - g_RCF_context.padUpPressedStartTimeInS < STP_BUTTONS_DEBOUNCE_PERIOD_IN_S)
       {
         ; /* Nothing to do */
       }
       else
       {
-        g_RBT_context.padUpPressedStartTimeInS = 0;
+        g_RCF_context.padUpPressedStartTimeInS = 0;
       }
       break;
 
     case BLU_BUTTON_PAD_DOWN:
-      if (g_RBT_context.padDownPressedStartTimeInS == 0)
+      if (g_RCF_context.padDownPressedStartTimeInS == 0)
       {
-        g_RBT_context.padDownPressedStartTimeInS = p_timeInS;
+        g_RCF_context.padDownPressedStartTimeInS = p_timeInS;
 
         LOG_decreaseLevel();
       }
-      else if (p_timeInS - g_RBT_context.padDownPressedStartTimeInS < STP_BUTTONS_DEBOUNCE_PERIOD_IN_S)
+      else if (p_timeInS - g_RCF_context.padDownPressedStartTimeInS < STP_BUTTONS_DEBOUNCE_PERIOD_IN_S)
       {
         ; /* Nothing to do */
       }
       else
       {
-        g_RBT_context.padDownPressedStartTimeInS = 0;
+        g_RCF_context.padDownPressedStartTimeInS = 0;
       }
       break;
 
     case BLU_BUTTON_PAD_LEFT:
-      if (g_RBT_context.padLeftPressedStartTimeInS == 0)
+      if (g_RCF_context.padLeftPressedStartTimeInS == 0)
       {
-        g_RBT_context.padLeftPressedStartTimeInS = p_timeInS;
+        g_RCF_context.padLeftPressedStartTimeInS = p_timeInS;
 
         LOG_toggleOnOff();
       }
-      else if (p_timeInS - g_RBT_context.padLeftPressedStartTimeInS < STP_BUTTONS_DEBOUNCE_PERIOD_IN_S)
+      else if (p_timeInS - g_RCF_context.padLeftPressedStartTimeInS < STP_BUTTONS_DEBOUNCE_PERIOD_IN_S)
       {
         ; /* Nothing to do */
       }
       else
       {
-        g_RBT_context.padLeftPressedStartTimeInS = 0;
+        g_RCF_context.padLeftPressedStartTimeInS = 0;
       }
       break;
 
     case BLU_BUTTON_PAD_RIGHT:
-      if (g_RBT_context.padRightPressedStartTimeInS == 0)
+      if (g_RCF_context.padRightPressedStartTimeInS == 0)
       {
-        g_RBT_context.padRightPressedStartTimeInS = p_timeInS;
+        g_RCF_context.padRightPressedStartTimeInS = p_timeInS;
 
-        RBT_togglePrintOutput();
+        RCF_togglePrintOutput();
       }
-      else if (p_timeInS - g_RBT_context.padRightPressedStartTimeInS < STP_BUTTONS_DEBOUNCE_PERIOD_IN_S)
+      else if (p_timeInS - g_RCF_context.padRightPressedStartTimeInS < STP_BUTTONS_DEBOUNCE_PERIOD_IN_S)
       {
         ; /* Nothing to do */
       }
       else
       {
-        g_RBT_context.padRightPressedStartTimeInS = 0;
+        g_RCF_context.padRightPressedStartTimeInS = 0;
       }
       break;
 
@@ -410,8 +409,8 @@ static void RBT_updateLogSetup(T_BLU_Data *p_data, uint32_t p_timeInS)
 
   if ((p_data->button != BLU_BUTTON_PAD_UP) && (p_data->button != BLU_BUTTON_PAD_DOWN))
   {
-    g_RBT_context.padUpPressedStartTimeInS   = 0;
-    g_RBT_context.padDownPressedStartTimeInS = 0;
+    g_RCF_context.padUpPressedStartTimeInS   = 0;
+    g_RCF_context.padDownPressedStartTimeInS = 0;
   }
   else
   {
@@ -421,7 +420,7 @@ static void RBT_updateLogSetup(T_BLU_Data *p_data, uint32_t p_timeInS)
   return;
 }
 
-static void RBT_updateLedMode(T_DRV_MODE p_driveMode, uint32_t p_voltageInMv)
+static void RCF_updateLedMode(T_DRV_MODE p_driveMode, uint32_t p_voltageInMv)
 {
   /* Regarding LED mode, battery check is prioritary on user requests. */
   /* Ignore 0 value as we could get it at startup or while debugging.  */

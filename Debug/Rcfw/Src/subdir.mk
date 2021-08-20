@@ -16,7 +16,7 @@ C_SRCS += \
 ../Rcfw/Src/master_control.c \
 ../Rcfw/Src/motor.c \
 ../Rcfw/Src/pid.c \
-../Rcfw/Src/robot.c \
+../Rcfw/Src/rcfw.c \
 ../Rcfw/Src/string_fifo.c \
 ../Rcfw/Src/utils.c \
 ../Rcfw/Src/wheel.c 
@@ -33,7 +33,7 @@ OBJS += \
 ./Rcfw/Src/master_control.o \
 ./Rcfw/Src/motor.o \
 ./Rcfw/Src/pid.o \
-./Rcfw/Src/robot.o \
+./Rcfw/Src/rcfw.o \
 ./Rcfw/Src/string_fifo.o \
 ./Rcfw/Src/utils.o \
 ./Rcfw/Src/wheel.o 
@@ -50,7 +50,7 @@ C_DEPS += \
 ./Rcfw/Src/master_control.d \
 ./Rcfw/Src/motor.d \
 ./Rcfw/Src/pid.d \
-./Rcfw/Src/robot.d \
+./Rcfw/Src/rcfw.d \
 ./Rcfw/Src/string_fifo.d \
 ./Rcfw/Src/utils.d \
 ./Rcfw/Src/wheel.d 

@@ -35,15 +35,15 @@ Idx Name          Size      VMA       LMA       File off  Algn
                   CONTENTS, READONLY, DEBUGGING, OCTETS
  15 .debug_ranges 000013e0  00000000  00000000  00054018  2**3
                   CONTENTS, READONLY, DEBUGGING, OCTETS
- 16 .debug_macro  0001f39f  00000000  00000000  000553f8  2**0
+ 16 .debug_macro  0001f36f  00000000  00000000  000553f8  2**0
                   CONTENTS, READONLY, DEBUGGING, OCTETS
- 17 .debug_line   0001dbe9  00000000  00000000  00074797  2**0
+ 17 .debug_line   0001dbb0  00000000  00000000  00074767  2**0
                   CONTENTS, READONLY, DEBUGGING, OCTETS
- 18 .debug_str    000a6a5c  00000000  00000000  00092380  2**0
+ 18 .debug_str    000a6a59  00000000  00000000  00092317  2**0
                   CONTENTS, READONLY, DEBUGGING, OCTETS
- 19 .comment      00000053  00000000  00000000  00138ddc  2**0
+ 19 .comment      00000053  00000000  00000000  00138d70  2**0
                   CONTENTS, READONLY
- 20 .debug_frame  00006eb4  00000000  00000000  00138e30  2**2
+ 20 .debug_frame  00006eb4  00000000  00000000  00138dc4  2**2
                   CONTENTS, READONLY, DEBUGGING, OCTETS
 
 Disassembly of section .text:
@@ -1515,7 +1515,7 @@ int main(void)
  8001236:	f000 fb25 	bl	8001884 <MX_TIM8_Init>
   /* USER CODE BEGIN 2 */
 
-  RBT_init(&l_robotHandle,
+  RCF_init(&l_rcfHandle,
  800123a:	4638      	mov	r0, r7
  800123c:	4b0f      	ldr	r3, [pc, #60]	; (800127c <main+0x84>)
  800123e:	9308      	str	r3, [sp, #32]
@@ -1538,21 +1538,21 @@ int main(void)
  8001260:	4b0f      	ldr	r3, [pc, #60]	; (80012a0 <main+0xa8>)
  8001262:	4a10      	ldr	r2, [pc, #64]	; (80012a4 <main+0xac>)
  8001264:	4910      	ldr	r1, [pc, #64]	; (80012a8 <main+0xb0>)
- 8001266:	f009 fbdd 	bl	800aa24 <RBT_init>
+ 8001266:	f009 fbdd 	bl	800aa24 <RCF_init>
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
   while (1)
   {
-    RBT_update(&l_robotHandle);
+    RCF_update(&l_rcfHandle);
  800126a:	463b      	mov	r3, r7
  800126c:	4618      	mov	r0, r3
- 800126e:	f009 fd29 	bl	800acc4 <RBT_update>
+ 800126e:	f009 fd29 	bl	800acc4 <RCF_update>
 
     UTI_delayUs(STP_MAIN_LOOP_DELAY_IN_US);
  8001272:	f242 7010 	movw	r0, #10000	; 0x2710
  8001276:	f00a f83b 	bl	800b2f0 <UTI_delayUs>
-    RBT_update(&l_robotHandle);
+    RCF_update(&l_rcfHandle);
  800127a:	e7f6      	b.n	800126a <main+0x72>
  800127c:	20000a64 	.word	0x20000a64
  8001280:	20000874 	.word	0x20000874
@@ -4831,7 +4831,7 @@ __attribute__((weak)) int _write(int file, char *ptr, int len)
  8002482:	e00f      	b.n	80024a4 <_write+0x48>
   }
 
-  if (g_RBT_printOutput == RBT_PRINT_OUTPUT_TO_CONSOLE)
+  if (g_RCF_printOutput == RCF_PRINT_OUTPUT_TO_CONSOLE)
  8002484:	4b09      	ldr	r3, [pc, #36]	; (80024ac <_write+0x50>)
  8002486:	781b      	ldrb	r3, [r3, #0]
  8002488:	2b00      	cmp	r3, #0
@@ -26379,7 +26379,7 @@ void PID_logInfo(T_PID_Handle *p_handle, bool p_compactLog)
  800aa1c:	080108e4 	.word	0x080108e4
  800aa20:	08010910 	.word	0x08010910
 
-0800aa24 <RBT_init>:
+0800aa24 <RCF_init>:
               TIM_HandleTypeDef  *p_htim8 ,
               RTC_HandleTypeDef  *p_hrtc  ,
               ADC_HandleTypeDef  *p_hadc1 ,
@@ -26395,8 +26395,8 @@ void PID_logInfo(T_PID_Handle *p_handle, bool p_compactLog)
  800aa30:	603b      	str	r3, [r7, #0]
   HAL_StatusTypeDef l_halReturnCode;
 
-  LOG_info("Initializing robot module");
- 800aa32:	4997      	ldr	r1, [pc, #604]	; (800ac90 <RBT_init+0x26c>)
+  LOG_info("Initializing RCFW module");
+ 800aa32:	4997      	ldr	r1, [pc, #604]	; (800ac90 <RCF_init+0x26c>)
  800aa34:	2001      	movs	r0, #1
  800aa36:	f7ff fbd1 	bl	800a1dc <LOG_log>
 
@@ -26455,51 +26455,51 @@ void PID_logInfo(T_PID_Handle *p_handle, bool p_compactLog)
  800aa84:	74fb      	strb	r3, [r7, #19]
 
   /* Setup global variables */
-  SFO_init    (&g_RBT_context.commandsFifo );
- 800aa86:	4883      	ldr	r0, [pc, #524]	; (800ac94 <RBT_init+0x270>)
+  SFO_init    (&g_RCF_context.commandsFifo );
+ 800aa86:	4883      	ldr	r0, [pc, #524]	; (800ac94 <RCF_init+0x270>)
  800aa88:	f000 fae8 	bl	800b05c <SFO_init>
-  BLU_initData(&g_RBT_context.bluetoothData);
- 800aa8c:	4882      	ldr	r0, [pc, #520]	; (800ac98 <RBT_init+0x274>)
+  BLU_initData(&g_RCF_context.bluetoothData);
+ 800aa8c:	4882      	ldr	r0, [pc, #520]	; (800ac98 <RCF_init+0x274>)
  800aa8e:	f7fe f817 	bl	8008ac0 <BLU_initData>
 
-  g_RBT_context.padUpPressedStartTimeInS    = 0;
- 800aa92:	4b80      	ldr	r3, [pc, #512]	; (800ac94 <RBT_init+0x270>)
+  g_RCF_context.padUpPressedStartTimeInS    = 0;
+ 800aa92:	4b80      	ldr	r3, [pc, #512]	; (800ac94 <RCF_init+0x270>)
  800aa94:	2200      	movs	r2, #0
  800aa96:	621a      	str	r2, [r3, #32]
-  g_RBT_context.padDownPressedStartTimeInS  = 0;
- 800aa98:	4b7e      	ldr	r3, [pc, #504]	; (800ac94 <RBT_init+0x270>)
+  g_RCF_context.padDownPressedStartTimeInS  = 0;
+ 800aa98:	4b7e      	ldr	r3, [pc, #504]	; (800ac94 <RCF_init+0x270>)
  800aa9a:	2200      	movs	r2, #0
  800aa9c:	625a      	str	r2, [r3, #36]	; 0x24
-  g_RBT_context.padLeftPressedStartTimeInS  = 0;
- 800aa9e:	4b7d      	ldr	r3, [pc, #500]	; (800ac94 <RBT_init+0x270>)
+  g_RCF_context.padLeftPressedStartTimeInS  = 0;
+ 800aa9e:	4b7d      	ldr	r3, [pc, #500]	; (800ac94 <RCF_init+0x270>)
  800aaa0:	2200      	movs	r2, #0
  800aaa2:	629a      	str	r2, [r3, #40]	; 0x28
-  g_RBT_context.padRightPressedStartTimeInS = 0;
- 800aaa4:	4b7b      	ldr	r3, [pc, #492]	; (800ac94 <RBT_init+0x270>)
+  g_RCF_context.padRightPressedStartTimeInS = 0;
+ 800aaa4:	4b7b      	ldr	r3, [pc, #492]	; (800ac94 <RCF_init+0x270>)
  800aaa6:	2200      	movs	r2, #0
  800aaa8:	62da      	str	r2, [r3, #44]	; 0x2c
-  g_RBT_context.swResetPollingLastTimeInS   = 0;
- 800aaaa:	4b7a      	ldr	r3, [pc, #488]	; (800ac94 <RBT_init+0x270>)
+  g_RCF_context.swResetPollingLastTimeInS   = 0;
+ 800aaaa:	4b7a      	ldr	r3, [pc, #488]	; (800ac94 <RCF_init+0x270>)
  800aaac:	2200      	movs	r2, #0
  800aaae:	631a      	str	r2, [r3, #48]	; 0x30
-  g_RBT_context.batteryPollingLastTimeInS   = 0;
- 800aab0:	4b78      	ldr	r3, [pc, #480]	; (800ac94 <RBT_init+0x270>)
+  g_RCF_context.batteryPollingLastTimeInS   = 0;
+ 800aab0:	4b78      	ldr	r3, [pc, #480]	; (800ac94 <RCF_init+0x270>)
  800aab2:	2200      	movs	r2, #0
  800aab4:	635a      	str	r2, [r3, #52]	; 0x34
-  g_RBT_context.ledModeUpdateLastTimeInS    = 0;
- 800aab6:	4b77      	ldr	r3, [pc, #476]	; (800ac94 <RBT_init+0x270>)
+  g_RCF_context.ledModeUpdateLastTimeInS    = 0;
+ 800aab6:	4b77      	ldr	r3, [pc, #476]	; (800ac94 <RCF_init+0x270>)
  800aab8:	2200      	movs	r2, #0
  800aaba:	639a      	str	r2, [r3, #56]	; 0x38
-  g_RBT_context.driveLogInfoLastTimeInS     = 0;
- 800aabc:	4b75      	ldr	r3, [pc, #468]	; (800ac94 <RBT_init+0x270>)
+  g_RCF_context.driveLogInfoLastTimeInS     = 0;
+ 800aabc:	4b75      	ldr	r3, [pc, #468]	; (800ac94 <RCF_init+0x270>)
  800aabe:	2200      	movs	r2, #0
  800aac0:	63da      	str	r2, [r3, #60]	; 0x3c
-  g_RBT_context.velocityReportLastTimeInS   = 0;
- 800aac2:	4b74      	ldr	r3, [pc, #464]	; (800ac94 <RBT_init+0x270>)
+  g_RCF_context.velocityReportLastTimeInS   = 0;
+ 800aac2:	4b74      	ldr	r3, [pc, #464]	; (800ac94 <RCF_init+0x270>)
  800aac4:	2200      	movs	r2, #0
  800aac6:	641a      	str	r2, [r3, #64]	; 0x40
-  g_RBT_printOutput                         = RBT_PRINT_OUTPUT_TO_CONSOLE;
- 800aac8:	4b74      	ldr	r3, [pc, #464]	; (800ac9c <RBT_init+0x278>)
+  g_RCF_printOutput                         = RCF_PRINT_OUTPUT_TO_CONSOLE;
+ 800aac8:	4b74      	ldr	r3, [pc, #464]	; (800ac9c <RCF_init+0x278>)
  800aaca:	2200      	movs	r2, #0
  800aacc:	701a      	strb	r2, [r3, #0]
 
@@ -26523,7 +26523,7 @@ void PID_logInfo(T_PID_Handle *p_handle, bool p_compactLog)
   for (int i = 0; i < 10; i++)
  800aae2:	2300      	movs	r3, #0
  800aae4:	617b      	str	r3, [r7, #20]
- 800aae6:	e006      	b.n	800aaf6 <RBT_init+0xd2>
+ 800aae6:	e006      	b.n	800aaf6 <RCF_init+0xd2>
   {
     UTI_delayMs(1000);
  800aae8:	f44f 707a 	mov.w	r0, #1000	; 0x3e8
@@ -26534,7 +26534,7 @@ void PID_logInfo(T_PID_Handle *p_handle, bool p_compactLog)
  800aaf4:	617b      	str	r3, [r7, #20]
  800aaf6:	697b      	ldr	r3, [r7, #20]
  800aaf8:	2b09      	cmp	r3, #9
- 800aafa:	ddf5      	ble.n	800aae8 <RBT_init+0xc4>
+ 800aafa:	ddf5      	ble.n	800aae8 <RCF_init+0xc4>
   }
 
 #endif
@@ -26547,13 +26547,13 @@ void PID_logInfo(T_PID_Handle *p_handle, bool p_compactLog)
  800ab02:	2000      	movs	r0, #0
  800ab04:	f7ff fb2a 	bl	800a15c <LOG_setLevel>
   LOG_info    ("Starting RCFW"      );
- 800ab08:	4965      	ldr	r1, [pc, #404]	; (800aca0 <RBT_init+0x27c>)
+ 800ab08:	4965      	ldr	r1, [pc, #404]	; (800aca0 <RCF_init+0x27c>)
  800ab0a:	2001      	movs	r0, #1
  800ab0c:	f7ff fb66 	bl	800a1dc <LOG_log>
 
   /* Display RCFW banner */
-  RBT_displayRcfwBanner();
- 800ab10:	f000 f946 	bl	800ada0 <RBT_displayRcfwBanner>
+  RCF_displayRcfwBanner();
+ 800ab10:	f000 f946 	bl	800ada0 <RCF_displayRcfwBanner>
 
   /* Initialize utilities */
   UTI_init(p_handle->htim7, p_handle->htim6, p_handle->hrtc);
@@ -26578,20 +26578,20 @@ void PID_logInfo(T_PID_Handle *p_handle, bool p_compactLog)
   if (l_halReturnCode != HAL_OK)
  800ab34:	7cfb      	ldrb	r3, [r7, #19]
  800ab36:	2b00      	cmp	r3, #0
- 800ab38:	d006      	beq.n	800ab48 <RBT_init+0x124>
+ 800ab38:	d006      	beq.n	800ab48 <RCF_init+0x124>
   {
     LOG_error("HAL_TIM_Base_Start_IT(&htim1) returned an error code: %d", l_halReturnCode);
  800ab3a:	7cfb      	ldrb	r3, [r7, #19]
  800ab3c:	461a      	mov	r2, r3
- 800ab3e:	4959      	ldr	r1, [pc, #356]	; (800aca4 <RBT_init+0x280>)
+ 800ab3e:	4959      	ldr	r1, [pc, #356]	; (800aca4 <RCF_init+0x280>)
  800ab40:	2003      	movs	r0, #3
  800ab42:	f7ff fb4b 	bl	800a1dc <LOG_log>
- 800ab46:	e003      	b.n	800ab50 <RBT_init+0x12c>
+ 800ab46:	e003      	b.n	800ab50 <RCF_init+0x12c>
   }
   else
   {
     LOG_info("Started TIMER 1 (green LED)");
- 800ab48:	4957      	ldr	r1, [pc, #348]	; (800aca8 <RBT_init+0x284>)
+ 800ab48:	4957      	ldr	r1, [pc, #348]	; (800aca8 <RCF_init+0x284>)
  800ab4a:	2001      	movs	r0, #1
  800ab4c:	f7ff fb46 	bl	800a1dc <LOG_log>
   }
@@ -26646,20 +26646,20 @@ void PID_logInfo(T_PID_Handle *p_handle, bool p_compactLog)
   if (l_halReturnCode != HAL_OK)
  800aba8:	7cfb      	ldrb	r3, [r7, #19]
  800abaa:	2b00      	cmp	r3, #0
- 800abac:	d006      	beq.n	800abbc <RBT_init+0x198>
+ 800abac:	d006      	beq.n	800abbc <RCF_init+0x198>
   {
     LOG_error("HAL_TIM_Encoder_Start_IT(&htimX) returned error code(s): %d", l_halReturnCode);
  800abae:	7cfb      	ldrb	r3, [r7, #19]
  800abb0:	461a      	mov	r2, r3
- 800abb2:	493e      	ldr	r1, [pc, #248]	; (800acac <RBT_init+0x288>)
+ 800abb2:	493e      	ldr	r1, [pc, #248]	; (800acac <RCF_init+0x288>)
  800abb4:	2003      	movs	r0, #3
  800abb6:	f7ff fb11 	bl	800a1dc <LOG_log>
- 800abba:	e003      	b.n	800abc4 <RBT_init+0x1a0>
+ 800abba:	e003      	b.n	800abc4 <RCF_init+0x1a0>
   }
   else
   {
     LOG_info("Started TIMER 2, 3, 4, 5 (encoders)");
- 800abbc:	493c      	ldr	r1, [pc, #240]	; (800acb0 <RBT_init+0x28c>)
+ 800abbc:	493c      	ldr	r1, [pc, #240]	; (800acb0 <RCF_init+0x28c>)
  800abbe:	2001      	movs	r0, #1
  800abc0:	f7ff fb0c 	bl	800a1dc <LOG_log>
   }
@@ -26676,20 +26676,20 @@ void PID_logInfo(T_PID_Handle *p_handle, bool p_compactLog)
   if (l_halReturnCode != HAL_OK)
  800abd2:	7cfb      	ldrb	r3, [r7, #19]
  800abd4:	2b00      	cmp	r3, #0
- 800abd6:	d006      	beq.n	800abe6 <RBT_init+0x1c2>
+ 800abd6:	d006      	beq.n	800abe6 <RCF_init+0x1c2>
   {
     LOG_error("HAL_TIM_Base_Start(&htim8) returned an error code: %d", l_halReturnCode);
  800abd8:	7cfb      	ldrb	r3, [r7, #19]
  800abda:	461a      	mov	r2, r3
- 800abdc:	4935      	ldr	r1, [pc, #212]	; (800acb4 <RBT_init+0x290>)
+ 800abdc:	4935      	ldr	r1, [pc, #212]	; (800acb4 <RCF_init+0x290>)
  800abde:	2003      	movs	r0, #3
  800abe0:	f7ff fafc 	bl	800a1dc <LOG_log>
- 800abe4:	e003      	b.n	800abee <RBT_init+0x1ca>
+ 800abe4:	e003      	b.n	800abee <RCF_init+0x1ca>
   }
   else
   {
     LOG_info("Started TIMER 8 (PWM channels)");
- 800abe6:	4934      	ldr	r1, [pc, #208]	; (800acb8 <RBT_init+0x294>)
+ 800abe6:	4934      	ldr	r1, [pc, #208]	; (800acb8 <RCF_init+0x294>)
  800abe8:	2001      	movs	r0, #1
  800abea:	f7ff faf7 	bl	800a1dc <LOG_log>
   }
@@ -26747,20 +26747,20 @@ void PID_logInfo(T_PID_Handle *p_handle, bool p_compactLog)
   if (l_halReturnCode != HAL_OK)
  800ac4a:	7cfb      	ldrb	r3, [r7, #19]
  800ac4c:	2b00      	cmp	r3, #0
- 800ac4e:	d006      	beq.n	800ac5e <RBT_init+0x23a>
+ 800ac4e:	d006      	beq.n	800ac5e <RCF_init+0x23a>
   {
     LOG_error("HAL_TIM_PWM_Start(&htim8) returned error code(s): %d", l_halReturnCode);
  800ac50:	7cfb      	ldrb	r3, [r7, #19]
  800ac52:	461a      	mov	r2, r3
- 800ac54:	4919      	ldr	r1, [pc, #100]	; (800acbc <RBT_init+0x298>)
+ 800ac54:	4919      	ldr	r1, [pc, #100]	; (800acbc <RCF_init+0x298>)
  800ac56:	2003      	movs	r0, #3
  800ac58:	f7ff fac0 	bl	800a1dc <LOG_log>
- 800ac5c:	e003      	b.n	800ac66 <RBT_init+0x242>
+ 800ac5c:	e003      	b.n	800ac66 <RCF_init+0x242>
   }
   else
   {
     LOG_info("Started PWM channels");
- 800ac5e:	4918      	ldr	r1, [pc, #96]	; (800acc0 <RBT_init+0x29c>)
+ 800ac5e:	4918      	ldr	r1, [pc, #96]	; (800acc0 <RCF_init+0x29c>)
  800ac60:	2001      	movs	r0, #1
  800ac62:	f7ff fabb 	bl	800a1dc <LOG_log>
   }
@@ -26806,9 +26806,9 @@ void PID_logInfo(T_PID_Handle *p_handle, bool p_compactLog)
  800acbc:	08010a90 	.word	0x08010a90
  800acc0:	08010ac8 	.word	0x08010ac8
 
-0800acc4 <RBT_update>:
+0800acc4 <RCF_update>:
 
-void RBT_update(T_RBT_Handle *p_handle)
+void RCF_update(T_RCF_Handle *p_handle)
 {
  800acc4:	b580      	push	{r7, lr}
  800acc6:	b086      	sub	sp, #24
@@ -26839,19 +26839,19 @@ void RBT_update(T_RBT_Handle *p_handle)
  800ace4:	6138      	str	r0, [r7, #16]
 
   if ((STP_SW_RESET_POLLING_PERIOD_IN_S != 0) &&
-      (l_currentTimeInS - g_RBT_context.swResetPollingLastTimeInS >= STP_SW_RESET_POLLING_PERIOD_IN_S))
- 800ace6:	4b2c      	ldr	r3, [pc, #176]	; (800ad98 <RBT_update+0xd4>)
+      (l_currentTimeInS - g_RCF_context.swResetPollingLastTimeInS >= STP_SW_RESET_POLLING_PERIOD_IN_S))
+ 800ace6:	4b2c      	ldr	r3, [pc, #176]	; (800ad98 <RCF_update+0xd4>)
  800ace8:	6b1b      	ldr	r3, [r3, #48]	; 0x30
   if ((STP_SW_RESET_POLLING_PERIOD_IN_S != 0) &&
  800acea:	693a      	ldr	r2, [r7, #16]
  800acec:	429a      	cmp	r2, r3
- 800acee:	d004      	beq.n	800acfa <RBT_update+0x36>
+ 800acee:	d004      	beq.n	800acfa <RCF_update+0x36>
   {
-    RBT_updateSwReset();
- 800acf0:	f000 f8b2 	bl	800ae58 <RBT_updateSwReset>
+    RCF_updateSwReset();
+ 800acf0:	f000 f8b2 	bl	800ae58 <RCF_updateSwReset>
 
-    g_RBT_context.swResetPollingLastTimeInS = l_currentTimeInS;
- 800acf4:	4a28      	ldr	r2, [pc, #160]	; (800ad98 <RBT_update+0xd4>)
+    g_RCF_context.swResetPollingLastTimeInS = l_currentTimeInS;
+ 800acf4:	4a28      	ldr	r2, [pc, #160]	; (800ad98 <RCF_update+0xd4>)
  800acf6:	693b      	ldr	r3, [r7, #16]
  800acf8:	6313      	str	r3, [r2, #48]	; 0x30
   {
@@ -26859,22 +26859,22 @@ void RBT_update(T_RBT_Handle *p_handle)
   }
 
   if ((STP_BATTERY_POLLING_PERIOD_IN_S != 0) &&
-      (l_currentTimeInS - g_RBT_context.batteryPollingLastTimeInS >= STP_BATTERY_POLLING_PERIOD_IN_S))
- 800acfa:	4b27      	ldr	r3, [pc, #156]	; (800ad98 <RBT_update+0xd4>)
+      (l_currentTimeInS - g_RCF_context.batteryPollingLastTimeInS >= STP_BATTERY_POLLING_PERIOD_IN_S))
+ 800acfa:	4b27      	ldr	r3, [pc, #156]	; (800ad98 <RCF_update+0xd4>)
  800acfc:	6b5b      	ldr	r3, [r3, #52]	; 0x34
  800acfe:	693a      	ldr	r2, [r7, #16]
  800ad00:	1ad3      	subs	r3, r2, r3
   if ((STP_BATTERY_POLLING_PERIOD_IN_S != 0) &&
  800ad02:	2b09      	cmp	r3, #9
- 800ad04:	d907      	bls.n	800ad16 <RBT_update+0x52>
+ 800ad04:	d907      	bls.n	800ad16 <RCF_update+0x52>
   {
     BAT_update(&l_voltageInMv);
  800ad06:	f107 030c 	add.w	r3, r7, #12
  800ad0a:	4618      	mov	r0, r3
  800ad0c:	f7fd fdb0 	bl	8008870 <BAT_update>
 
-    g_RBT_context.batteryPollingLastTimeInS = l_currentTimeInS;
- 800ad10:	4a21      	ldr	r2, [pc, #132]	; (800ad98 <RBT_update+0xd4>)
+    g_RCF_context.batteryPollingLastTimeInS = l_currentTimeInS;
+ 800ad10:	4a21      	ldr	r2, [pc, #132]	; (800ad98 <RCF_update+0xd4>)
  800ad12:	693b      	ldr	r3, [r7, #16]
  800ad14:	6353      	str	r3, [r2, #52]	; 0x34
   {
@@ -26882,23 +26882,23 @@ void RBT_update(T_RBT_Handle *p_handle)
   }
 
   if ((STP_LED_UPDATE_MODE_PERIOD_IN_S != 0) &&
-      (l_currentTimeInS - g_RBT_context.ledModeUpdateLastTimeInS >= STP_LED_UPDATE_MODE_PERIOD_IN_S))
- 800ad16:	4b20      	ldr	r3, [pc, #128]	; (800ad98 <RBT_update+0xd4>)
+      (l_currentTimeInS - g_RCF_context.ledModeUpdateLastTimeInS >= STP_LED_UPDATE_MODE_PERIOD_IN_S))
+ 800ad16:	4b20      	ldr	r3, [pc, #128]	; (800ad98 <RCF_update+0xd4>)
  800ad18:	6b9b      	ldr	r3, [r3, #56]	; 0x38
   if ((STP_LED_UPDATE_MODE_PERIOD_IN_S != 0) &&
  800ad1a:	693a      	ldr	r2, [r7, #16]
  800ad1c:	429a      	cmp	r2, r3
- 800ad1e:	d008      	beq.n	800ad32 <RBT_update+0x6e>
+ 800ad1e:	d008      	beq.n	800ad32 <RCF_update+0x6e>
   {
-    RBT_updateLedMode (l_driveMode, l_voltageInMv);
+    RCF_updateLedMode (l_driveMode, l_voltageInMv);
  800ad20:	68fa      	ldr	r2, [r7, #12]
  800ad22:	7dfb      	ldrb	r3, [r7, #23]
  800ad24:	4611      	mov	r1, r2
  800ad26:	4618      	mov	r0, r3
- 800ad28:	f000 f956 	bl	800afd8 <RBT_updateLedMode>
+ 800ad28:	f000 f956 	bl	800afd8 <RCF_updateLedMode>
 
-    g_RBT_context.ledModeUpdateLastTimeInS = l_currentTimeInS;
- 800ad2c:	4a1a      	ldr	r2, [pc, #104]	; (800ad98 <RBT_update+0xd4>)
+    g_RCF_context.ledModeUpdateLastTimeInS = l_currentTimeInS;
+ 800ad2c:	4a1a      	ldr	r2, [pc, #104]	; (800ad98 <RCF_update+0xd4>)
  800ad2e:	693b      	ldr	r3, [r7, #16]
  800ad30:	6393      	str	r3, [r2, #56]	; 0x38
   else
@@ -26906,68 +26906,68 @@ void RBT_update(T_RBT_Handle *p_handle)
     ; /* Nothing to do */
   }
 
-  BLU_receiveData        (&g_RBT_context.bluetoothData);
- 800ad32:	481a      	ldr	r0, [pc, #104]	; (800ad9c <RBT_update+0xd8>)
+  BLU_receiveData        (&g_RCF_context.bluetoothData);
+ 800ad32:	481a      	ldr	r0, [pc, #104]	; (800ad9c <RCF_update+0xd8>)
  800ad34:	f7fd fedc 	bl	8008af0 <BLU_receiveData>
-  RBT_updateLogSetup     (&g_RBT_context.bluetoothData, l_currentTimeInS);
+  RCF_updateLogSetup     (&g_RCF_context.bluetoothData, l_currentTimeInS);
  800ad38:	6939      	ldr	r1, [r7, #16]
- 800ad3a:	4818      	ldr	r0, [pc, #96]	; (800ad9c <RBT_update+0xd8>)
- 800ad3c:	f000 f8c8 	bl	800aed0 <RBT_updateLogSetup>
-  DRV_updateFromBluetooth(&g_RBT_context.bluetoothData);
- 800ad40:	4816      	ldr	r0, [pc, #88]	; (800ad9c <RBT_update+0xd8>)
+ 800ad3a:	4818      	ldr	r0, [pc, #96]	; (800ad9c <RCF_update+0xd8>)
+ 800ad3c:	f000 f8c8 	bl	800aed0 <RCF_updateLogSetup>
+  DRV_updateFromBluetooth(&g_RCF_context.bluetoothData);
+ 800ad40:	4816      	ldr	r0, [pc, #88]	; (800ad9c <RCF_update+0xd8>)
  800ad42:	f7fe f957 	bl	8008ff4 <DRV_updateFromBluetooth>
 
-  CON_updateFifo(&g_RBT_context.commandsFifo);
- 800ad46:	4814      	ldr	r0, [pc, #80]	; (800ad98 <RBT_update+0xd4>)
+  CON_updateFifo(&g_RCF_context.commandsFifo);
+ 800ad46:	4814      	ldr	r0, [pc, #80]	; (800ad98 <RCF_update+0xd4>)
  800ad48:	f7fe f84a 	bl	8008de0 <CON_updateFifo>
-  MAS_updateFifo(&g_RBT_context.commandsFifo);
- 800ad4c:	4812      	ldr	r0, [pc, #72]	; (800ad98 <RBT_update+0xd4>)
+  MAS_updateFifo(&g_RCF_context.commandsFifo);
+ 800ad4c:	4812      	ldr	r0, [pc, #72]	; (800ad98 <RCF_update+0xd4>)
  800ad4e:	f7ff faff 	bl	800a350 <MAS_updateFifo>
 
   if ((STP_DRIVE_LOG_INFO_PERIOD_IN_S != 0) &&
-      (l_currentTimeInS - g_RBT_context.driveLogInfoLastTimeInS >= STP_DRIVE_LOG_INFO_PERIOD_IN_S))
- 800ad52:	4b11      	ldr	r3, [pc, #68]	; (800ad98 <RBT_update+0xd4>)
+      (l_currentTimeInS - g_RCF_context.driveLogInfoLastTimeInS >= STP_DRIVE_LOG_INFO_PERIOD_IN_S))
+ 800ad52:	4b11      	ldr	r3, [pc, #68]	; (800ad98 <RCF_update+0xd4>)
  800ad54:	6bdb      	ldr	r3, [r3, #60]	; 0x3c
  800ad56:	693a      	ldr	r2, [r7, #16]
  800ad58:	1ad3      	subs	r3, r2, r3
   if ((STP_DRIVE_LOG_INFO_PERIOD_IN_S != 0) &&
  800ad5a:	2b04      	cmp	r3, #4
- 800ad5c:	d907      	bls.n	800ad6e <RBT_update+0xaa>
+ 800ad5c:	d907      	bls.n	800ad6e <RCF_update+0xaa>
   {
-    DRV_updateFromCommands(&g_RBT_context.commandsFifo, true);
+    DRV_updateFromCommands(&g_RCF_context.commandsFifo, true);
  800ad5e:	2101      	movs	r1, #1
- 800ad60:	480d      	ldr	r0, [pc, #52]	; (800ad98 <RBT_update+0xd4>)
+ 800ad60:	480d      	ldr	r0, [pc, #52]	; (800ad98 <RCF_update+0xd4>)
  800ad62:	f7fe faa1 	bl	80092a8 <DRV_updateFromCommands>
 
-    g_RBT_context.driveLogInfoLastTimeInS = l_currentTimeInS;
- 800ad66:	4a0c      	ldr	r2, [pc, #48]	; (800ad98 <RBT_update+0xd4>)
+    g_RCF_context.driveLogInfoLastTimeInS = l_currentTimeInS;
+ 800ad66:	4a0c      	ldr	r2, [pc, #48]	; (800ad98 <RCF_update+0xd4>)
  800ad68:	693b      	ldr	r3, [r7, #16]
  800ad6a:	63d3      	str	r3, [r2, #60]	; 0x3c
- 800ad6c:	e003      	b.n	800ad76 <RBT_update+0xb2>
+ 800ad6c:	e003      	b.n	800ad76 <RCF_update+0xb2>
   }
   else
   {
-    DRV_updateFromCommands(&g_RBT_context.commandsFifo, false);
+    DRV_updateFromCommands(&g_RCF_context.commandsFifo, false);
  800ad6e:	2100      	movs	r1, #0
- 800ad70:	4809      	ldr	r0, [pc, #36]	; (800ad98 <RBT_update+0xd4>)
+ 800ad70:	4809      	ldr	r0, [pc, #36]	; (800ad98 <RCF_update+0xd4>)
  800ad72:	f7fe fa99 	bl	80092a8 <DRV_updateFromCommands>
   }
 
   if ((STP_VELOCITY_REPORT_PERIOD_IN_S != 0) &&
-      (l_currentTimeInS - g_RBT_context.velocityReportLastTimeInS >= STP_VELOCITY_REPORT_PERIOD_IN_S))
- 800ad76:	4b08      	ldr	r3, [pc, #32]	; (800ad98 <RBT_update+0xd4>)
+      (l_currentTimeInS - g_RCF_context.velocityReportLastTimeInS >= STP_VELOCITY_REPORT_PERIOD_IN_S))
+ 800ad76:	4b08      	ldr	r3, [pc, #32]	; (800ad98 <RCF_update+0xd4>)
  800ad78:	6c1b      	ldr	r3, [r3, #64]	; 0x40
  800ad7a:	693a      	ldr	r2, [r7, #16]
  800ad7c:	1ad3      	subs	r3, r2, r3
   if ((STP_VELOCITY_REPORT_PERIOD_IN_S != 0) &&
  800ad7e:	2b04      	cmp	r3, #4
- 800ad80:	d905      	bls.n	800ad8e <RBT_update+0xca>
+ 800ad80:	d905      	bls.n	800ad8e <RCF_update+0xca>
   {
     DRV_reportVelocity();
  800ad82:	f7fe fce5 	bl	8009750 <DRV_reportVelocity>
 
-    g_RBT_context.velocityReportLastTimeInS = l_currentTimeInS;
- 800ad86:	4a04      	ldr	r2, [pc, #16]	; (800ad98 <RBT_update+0xd4>)
+    g_RCF_context.velocityReportLastTimeInS = l_currentTimeInS;
+ 800ad86:	4a04      	ldr	r2, [pc, #16]	; (800ad98 <RCF_update+0xd4>)
  800ad88:	693b      	ldr	r3, [r7, #16]
  800ad8a:	6413      	str	r3, [r2, #64]	; 0x40
   }
@@ -26986,51 +26986,51 @@ void RBT_update(T_RBT_Handle *p_handle)
  800ad98:	2000051c 	.word	0x2000051c
  800ad9c:	20000528 	.word	0x20000528
 
-0800ada0 <RBT_displayRcfwBanner>:
+0800ada0 <RCF_displayRcfwBanner>:
 
-static void RBT_displayRcfwBanner(void)
+static void RCF_displayRcfwBanner(void)
 {
  800ada0:	b580      	push	{r7, lr}
  800ada2:	af00      	add	r7, sp, #0
   /* Used ASCII art generator from https://patorjk.com with font called "Colossal" */
   LOG_info("");
- 800ada4:	4914      	ldr	r1, [pc, #80]	; (800adf8 <RBT_displayRcfwBanner+0x58>)
+ 800ada4:	4914      	ldr	r1, [pc, #80]	; (800adf8 <RCF_displayRcfwBanner+0x58>)
  800ada6:	2001      	movs	r0, #1
  800ada8:	f7ff fa18 	bl	800a1dc <LOG_log>
   LOG_info("    8888888b.        .d8888b.       8888888888      888       888"  );
- 800adac:	4913      	ldr	r1, [pc, #76]	; (800adfc <RBT_displayRcfwBanner+0x5c>)
+ 800adac:	4913      	ldr	r1, [pc, #76]	; (800adfc <RCF_displayRcfwBanner+0x5c>)
  800adae:	2001      	movs	r0, #1
  800adb0:	f7ff fa14 	bl	800a1dc <LOG_log>
   LOG_info("    888   Y88b      d88P  Y88b      888             888   o   888"  );
- 800adb4:	4912      	ldr	r1, [pc, #72]	; (800ae00 <RBT_displayRcfwBanner+0x60>)
+ 800adb4:	4912      	ldr	r1, [pc, #72]	; (800ae00 <RCF_displayRcfwBanner+0x60>)
  800adb6:	2001      	movs	r0, #1
  800adb8:	f7ff fa10 	bl	800a1dc <LOG_log>
   LOG_info("    888    888      888    888      888             888  d8b  888"  );
- 800adbc:	4911      	ldr	r1, [pc, #68]	; (800ae04 <RBT_displayRcfwBanner+0x64>)
+ 800adbc:	4911      	ldr	r1, [pc, #68]	; (800ae04 <RCF_displayRcfwBanner+0x64>)
  800adbe:	2001      	movs	r0, #1
  800adc0:	f7ff fa0c 	bl	800a1dc <LOG_log>
   LOG_info("    888   d88P      888             8888888         888 d888b 888"  );
- 800adc4:	4910      	ldr	r1, [pc, #64]	; (800ae08 <RBT_displayRcfwBanner+0x68>)
+ 800adc4:	4910      	ldr	r1, [pc, #64]	; (800ae08 <RCF_displayRcfwBanner+0x68>)
  800adc6:	2001      	movs	r0, #1
  800adc8:	f7ff fa08 	bl	800a1dc <LOG_log>
   LOG_info("    8888888P\"       888             888             888d88888b888" );
- 800adcc:	490f      	ldr	r1, [pc, #60]	; (800ae0c <RBT_displayRcfwBanner+0x6c>)
+ 800adcc:	490f      	ldr	r1, [pc, #60]	; (800ae0c <RCF_displayRcfwBanner+0x6c>)
  800adce:	2001      	movs	r0, #1
  800add0:	f7ff fa04 	bl	800a1dc <LOG_log>
   LOG_info("    888 T88b        888    888      888             88888P Y88888"  );
- 800add4:	490e      	ldr	r1, [pc, #56]	; (800ae10 <RBT_displayRcfwBanner+0x70>)
+ 800add4:	490e      	ldr	r1, [pc, #56]	; (800ae10 <RCF_displayRcfwBanner+0x70>)
  800add6:	2001      	movs	r0, #1
  800add8:	f7ff fa00 	bl	800a1dc <LOG_log>
   LOG_info("    888  T88b       Y88b  d88P      888             8888P   Y8888"  );
- 800addc:	490d      	ldr	r1, [pc, #52]	; (800ae14 <RBT_displayRcfwBanner+0x74>)
+ 800addc:	490d      	ldr	r1, [pc, #52]	; (800ae14 <RCF_displayRcfwBanner+0x74>)
  800adde:	2001      	movs	r0, #1
  800ade0:	f7ff f9fc 	bl	800a1dc <LOG_log>
   LOG_info("    888   T88b       \"Y8888P\"       888             888P     Y888");
- 800ade4:	490c      	ldr	r1, [pc, #48]	; (800ae18 <RBT_displayRcfwBanner+0x78>)
+ 800ade4:	490c      	ldr	r1, [pc, #48]	; (800ae18 <RCF_displayRcfwBanner+0x78>)
  800ade6:	2001      	movs	r0, #1
  800ade8:	f7ff f9f8 	bl	800a1dc <LOG_log>
   LOG_info("");
- 800adec:	4902      	ldr	r1, [pc, #8]	; (800adf8 <RBT_displayRcfwBanner+0x58>)
+ 800adec:	4902      	ldr	r1, [pc, #8]	; (800adf8 <RCF_displayRcfwBanner+0x58>)
  800adee:	2001      	movs	r0, #1
  800adf0:	f7ff f9f4 	bl	800a1dc <LOG_log>
 
@@ -27048,40 +27048,40 @@ static void RBT_displayRcfwBanner(void)
  800ae14:	08010c7c 	.word	0x08010c7c
  800ae18:	08010cc0 	.word	0x08010cc0
 
-0800ae1c <RBT_togglePrintOutput>:
+0800ae1c <RCF_togglePrintOutput>:
 
-static void RBT_togglePrintOutput(void)
+static void RCF_togglePrintOutput(void)
 {
  800ae1c:	b580      	push	{r7, lr}
  800ae1e:	af00      	add	r7, sp, #0
-  if (g_RBT_printOutput == RBT_PRINT_OUTPUT_TO_CONSOLE)
- 800ae20:	4b0a      	ldr	r3, [pc, #40]	; (800ae4c <RBT_togglePrintOutput+0x30>)
+  if (g_RCF_printOutput == RCF_PRINT_OUTPUT_TO_CONSOLE)
+ 800ae20:	4b0a      	ldr	r3, [pc, #40]	; (800ae4c <RCF_togglePrintOutput+0x30>)
  800ae22:	781b      	ldrb	r3, [r3, #0]
  800ae24:	2b00      	cmp	r3, #0
- 800ae26:	d107      	bne.n	800ae38 <RBT_togglePrintOutput+0x1c>
+ 800ae26:	d107      	bne.n	800ae38 <RCF_togglePrintOutput+0x1c>
   {
     LOG_info("Directing print to MASTER");
- 800ae28:	4909      	ldr	r1, [pc, #36]	; (800ae50 <RBT_togglePrintOutput+0x34>)
+ 800ae28:	4909      	ldr	r1, [pc, #36]	; (800ae50 <RCF_togglePrintOutput+0x34>)
  800ae2a:	2001      	movs	r0, #1
  800ae2c:	f7ff f9d6 	bl	800a1dc <LOG_log>
 
-    g_RBT_printOutput = RBT_PRINT_OUTPUT_TO_MASTER;
- 800ae30:	4b06      	ldr	r3, [pc, #24]	; (800ae4c <RBT_togglePrintOutput+0x30>)
+    g_RCF_printOutput = RCF_PRINT_OUTPUT_TO_MASTER;
+ 800ae30:	4b06      	ldr	r3, [pc, #24]	; (800ae4c <RCF_togglePrintOutput+0x30>)
  800ae32:	2201      	movs	r2, #1
  800ae34:	701a      	strb	r2, [r3, #0]
     LOG_info("Directing print to CONSOLE");
 
-    g_RBT_printOutput = RBT_PRINT_OUTPUT_TO_CONSOLE;
+    g_RCF_printOutput = RCF_PRINT_OUTPUT_TO_CONSOLE;
   }
 
   return;
- 800ae36:	e007      	b.n	800ae48 <RBT_togglePrintOutput+0x2c>
+ 800ae36:	e007      	b.n	800ae48 <RCF_togglePrintOutput+0x2c>
     LOG_info("Directing print to CONSOLE");
- 800ae38:	4906      	ldr	r1, [pc, #24]	; (800ae54 <RBT_togglePrintOutput+0x38>)
+ 800ae38:	4906      	ldr	r1, [pc, #24]	; (800ae54 <RCF_togglePrintOutput+0x38>)
  800ae3a:	2001      	movs	r0, #1
  800ae3c:	f7ff f9ce 	bl	800a1dc <LOG_log>
-    g_RBT_printOutput = RBT_PRINT_OUTPUT_TO_CONSOLE;
- 800ae40:	4b02      	ldr	r3, [pc, #8]	; (800ae4c <RBT_togglePrintOutput+0x30>)
+    g_RCF_printOutput = RCF_PRINT_OUTPUT_TO_CONSOLE;
+ 800ae40:	4b02      	ldr	r3, [pc, #8]	; (800ae4c <RCF_togglePrintOutput+0x30>)
  800ae42:	2200      	movs	r2, #0
  800ae44:	701a      	strb	r2, [r3, #0]
   return;
@@ -27093,9 +27093,9 @@ static void RBT_togglePrintOutput(void)
  800ae50:	08010d04 	.word	0x08010d04
  800ae54:	08010d20 	.word	0x08010d20
 
-0800ae58 <RBT_updateSwReset>:
+0800ae58 <RCF_updateSwReset>:
 
-static void RBT_updateSwReset(void)
+static void RCF_updateSwReset(void)
 {
  800ae58:	b580      	push	{r7, lr}
  800ae5a:	b082      	sub	sp, #8
@@ -27104,7 +27104,7 @@ static void RBT_updateSwReset(void)
 
   l_pinState = HAL_GPIO_ReadPin(SW_RESET_GPIO_Port, SW_RESET_Pin);
  800ae5e:	2101      	movs	r1, #1
- 800ae60:	4816      	ldr	r0, [pc, #88]	; (800aebc <RBT_updateSwReset+0x64>)
+ 800ae60:	4816      	ldr	r0, [pc, #88]	; (800aebc <RCF_updateSwReset+0x64>)
  800ae62:	f7f8 fd41 	bl	80038e8 <HAL_GPIO_ReadPin>
  800ae66:	4603      	mov	r3, r0
  800ae68:	71fb      	strb	r3, [r7, #7]
@@ -27112,35 +27112,35 @@ static void RBT_updateSwReset(void)
   if (l_pinState == GPIO_PIN_SET)
  800ae6a:	79fb      	ldrb	r3, [r7, #7]
  800ae6c:	2b01      	cmp	r3, #1
- 800ae6e:	d021      	beq.n	800aeb4 <RBT_updateSwReset+0x5c>
+ 800ae6e:	d021      	beq.n	800aeb4 <RCF_updateSwReset+0x5c>
   {
     ; /* Nothing to do */
   }
   else
   {
     LOG_info("SW reset will be triggered in 3s");
- 800ae70:	4913      	ldr	r1, [pc, #76]	; (800aec0 <RBT_updateSwReset+0x68>)
+ 800ae70:	4913      	ldr	r1, [pc, #76]	; (800aec0 <RCF_updateSwReset+0x68>)
  800ae72:	2001      	movs	r0, #1
  800ae74:	f7ff f9b2 	bl	800a1dc <LOG_log>
     HAL_Delay(1000);
  800ae78:	f44f 707a 	mov.w	r0, #1000	; 0x3e8
  800ae7c:	f7f7 fc0c 	bl	8002698 <HAL_Delay>
     LOG_info("SW reset will be triggered in 2s");
- 800ae80:	4910      	ldr	r1, [pc, #64]	; (800aec4 <RBT_updateSwReset+0x6c>)
+ 800ae80:	4910      	ldr	r1, [pc, #64]	; (800aec4 <RCF_updateSwReset+0x6c>)
  800ae82:	2001      	movs	r0, #1
  800ae84:	f7ff f9aa 	bl	800a1dc <LOG_log>
     HAL_Delay(1000);
  800ae88:	f44f 707a 	mov.w	r0, #1000	; 0x3e8
  800ae8c:	f7f7 fc04 	bl	8002698 <HAL_Delay>
     LOG_info("SW reset will be triggered in 1s");
- 800ae90:	490d      	ldr	r1, [pc, #52]	; (800aec8 <RBT_updateSwReset+0x70>)
+ 800ae90:	490d      	ldr	r1, [pc, #52]	; (800aec8 <RCF_updateSwReset+0x70>)
  800ae92:	2001      	movs	r0, #1
  800ae94:	f7ff f9a2 	bl	800a1dc <LOG_log>
     HAL_Delay(1000);
  800ae98:	f44f 707a 	mov.w	r0, #1000	; 0x3e8
  800ae9c:	f7f7 fbfc 	bl	8002698 <HAL_Delay>
     LOG_info("Resetting...");
- 800aea0:	490a      	ldr	r1, [pc, #40]	; (800aecc <RBT_updateSwReset+0x74>)
+ 800aea0:	490a      	ldr	r1, [pc, #40]	; (800aecc <RCF_updateSwReset+0x74>)
  800aea2:	2001      	movs	r0, #1
  800aea4:	f7ff f99a 	bl	800a1dc <LOG_log>
     HAL_Delay(100);
@@ -27164,9 +27164,9 @@ static void RBT_updateSwReset(void)
  800aec8:	08010d84 	.word	0x08010d84
  800aecc:	08010da8 	.word	0x08010da8
 
-0800aed0 <RBT_updateLogSetup>:
+0800aed0 <RCF_updateLogSetup>:
 
-static void RBT_updateLogSetup(T_BLU_Data *p_data, uint32_t p_timeInS)
+static void RCF_updateLogSetup(T_BLU_Data *p_data, uint32_t p_timeInS)
 {
  800aed0:	b580      	push	{r7, lr}
  800aed2:	b082      	sub	sp, #8
@@ -27178,8 +27178,8 @@ static void RBT_updateLogSetup(T_BLU_Data *p_data, uint32_t p_timeInS)
  800aedc:	7c1b      	ldrb	r3, [r3, #16]
  800aede:	3b05      	subs	r3, #5
  800aee0:	2b03      	cmp	r3, #3
- 800aee2:	d85b      	bhi.n	800af9c <RBT_updateLogSetup+0xcc>
- 800aee4:	a201      	add	r2, pc, #4	; (adr r2, 800aeec <RBT_updateLogSetup+0x1c>)
+ 800aee2:	d85b      	bhi.n	800af9c <RCF_updateLogSetup+0xcc>
+ 800aee4:	a201      	add	r2, pc, #4	; (adr r2, 800aeec <RCF_updateLogSetup+0x1c>)
  800aee6:	f852 f023 	ldr.w	pc, [r2, r3, lsl #2]
  800aeea:	bf00      	nop
  800aeec:	0800aefd 	.word	0x0800aefd
@@ -27188,14 +27188,14 @@ static void RBT_updateLogSetup(T_BLU_Data *p_data, uint32_t p_timeInS)
  800aef8:	0800af4d 	.word	0x0800af4d
   {
     case BLU_BUTTON_PAD_UP:
-      if (g_RBT_context.padUpPressedStartTimeInS == 0)
- 800aefc:	4b35      	ldr	r3, [pc, #212]	; (800afd4 <RBT_updateLogSetup+0x104>)
+      if (g_RCF_context.padUpPressedStartTimeInS == 0)
+ 800aefc:	4b35      	ldr	r3, [pc, #212]	; (800afd4 <RCF_updateLogSetup+0x104>)
  800aefe:	6a1b      	ldr	r3, [r3, #32]
  800af00:	2b00      	cmp	r3, #0
- 800af02:	d105      	bne.n	800af10 <RBT_updateLogSetup+0x40>
+ 800af02:	d105      	bne.n	800af10 <RCF_updateLogSetup+0x40>
       {
-        g_RBT_context.padUpPressedStartTimeInS = p_timeInS;
- 800af04:	4a33      	ldr	r2, [pc, #204]	; (800afd4 <RBT_updateLogSetup+0x104>)
+        g_RCF_context.padUpPressedStartTimeInS = p_timeInS;
+ 800af04:	4a33      	ldr	r2, [pc, #204]	; (800afd4 <RCF_updateLogSetup+0x104>)
  800af06:	683b      	ldr	r3, [r7, #0]
  800af08:	6213      	str	r3, [r2, #32]
 
@@ -27204,33 +27204,33 @@ static void RBT_updateLogSetup(T_BLU_Data *p_data, uint32_t p_timeInS)
       }
       else
       {
-        g_RBT_context.padUpPressedStartTimeInS = 0;
+        g_RCF_context.padUpPressedStartTimeInS = 0;
       }
       break;
- 800af0e:	e047      	b.n	800afa0 <RBT_updateLogSetup+0xd0>
-      else if (p_timeInS - g_RBT_context.padUpPressedStartTimeInS < STP_BUTTONS_DEBOUNCE_PERIOD_IN_S)
- 800af10:	4b30      	ldr	r3, [pc, #192]	; (800afd4 <RBT_updateLogSetup+0x104>)
+ 800af0e:	e047      	b.n	800afa0 <RCF_updateLogSetup+0xd0>
+      else if (p_timeInS - g_RCF_context.padUpPressedStartTimeInS < STP_BUTTONS_DEBOUNCE_PERIOD_IN_S)
+ 800af10:	4b30      	ldr	r3, [pc, #192]	; (800afd4 <RCF_updateLogSetup+0x104>)
  800af12:	6a1b      	ldr	r3, [r3, #32]
  800af14:	683a      	ldr	r2, [r7, #0]
  800af16:	1ad3      	subs	r3, r2, r3
  800af18:	2b01      	cmp	r3, #1
- 800af1a:	d941      	bls.n	800afa0 <RBT_updateLogSetup+0xd0>
-        g_RBT_context.padUpPressedStartTimeInS = 0;
- 800af1c:	4b2d      	ldr	r3, [pc, #180]	; (800afd4 <RBT_updateLogSetup+0x104>)
+ 800af1a:	d941      	bls.n	800afa0 <RCF_updateLogSetup+0xd0>
+        g_RCF_context.padUpPressedStartTimeInS = 0;
+ 800af1c:	4b2d      	ldr	r3, [pc, #180]	; (800afd4 <RCF_updateLogSetup+0x104>)
  800af1e:	2200      	movs	r2, #0
  800af20:	621a      	str	r2, [r3, #32]
       break;
- 800af22:	e03d      	b.n	800afa0 <RBT_updateLogSetup+0xd0>
+ 800af22:	e03d      	b.n	800afa0 <RCF_updateLogSetup+0xd0>
 
     case BLU_BUTTON_PAD_DOWN:
-      if (g_RBT_context.padDownPressedStartTimeInS == 0)
- 800af24:	4b2b      	ldr	r3, [pc, #172]	; (800afd4 <RBT_updateLogSetup+0x104>)
+      if (g_RCF_context.padDownPressedStartTimeInS == 0)
+ 800af24:	4b2b      	ldr	r3, [pc, #172]	; (800afd4 <RCF_updateLogSetup+0x104>)
  800af26:	6a5b      	ldr	r3, [r3, #36]	; 0x24
  800af28:	2b00      	cmp	r3, #0
- 800af2a:	d105      	bne.n	800af38 <RBT_updateLogSetup+0x68>
+ 800af2a:	d105      	bne.n	800af38 <RCF_updateLogSetup+0x68>
       {
-        g_RBT_context.padDownPressedStartTimeInS = p_timeInS;
- 800af2c:	4a29      	ldr	r2, [pc, #164]	; (800afd4 <RBT_updateLogSetup+0x104>)
+        g_RCF_context.padDownPressedStartTimeInS = p_timeInS;
+ 800af2c:	4a29      	ldr	r2, [pc, #164]	; (800afd4 <RCF_updateLogSetup+0x104>)
  800af2e:	683b      	ldr	r3, [r7, #0]
  800af30:	6253      	str	r3, [r2, #36]	; 0x24
 
@@ -27239,33 +27239,33 @@ static void RBT_updateLogSetup(T_BLU_Data *p_data, uint32_t p_timeInS)
       }
       else
       {
-        g_RBT_context.padDownPressedStartTimeInS = 0;
+        g_RCF_context.padDownPressedStartTimeInS = 0;
       }
       break;
- 800af36:	e035      	b.n	800afa4 <RBT_updateLogSetup+0xd4>
-      else if (p_timeInS - g_RBT_context.padDownPressedStartTimeInS < STP_BUTTONS_DEBOUNCE_PERIOD_IN_S)
- 800af38:	4b26      	ldr	r3, [pc, #152]	; (800afd4 <RBT_updateLogSetup+0x104>)
+ 800af36:	e035      	b.n	800afa4 <RCF_updateLogSetup+0xd4>
+      else if (p_timeInS - g_RCF_context.padDownPressedStartTimeInS < STP_BUTTONS_DEBOUNCE_PERIOD_IN_S)
+ 800af38:	4b26      	ldr	r3, [pc, #152]	; (800afd4 <RCF_updateLogSetup+0x104>)
  800af3a:	6a5b      	ldr	r3, [r3, #36]	; 0x24
  800af3c:	683a      	ldr	r2, [r7, #0]
  800af3e:	1ad3      	subs	r3, r2, r3
  800af40:	2b01      	cmp	r3, #1
- 800af42:	d92f      	bls.n	800afa4 <RBT_updateLogSetup+0xd4>
-        g_RBT_context.padDownPressedStartTimeInS = 0;
- 800af44:	4b23      	ldr	r3, [pc, #140]	; (800afd4 <RBT_updateLogSetup+0x104>)
+ 800af42:	d92f      	bls.n	800afa4 <RCF_updateLogSetup+0xd4>
+        g_RCF_context.padDownPressedStartTimeInS = 0;
+ 800af44:	4b23      	ldr	r3, [pc, #140]	; (800afd4 <RCF_updateLogSetup+0x104>)
  800af46:	2200      	movs	r2, #0
  800af48:	625a      	str	r2, [r3, #36]	; 0x24
       break;
- 800af4a:	e02b      	b.n	800afa4 <RBT_updateLogSetup+0xd4>
+ 800af4a:	e02b      	b.n	800afa4 <RCF_updateLogSetup+0xd4>
 
     case BLU_BUTTON_PAD_LEFT:
-      if (g_RBT_context.padLeftPressedStartTimeInS == 0)
- 800af4c:	4b21      	ldr	r3, [pc, #132]	; (800afd4 <RBT_updateLogSetup+0x104>)
+      if (g_RCF_context.padLeftPressedStartTimeInS == 0)
+ 800af4c:	4b21      	ldr	r3, [pc, #132]	; (800afd4 <RCF_updateLogSetup+0x104>)
  800af4e:	6a9b      	ldr	r3, [r3, #40]	; 0x28
  800af50:	2b00      	cmp	r3, #0
- 800af52:	d105      	bne.n	800af60 <RBT_updateLogSetup+0x90>
+ 800af52:	d105      	bne.n	800af60 <RCF_updateLogSetup+0x90>
       {
-        g_RBT_context.padLeftPressedStartTimeInS = p_timeInS;
- 800af54:	4a1f      	ldr	r2, [pc, #124]	; (800afd4 <RBT_updateLogSetup+0x104>)
+        g_RCF_context.padLeftPressedStartTimeInS = p_timeInS;
+ 800af54:	4a1f      	ldr	r2, [pc, #124]	; (800afd4 <RCF_updateLogSetup+0x104>)
  800af56:	683b      	ldr	r3, [r7, #0]
  800af58:	6293      	str	r3, [r2, #40]	; 0x28
 
@@ -27274,73 +27274,73 @@ static void RBT_updateLogSetup(T_BLU_Data *p_data, uint32_t p_timeInS)
       }
       else
       {
-        g_RBT_context.padLeftPressedStartTimeInS = 0;
+        g_RCF_context.padLeftPressedStartTimeInS = 0;
       }
       break;
- 800af5e:	e023      	b.n	800afa8 <RBT_updateLogSetup+0xd8>
-      else if (p_timeInS - g_RBT_context.padLeftPressedStartTimeInS < STP_BUTTONS_DEBOUNCE_PERIOD_IN_S)
- 800af60:	4b1c      	ldr	r3, [pc, #112]	; (800afd4 <RBT_updateLogSetup+0x104>)
+ 800af5e:	e023      	b.n	800afa8 <RCF_updateLogSetup+0xd8>
+      else if (p_timeInS - g_RCF_context.padLeftPressedStartTimeInS < STP_BUTTONS_DEBOUNCE_PERIOD_IN_S)
+ 800af60:	4b1c      	ldr	r3, [pc, #112]	; (800afd4 <RCF_updateLogSetup+0x104>)
  800af62:	6a9b      	ldr	r3, [r3, #40]	; 0x28
  800af64:	683a      	ldr	r2, [r7, #0]
  800af66:	1ad3      	subs	r3, r2, r3
  800af68:	2b01      	cmp	r3, #1
- 800af6a:	d91d      	bls.n	800afa8 <RBT_updateLogSetup+0xd8>
-        g_RBT_context.padLeftPressedStartTimeInS = 0;
- 800af6c:	4b19      	ldr	r3, [pc, #100]	; (800afd4 <RBT_updateLogSetup+0x104>)
+ 800af6a:	d91d      	bls.n	800afa8 <RCF_updateLogSetup+0xd8>
+        g_RCF_context.padLeftPressedStartTimeInS = 0;
+ 800af6c:	4b19      	ldr	r3, [pc, #100]	; (800afd4 <RCF_updateLogSetup+0x104>)
  800af6e:	2200      	movs	r2, #0
  800af70:	629a      	str	r2, [r3, #40]	; 0x28
       break;
- 800af72:	e019      	b.n	800afa8 <RBT_updateLogSetup+0xd8>
+ 800af72:	e019      	b.n	800afa8 <RCF_updateLogSetup+0xd8>
 
     case BLU_BUTTON_PAD_RIGHT:
-      if (g_RBT_context.padRightPressedStartTimeInS == 0)
- 800af74:	4b17      	ldr	r3, [pc, #92]	; (800afd4 <RBT_updateLogSetup+0x104>)
+      if (g_RCF_context.padRightPressedStartTimeInS == 0)
+ 800af74:	4b17      	ldr	r3, [pc, #92]	; (800afd4 <RCF_updateLogSetup+0x104>)
  800af76:	6adb      	ldr	r3, [r3, #44]	; 0x2c
  800af78:	2b00      	cmp	r3, #0
- 800af7a:	d105      	bne.n	800af88 <RBT_updateLogSetup+0xb8>
+ 800af7a:	d105      	bne.n	800af88 <RCF_updateLogSetup+0xb8>
       {
-        g_RBT_context.padRightPressedStartTimeInS = p_timeInS;
- 800af7c:	4a15      	ldr	r2, [pc, #84]	; (800afd4 <RBT_updateLogSetup+0x104>)
+        g_RCF_context.padRightPressedStartTimeInS = p_timeInS;
+ 800af7c:	4a15      	ldr	r2, [pc, #84]	; (800afd4 <RCF_updateLogSetup+0x104>)
  800af7e:	683b      	ldr	r3, [r7, #0]
  800af80:	62d3      	str	r3, [r2, #44]	; 0x2c
 
-        RBT_togglePrintOutput();
- 800af82:	f7ff ff4b 	bl	800ae1c <RBT_togglePrintOutput>
+        RCF_togglePrintOutput();
+ 800af82:	f7ff ff4b 	bl	800ae1c <RCF_togglePrintOutput>
       }
       else
       {
-        g_RBT_context.padRightPressedStartTimeInS = 0;
+        g_RCF_context.padRightPressedStartTimeInS = 0;
       }
       break;
- 800af86:	e011      	b.n	800afac <RBT_updateLogSetup+0xdc>
-      else if (p_timeInS - g_RBT_context.padRightPressedStartTimeInS < STP_BUTTONS_DEBOUNCE_PERIOD_IN_S)
- 800af88:	4b12      	ldr	r3, [pc, #72]	; (800afd4 <RBT_updateLogSetup+0x104>)
+ 800af86:	e011      	b.n	800afac <RCF_updateLogSetup+0xdc>
+      else if (p_timeInS - g_RCF_context.padRightPressedStartTimeInS < STP_BUTTONS_DEBOUNCE_PERIOD_IN_S)
+ 800af88:	4b12      	ldr	r3, [pc, #72]	; (800afd4 <RCF_updateLogSetup+0x104>)
  800af8a:	6adb      	ldr	r3, [r3, #44]	; 0x2c
  800af8c:	683a      	ldr	r2, [r7, #0]
  800af8e:	1ad3      	subs	r3, r2, r3
  800af90:	2b01      	cmp	r3, #1
- 800af92:	d90b      	bls.n	800afac <RBT_updateLogSetup+0xdc>
-        g_RBT_context.padRightPressedStartTimeInS = 0;
- 800af94:	4b0f      	ldr	r3, [pc, #60]	; (800afd4 <RBT_updateLogSetup+0x104>)
+ 800af92:	d90b      	bls.n	800afac <RCF_updateLogSetup+0xdc>
+        g_RCF_context.padRightPressedStartTimeInS = 0;
+ 800af94:	4b0f      	ldr	r3, [pc, #60]	; (800afd4 <RCF_updateLogSetup+0x104>)
  800af96:	2200      	movs	r2, #0
  800af98:	62da      	str	r2, [r3, #44]	; 0x2c
       break;
- 800af9a:	e007      	b.n	800afac <RBT_updateLogSetup+0xdc>
+ 800af9a:	e007      	b.n	800afac <RCF_updateLogSetup+0xdc>
 
     default:
       ; /* Nothing to do */;
       break;
  800af9c:	bf00      	nop
- 800af9e:	e006      	b.n	800afae <RBT_updateLogSetup+0xde>
+ 800af9e:	e006      	b.n	800afae <RCF_updateLogSetup+0xde>
       break;
  800afa0:	bf00      	nop
- 800afa2:	e004      	b.n	800afae <RBT_updateLogSetup+0xde>
+ 800afa2:	e004      	b.n	800afae <RCF_updateLogSetup+0xde>
       break;
  800afa4:	bf00      	nop
- 800afa6:	e002      	b.n	800afae <RBT_updateLogSetup+0xde>
+ 800afa6:	e002      	b.n	800afae <RCF_updateLogSetup+0xde>
       break;
  800afa8:	bf00      	nop
- 800afaa:	e000      	b.n	800afae <RBT_updateLogSetup+0xde>
+ 800afaa:	e000      	b.n	800afae <RCF_updateLogSetup+0xde>
       break;
  800afac:	bf00      	nop
   }
@@ -27349,18 +27349,18 @@ static void RBT_updateLogSetup(T_BLU_Data *p_data, uint32_t p_timeInS)
  800afae:	687b      	ldr	r3, [r7, #4]
  800afb0:	7c1b      	ldrb	r3, [r3, #16]
  800afb2:	2b05      	cmp	r3, #5
- 800afb4:	d00a      	beq.n	800afcc <RBT_updateLogSetup+0xfc>
+ 800afb4:	d00a      	beq.n	800afcc <RCF_updateLogSetup+0xfc>
  800afb6:	687b      	ldr	r3, [r7, #4]
  800afb8:	7c1b      	ldrb	r3, [r3, #16]
  800afba:	2b07      	cmp	r3, #7
- 800afbc:	d006      	beq.n	800afcc <RBT_updateLogSetup+0xfc>
+ 800afbc:	d006      	beq.n	800afcc <RCF_updateLogSetup+0xfc>
   {
-    g_RBT_context.padUpPressedStartTimeInS   = 0;
- 800afbe:	4b05      	ldr	r3, [pc, #20]	; (800afd4 <RBT_updateLogSetup+0x104>)
+    g_RCF_context.padUpPressedStartTimeInS   = 0;
+ 800afbe:	4b05      	ldr	r3, [pc, #20]	; (800afd4 <RCF_updateLogSetup+0x104>)
  800afc0:	2200      	movs	r2, #0
  800afc2:	621a      	str	r2, [r3, #32]
-    g_RBT_context.padDownPressedStartTimeInS = 0;
- 800afc4:	4b03      	ldr	r3, [pc, #12]	; (800afd4 <RBT_updateLogSetup+0x104>)
+    g_RCF_context.padDownPressedStartTimeInS = 0;
+ 800afc4:	4b03      	ldr	r3, [pc, #12]	; (800afd4 <RCF_updateLogSetup+0x104>)
  800afc6:	2200      	movs	r2, #0
  800afc8:	625a      	str	r2, [r3, #36]	; 0x24
   else
@@ -27377,9 +27377,9 @@ static void RBT_updateLogSetup(T_BLU_Data *p_data, uint32_t p_timeInS)
  800afd2:	bd80      	pop	{r7, pc}
  800afd4:	2000051c 	.word	0x2000051c
 
-0800afd8 <RBT_updateLedMode>:
+0800afd8 <RCF_updateLedMode>:
 
-static void RBT_updateLedMode(T_DRV_MODE p_driveMode, uint32_t p_voltageInMv)
+static void RCF_updateLedMode(T_DRV_MODE p_driveMode, uint32_t p_voltageInMv)
 {
  800afd8:	b580      	push	{r7, lr}
  800afda:	b082      	sub	sp, #8
@@ -27392,57 +27392,57 @@ static void RBT_updateLedMode(T_DRV_MODE p_driveMode, uint32_t p_voltageInMv)
   if ((p_voltageInMv != 0) && (p_voltageInMv < STP_MIN_BATTERY_LEVEL_IN_MV))
  800afe4:	683b      	ldr	r3, [r7, #0]
  800afe6:	2b00      	cmp	r3, #0
- 800afe8:	d00d      	beq.n	800b006 <RBT_updateLedMode+0x2e>
+ 800afe8:	d00d      	beq.n	800b006 <RCF_updateLedMode+0x2e>
  800afea:	683b      	ldr	r3, [r7, #0]
  800afec:	f242 720f 	movw	r2, #9999	; 0x270f
  800aff0:	4293      	cmp	r3, r2
- 800aff2:	d808      	bhi.n	800b006 <RBT_updateLedMode+0x2e>
+ 800aff2:	d808      	bhi.n	800b006 <RCF_updateLedMode+0x2e>
   {
     LOG_warning("Battery is getting low: %u mV", p_voltageInMv);
  800aff4:	683a      	ldr	r2, [r7, #0]
- 800aff6:	4911      	ldr	r1, [pc, #68]	; (800b03c <RBT_updateLedMode+0x64>)
+ 800aff6:	4911      	ldr	r1, [pc, #68]	; (800b03c <RCF_updateLedMode+0x64>)
  800aff8:	2002      	movs	r0, #2
  800affa:	f7ff f8ef 	bl	800a1dc <LOG_log>
 
     LED_setMode(LED_MODE_FORCED_OFF);
  800affe:	2000      	movs	r0, #0
  800b000:	f7fe ffd2 	bl	8009fa8 <LED_setMode>
- 800b004:	e016      	b.n	800b034 <RBT_updateLedMode+0x5c>
+ 800b004:	e016      	b.n	800b034 <RCF_updateLedMode+0x5c>
   }
   else
   {
     switch (p_driveMode)
  800b006:	79fb      	ldrb	r3, [r7, #7]
  800b008:	2b02      	cmp	r3, #2
- 800b00a:	d00e      	beq.n	800b02a <RBT_updateLedMode+0x52>
+ 800b00a:	d00e      	beq.n	800b02a <RCF_updateLedMode+0x52>
  800b00c:	2b02      	cmp	r3, #2
- 800b00e:	dc10      	bgt.n	800b032 <RBT_updateLedMode+0x5a>
+ 800b00e:	dc10      	bgt.n	800b032 <RCF_updateLedMode+0x5a>
  800b010:	2b00      	cmp	r3, #0
- 800b012:	d002      	beq.n	800b01a <RBT_updateLedMode+0x42>
+ 800b012:	d002      	beq.n	800b01a <RCF_updateLedMode+0x42>
  800b014:	2b01      	cmp	r3, #1
- 800b016:	d004      	beq.n	800b022 <RBT_updateLedMode+0x4a>
+ 800b016:	d004      	beq.n	800b022 <RCF_updateLedMode+0x4a>
         LED_setMode(LED_MODE_BLINK_FAST);
         break;
 
       default:
         ; /* Nothing to do */
         break;
- 800b018:	e00b      	b.n	800b032 <RBT_updateLedMode+0x5a>
+ 800b018:	e00b      	b.n	800b032 <RCF_updateLedMode+0x5a>
         LED_setMode(LED_MODE_BLINK_SLOW);
  800b01a:	2002      	movs	r0, #2
  800b01c:	f7fe ffc4 	bl	8009fa8 <LED_setMode>
         break;
- 800b020:	e008      	b.n	800b034 <RBT_updateLedMode+0x5c>
+ 800b020:	e008      	b.n	800b034 <RCF_updateLedMode+0x5c>
         LED_setMode(LED_MODE_BLINK_MEDIUM);
  800b022:	2003      	movs	r0, #3
  800b024:	f7fe ffc0 	bl	8009fa8 <LED_setMode>
         break;
- 800b028:	e004      	b.n	800b034 <RBT_updateLedMode+0x5c>
+ 800b028:	e004      	b.n	800b034 <RCF_updateLedMode+0x5c>
         LED_setMode(LED_MODE_BLINK_FAST);
  800b02a:	2004      	movs	r0, #4
  800b02c:	f7fe ffbc 	bl	8009fa8 <LED_setMode>
         break;
- 800b030:	e000      	b.n	800b034 <RBT_updateLedMode+0x5c>
+ 800b030:	e000      	b.n	800b034 <RCF_updateLedMode+0x5c>
         break;
  800b032:	bf00      	nop
     }

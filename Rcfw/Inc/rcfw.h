@@ -1,17 +1,17 @@
-#ifndef __ROBOT_H
-#define __ROBOT_H
+#ifndef __RCFW_H
+#define __RCFW_H
 
 #include "stm32f1xx_hal.h"
 
 typedef enum
 {
-  RBT_PRINT_OUTPUT_TO_CONSOLE = 0,
-  RBT_PRINT_OUTPUT_TO_MASTER,
-} T_RBT_PRINT_OUTPUT;
+  RCF_PRINT_OUTPUT_TO_CONSOLE = 0,
+  RCF_PRINT_OUTPUT_TO_MASTER,
+} T_RCF_PRINT_OUTPUT;
 
-extern T_RBT_PRINT_OUTPUT g_RBT_printOutput;
+extern T_RCF_PRINT_OUTPUT g_RCF_printOutput;
 
-typedef struct T_RBT_Handle
+typedef struct T_RCF_Handle
 {
   TIM_HandleTypeDef  *htim1 ;
   TIM_HandleTypeDef  *htim2 ;
@@ -25,9 +25,9 @@ typedef struct T_RBT_Handle
   RTC_HandleTypeDef  *hrtc  ;
   UART_HandleTypeDef *huart1;
   UART_HandleTypeDef *huart4;
-} T_RBT_Handle;
+} T_RCF_Handle;
 
-void RBT_init(T_RBT_Handle       *p_handle,
+void RCF_init(T_RCF_Handle       *p_handle,
               TIM_HandleTypeDef  *p_htim1 ,
               TIM_HandleTypeDef  *p_htim2 ,
               TIM_HandleTypeDef  *p_htim3 ,
@@ -41,6 +41,6 @@ void RBT_init(T_RBT_Handle       *p_handle,
               UART_HandleTypeDef *p_huart1,
               UART_HandleTypeDef *p_huart4);
 
-void RBT_update(T_RBT_Handle *p_handle);
+void RCF_update(T_RCF_Handle *p_handle);
 
-#endif /* __ROBOT_H */
+#endif /* __RCFW_H */

@@ -23,7 +23,7 @@
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
 
-#include "robot.h"
+#include "rcfw.h"
 #include "utils.h"
 #include "setup.h"
 #include "led.h"
@@ -109,7 +109,7 @@ int main(void)
   /* UART4  UART  is used  to get control from master board - PC10 / PC11      */
   /* PC0          is used  to trigger software reset                           */
 
-  T_RBT_Handle l_robotHandle;
+  T_RCF_Handle l_rcfHandle;
 
   /* USER CODE END 1 */
 
@@ -145,7 +145,7 @@ int main(void)
   MX_TIM8_Init();
   /* USER CODE BEGIN 2 */
 
-  RBT_init(&l_robotHandle,
+  RCF_init(&l_rcfHandle,
            &htim1 ,
            &htim2 ,
            &htim3 ,
@@ -165,7 +165,7 @@ int main(void)
   /* USER CODE BEGIN WHILE */
   while (1)
   {
-    RBT_update(&l_robotHandle);
+    RCF_update(&l_rcfHandle);
 
     UTI_delayUs(STP_MAIN_LOOP_DELAY_IN_US);
 

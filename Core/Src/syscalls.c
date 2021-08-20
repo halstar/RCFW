@@ -33,7 +33,7 @@
 #include <sys/unistd.h>
 
 #include "stm32f1xx_hal.h"
-#include "robot.h"
+#include "rcfw.h"
 #include "console.h"
 #include "master_control.h"
 
@@ -88,7 +88,7 @@ __attribute__((weak)) int _write(int file, char *ptr, int len)
     return -1;
   }
 
-  if (g_RBT_printOutput == RBT_PRINT_OUTPUT_TO_CONSOLE)
+  if (g_RCF_printOutput == RCF_PRINT_OUTPUT_TO_CONSOLE)
   {
     CON_sendString(ptr, len);
   }
