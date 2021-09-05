@@ -27,6 +27,7 @@
 #include "utils.h"
 #include "setup.h"
 #include "led.h"
+#include "chrono.h"
 #include "console.h"
 #include "master_control.h"
 
@@ -97,17 +98,6 @@ static void MX_TIM8_Init(void);
 int main(void)
 {
   /* USER CODE BEGIN 1 */
-
-  /* RTC  clock   is used  as a calendar base (e.g. for logs)                  */
-  /* TIM1 timer   is used  to update green LED              - PC13             */
-  /* TIM2 to TIM5 are used as input for motor's encoders                       */
-  /* TIM6 timer   is used  to produce a micro-second base for time measurement */
-  /* TIM7 timer   is used  to produce a micro-second base for delays           */
-  /* TIM8 timer   is used  to produce motors' PWM    base                      */
-  /* ADC1 ADC     is used  to monitor battery level         - PA5              */
-  /* USART1 UART  is used  for USB/serial console           - PA9  / PA10      */
-  /* UART4  UART  is used  to get control from master board - PC10 / PC11      */
-  /* PC0          is used  to trigger software reset                           */
 
   T_RCF_Handle l_rcfHandle;
 
@@ -884,14 +874,15 @@ void HAL_TIM_IC_CaptureCallback(TIM_HandleTypeDef *htim)
 
 void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
 {
-  /* Check the handle of the timer triggering this callback and update LED */
+  /* Check whether the handle of the triggering timer requires a LED update */
   if (htim == &htim1)
   {
     LED_update();
   }
-  else
+  /* Check whether the handle of the triggering timer requires a chronometer update */
+  else if (htim == &htim6)
   {
-    ; /* Nothing to do */
+    CHR_overflow();
   }
 
   return;

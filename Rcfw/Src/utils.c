@@ -6,7 +6,6 @@
 typedef struct T_UTI_Context
 {
   TIM_HandleTypeDef *usDelayHandle;
-  TIM_HandleTypeDef *usTimerHandle;
   RTC_HandleTypeDef *sTimerHandle ;
 } T_UTI_Context;
 
@@ -16,7 +15,6 @@ static void     UTI_resetRtcTime        (RTC_TimeTypeDef *p_time);
 static uint32_t UTI_turnRtcTimeToSeconds(RTC_TimeTypeDef *p_time);
 
 void UTI_init(TIM_HandleTypeDef *p_usDelayHandle,
-              TIM_HandleTypeDef *p_usTimerHandle,
               RTC_HandleTypeDef *p_sTimerHandle)
 {
   HAL_StatusTypeDef l_halReturnCode;
@@ -24,7 +22,6 @@ void UTI_init(TIM_HandleTypeDef *p_usDelayHandle,
   LOG_info("Initializing utilities");
 
   g_UTI_context.usDelayHandle = p_usDelayHandle;
-  g_UTI_context.usTimerHandle = p_usTimerHandle;
   g_UTI_context.sTimerHandle  = p_sTimerHandle ;
 
   l_halReturnCode = HAL_TIM_Base_Start(p_usDelayHandle);
@@ -36,17 +33,6 @@ void UTI_init(TIM_HandleTypeDef *p_usDelayHandle,
   else
   {
     LOG_info("Micro-second delay timer started");
-  }
-
-  l_halReturnCode = HAL_TIM_Base_Start_IT(p_usTimerHandle);
-
-  if (l_halReturnCode != HAL_OK)
-  {
-    LOG_error("HAL_TIM_Base_Start_IT() returned an error code: %d", l_halReturnCode);
-  }
-  else
-  {
-    LOG_info("Micro-second time measurment timer started");
   }
 
   return;
@@ -78,15 +64,6 @@ void UTI_delayMs(uint32_t p_delay)
   HAL_Delay(p_delay);
 
   return;
-}
-
-uint32_t UTI_getTimeUs(void)
-{
-  uint32_t l_currentTimeInUs;
-
-  l_currentTimeInUs = __HAL_TIM_GET_COUNTER(g_UTI_context.usTimerHandle);
-
-  return l_currentTimeInUs;
 }
 
 uint32_t UTI_getTimeS(void)

@@ -8,6 +8,7 @@
 #include "main.h"
 #include "setup.h"
 #include "utils.h"
+#include "chrono.h"
 #include "drive.h"
 #include "console.h"
 #include "string_fifo.h"
@@ -39,6 +40,17 @@ typedef struct T_RCF_Context
 static T_RCF_Context g_RCF_context;
 
 T_RCF_PRINT_OUTPUT g_RCF_printOutput;
+
+/* RTC  clock   is used  as a calendar base (e.g. for logs)                  */
+/* TIM1 timer   is used  to update green LED              - PC13             */
+/* TIM2 to TIM5 are used as input for motor's encoders                       */
+/* TIM6 timer   is used  to produce a micro-second base for time measurement */
+/* TIM7 timer   is used  to produce a micro-second base for delays           */
+/* TIM8 timer   is used  to produce motors' PWM    base                      */
+/* ADC1 ADC     is used  to monitor battery level         - PA5              */
+/* USART1 UART  is used  for USB/serial console           - PA9  / PA10      */
+/* UART4  UART  is used  to get control from master board - PC10 / PC11      */
+/* PC0          is used  to trigger software reset                           */
 
 void RCF_init(T_RCF_Handle       *p_handle,
               TIM_HandleTypeDef  *p_htim1 ,
@@ -113,8 +125,12 @@ void RCF_init(T_RCF_Handle       *p_handle,
   /* Display RCFW banner */
   RCF_displayRcfwBanner();
 
-  /* Initialize utilities */
-  UTI_init(p_handle->htim7, p_handle->htim6, p_handle->hrtc);
+  /* Initialize utilities & chronometer (used by wheels' encoders) */
+  UTI_init (p_handle->htim7 , p_handle->hrtc );
+  CHR_init (p_handle->htim6);
+  CHR_start();
+
+  LOG_info("Started TIMER 6 & 7 (utilities & chronometer)");
 
   /* Initialize Timer 1 & green LED */
   l_halReturnCode = HAL_TIM_Base_Start_IT(p_handle->htim1);
@@ -254,6 +270,9 @@ void RCF_update(T_RCF_Handle *p_handle)
     DRV_updateFromCommands(&g_RCF_context.commandsFifo, false);
   }
 
+  /* Restart chronometer (used by wheels' encoders) */
+  CHR_reset();
+
   if ((STP_VELOCITY_REPORT_PERIOD_IN_S != 0) &&
       (l_currentTimeInS - g_RCF_context.velocityReportLastTimeInS >= STP_VELOCITY_REPORT_PERIOD_IN_S))
   {
@@ -265,6 +284,7 @@ void RCF_update(T_RCF_Handle *p_handle)
   {
     ; /* Nothing to do */
   }
+
   return;
 }
 

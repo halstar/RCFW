@@ -9,14 +9,13 @@
 
 typedef struct T_WHL_Handle
 {
-  char              *name;
-  T_MTR_Handle       motor;
-  T_ENC_Handle       encoder;
-  T_PID_Handle       pid;
-  T_CBU_Handle       speedBuffer;
-  float              averageSpeed;
-  bool               isMotorOn;
-  uint32_t           lastTimeInUs;
+  char         *name;
+  T_MTR_Handle  motor;
+  T_ENC_Handle  encoder;
+  T_PID_Handle  pid;
+  T_CBU_Handle  speedBuffer;
+  float         averageSpeed;
+  bool          isMotorOn;
 } T_WHL_Handle;
 
 void WHL_init(T_WHL_Handle      *p_handle,

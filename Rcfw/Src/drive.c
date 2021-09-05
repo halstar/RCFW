@@ -7,6 +7,7 @@
 #include "pid.h"
 #include "motor.h"
 #include "encoder.h"
+#include "chrono.h"
 #include "wheel.h"
 #include "main.h"
 #include "log.h"
