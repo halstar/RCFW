@@ -82,7 +82,7 @@ uint32_t CHR_getTimeUs(void)
 
   if (g_CHR_context.wasOverflowed == true)
   {
-    LOG_error("Chronometer did overflow");
+    LOG_warning("Chronometer overflowed");
   }
   else
   {

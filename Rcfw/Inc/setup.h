@@ -49,11 +49,11 @@
 #define STP_DRIVE_MIN_SPEED    0
 #define STP_DRIVE_MAX_SPEED   40
 
-#define STP_DRIVE_PID_P_FACTOR                   1.00f
-#define STP_DRIVE_PID_I_FACTOR                   1.00f
-#define STP_DRIVE_PID_D_FACTOR                   0.00f
-#define STP_DRIVE_PID_ANTI_WIND_UP_FACTOR        0.25f
-#define STP_DRIVE_PID_ENCODER_TO_SPEED_FACTOR 75000.0f
+#define STP_DRIVE_PID_P_FACTOR                    1.00f
+#define STP_DRIVE_PID_I_FACTOR                    1.00f
+#define STP_DRIVE_PID_D_FACTOR                    0.00f
+#define STP_DRIVE_PID_ANTI_WIND_UP_FACTOR         0.25f
+#define STP_DRIVE_PID_ENCODER_TO_SPEED_FACTOR 13363.0f
 
 #define STP_JOYSTICKS_THRESHOLD   15
 #define STP_JOYSTICKS_FIXED_SPEED 20

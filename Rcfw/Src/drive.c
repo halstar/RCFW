@@ -142,26 +142,18 @@ void DRV_updateEncoder(TIM_HandleTypeDef *p_encoderTimerHandle)
   if (p_encoderTimerHandle == g_DRV_context.wheelFrontRight.encoder.timerHandle)
   {
     WHL_updateEncoder(&g_DRV_context.wheelFrontRight, l_count);
-
-    // LOG_debug("%s encoder: %d", CST_FRONT_RIGHT_WHEEL_NAME, l_count);
   }
   else if (p_encoderTimerHandle == g_DRV_context.wheelFrontLeft.encoder.timerHandle)
   {
     WHL_updateEncoder(&g_DRV_context.wheelFrontLeft, l_count);
-
-    // LOG_debug("%s encoder: %d", CST_FRONT_LEFT_WHEEL_NAME, l_count);
   }
   else if (p_encoderTimerHandle == g_DRV_context.wheelRearRight.encoder.timerHandle)
   {
     WHL_updateEncoder(&g_DRV_context.wheelRearRight, l_count);
-
-    // LOG_debug("%s encoder: %d", CST_REAR_RIGHT_WHEEL_NAME, l_count);
   }
   else if (p_encoderTimerHandle == g_DRV_context.wheelRearLeft.encoder.timerHandle)
   {
     WHL_updateEncoder(&g_DRV_context.wheelRearLeft, l_count);
-
-    // LOG_debug("%s encoder: %d", CST_REAR_LEFT_WHEEL_NAME, l_count);
   }
   else
   {
@@ -171,7 +163,18 @@ void DRV_updateEncoder(TIM_HandleTypeDef *p_encoderTimerHandle)
   return;
 }
 
-void DRV_updateFromBluetooth(T_BLU_Data *p_bluetoothData)
+void DRV_updateAverageSpeeds(void)
+{
+  /* Update all 4 wheels average speeds */
+  WHL_updateAverageSpeed(&g_DRV_context.wheelFrontRight);
+  WHL_updateAverageSpeed(&g_DRV_context.wheelFrontLeft );
+  WHL_updateAverageSpeed(&g_DRV_context.wheelRearRight );
+  WHL_updateAverageSpeed(&g_DRV_context.wheelRearLeft  );
+
+  return;
+}
+
+void DRV_updateFromBluetooth(T_BLU_Data *p_bluetoothData, bool p_logInfo)
 {
   uint32_t l_currentTimeInS;
   uint32_t l_speed;
@@ -338,6 +341,15 @@ void DRV_updateFromBluetooth(T_BLU_Data *p_bluetoothData)
       {
         /* Most of the time, we will get here */
         DRV_stop();
+      }
+
+      if (p_logInfo == true)
+      {
+        DRV_logInfo(true);
+      }
+      else
+      {
+        ; /* Nothing to do */
       }
     }
   }
@@ -529,6 +541,12 @@ void DRV_updateFromCommands(T_SFO_Handle *p_commandsFifo, bool p_logInfo)
       }
     }
 
+    /* Update all 4 wheels PIDs, adjusting speeds, to reach targets */
+    WHL_updatePidSpeed(&g_DRV_context.wheelFrontRight);
+    WHL_updatePidSpeed(&g_DRV_context.wheelFrontLeft );
+    WHL_updatePidSpeed(&g_DRV_context.wheelRearRight );
+    WHL_updatePidSpeed(&g_DRV_context.wheelRearLeft  );
+
     if (p_logInfo == true)
     {
       DRV_logInfo(true);
@@ -537,12 +555,6 @@ void DRV_updateFromCommands(T_SFO_Handle *p_commandsFifo, bool p_logInfo)
     {
       ; /* Nothing to do */
     }
-
-    /* Update all 4 wheels PIDs, adjusting speeds, to reach targets */
-    WHL_updatePidSpeed(&g_DRV_context.wheelFrontRight);
-    WHL_updatePidSpeed(&g_DRV_context.wheelFrontLeft );
-    WHL_updatePidSpeed(&g_DRV_context.wheelRearRight );
-    WHL_updatePidSpeed(&g_DRV_context.wheelRearLeft  );
   }
 
   return;

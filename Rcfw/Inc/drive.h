@@ -21,7 +21,8 @@ void DRV_init(TIM_HandleTypeDef *p_pwmTimerHandle,
               TIM_HandleTypeDef *p_frontLeftEncoderTimerHandle);
 
 void       DRV_updateEncoder      (TIM_HandleTypeDef *p_encoderTimerHandle           );
-void       DRV_updateFromBluetooth(T_BLU_Data        *p_bluetoothData                );
+void       DRV_updateAverageSpeeds(void                                              );
+void       DRV_updateFromBluetooth(T_BLU_Data        *p_bluetoothData, bool p_logInfo);
 void       DRV_updateFromCommands (T_SFO_Handle      *p_commandsFifo , bool p_logInfo);
 void       DRV_reportVelocity     (void                                              );
 T_DRV_MODE DRV_getMode            (void                                              );

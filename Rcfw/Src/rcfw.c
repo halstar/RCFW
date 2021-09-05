@@ -251,27 +251,30 @@ void RCF_update(T_RCF_Handle *p_handle)
     ; /* Nothing to do */
   }
 
-  BLU_receiveData        (&g_RCF_context.bluetoothData);
-  RCF_updateLogSetup     (&g_RCF_context.bluetoothData, l_currentTimeInS);
-  DRV_updateFromBluetooth(&g_RCF_context.bluetoothData);
-
   CON_updateFifo(&g_RCF_context.commandsFifo);
   MAS_updateFifo(&g_RCF_context.commandsFifo);
+
+  BLU_receiveData   (&g_RCF_context.bluetoothData);
+  RCF_updateLogSetup(&g_RCF_context.bluetoothData, l_currentTimeInS);
+
+  DRV_updateAverageSpeeds();
+
+  /* Restart chronometer (used to compute average speeds) */
+  CHR_reset();
 
   if ((STP_DRIVE_LOG_INFO_PERIOD_IN_S != 0) &&
       (l_currentTimeInS - g_RCF_context.driveLogInfoLastTimeInS >= STP_DRIVE_LOG_INFO_PERIOD_IN_S))
   {
-    DRV_updateFromCommands(&g_RCF_context.commandsFifo, true);
+    DRV_updateFromBluetooth(&g_RCF_context.bluetoothData, true);
+    DRV_updateFromCommands (&g_RCF_context.commandsFifo , true);
 
     g_RCF_context.driveLogInfoLastTimeInS = l_currentTimeInS;
   }
   else
   {
-    DRV_updateFromCommands(&g_RCF_context.commandsFifo, false);
+    DRV_updateFromBluetooth(&g_RCF_context.bluetoothData, false);
+    DRV_updateFromCommands(&g_RCF_context.commandsFifo  , false);
   }
-
-  /* Restart chronometer (used by wheels' encoders) */
-  CHR_reset();
 
   if ((STP_VELOCITY_REPORT_PERIOD_IN_S != 0) &&
       (l_currentTimeInS - g_RCF_context.velocityReportLastTimeInS >= STP_VELOCITY_REPORT_PERIOD_IN_S))
