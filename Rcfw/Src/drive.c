@@ -265,7 +265,7 @@ void DRV_updateFromBluetooth(T_BLU_Data *p_bluetoothData, bool p_logInfo)
     }
 
     /* Master board control mode is an automated mode, so that we will */
-    /* ignore any direction/button press received via bluetooth.       */
+    /* ignore any direction/button press we received via bluetooth.    */
     if (g_DRV_context.mode == DRV_MODE_MASTER_BOARD_CONTROL)
     {
       ; /* Nothing to do */
@@ -363,7 +363,7 @@ void DRV_updateFromCommands(T_SFO_Handle *p_commandsFifo, bool p_logInfo)
   uint32_t   l_speed;
   float      l_value;
 
-  /* Ignore master board data only whenever a manual mode is selected */
+  /* Ignore master board data when a manual mode is selected */
   if (g_DRV_context.mode != DRV_MODE_MASTER_BOARD_CONTROL)
   {
     ; /* Nothing to do */
@@ -568,20 +568,28 @@ void DRV_reportVelocity(void)
   float l_averageSpeedRearLeft;
   char  l_buffer[CST_MASTER_VELOCITY_STRING_LENGTH];
 
-  l_averageSpeedFrontRight = WHL_getAverageSpeed(&g_DRV_context.wheelFrontRight);
-  l_averageSpeedFrontLeft  = WHL_getAverageSpeed(&g_DRV_context.wheelFrontLeft );
-  l_averageSpeedRearRight  = WHL_getAverageSpeed(&g_DRV_context.wheelRearRight );
-  l_averageSpeedRearLeft   = WHL_getAverageSpeed(&g_DRV_context.wheelRearLeft  );
+  /* Ignore velocity reporting when a manual mode is selected */
+  if (g_DRV_context.mode != DRV_MODE_MASTER_BOARD_CONTROL)
+  {
+    ; /* Nothing to do */
+  }
+  else
+  {
+    l_averageSpeedFrontRight = WHL_getAverageSpeed(&g_DRV_context.wheelFrontRight);
+    l_averageSpeedFrontLeft  = WHL_getAverageSpeed(&g_DRV_context.wheelFrontLeft );
+    l_averageSpeedRearRight  = WHL_getAverageSpeed(&g_DRV_context.wheelRearRight );
+    l_averageSpeedRearLeft   = WHL_getAverageSpeed(&g_DRV_context.wheelRearLeft  );
 
-  (void)snprintf(l_buffer,
-                 CST_MASTER_VELOCITY_STRING_LENGTH,
-                 "FR%2d FL%2d RR%2d RL%2d\r",
-            (int)l_averageSpeedFrontRight,
-            (int)l_averageSpeedFrontLeft ,
-            (int)l_averageSpeedRearRight ,
-            (int)l_averageSpeedRearLeft  );
+    (void)snprintf(l_buffer,
+                   CST_MASTER_VELOCITY_STRING_LENGTH,
+                   "FR%2d FL%2d RR%2d RL%2d\r",
+              (int)l_averageSpeedFrontRight,
+              (int)l_averageSpeedFrontLeft ,
+              (int)l_averageSpeedRearRight ,
+              (int)l_averageSpeedRearLeft  );
 
-  MAS_sendString(l_buffer, CST_MASTER_VELOCITY_STRING_LENGTH);
+    MAS_sendString(l_buffer, CST_MASTER_VELOCITY_STRING_LENGTH);
+  }
 
   return;
 }
