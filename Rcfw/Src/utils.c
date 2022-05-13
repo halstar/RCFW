@@ -183,6 +183,11 @@ float UTI_clampFloatValue(float p_value, float p_minValue, float p_maxValue, boo
 
 int32_t UTI_normalizeIntValue(int32_t p_value, int32_t p_inMinValue, int32_t p_inMaxValue, int32_t p_outMinValue, int32_t p_outMaxValue, bool p_isInversionNeeded)
 {
+  return UTI_normalizeFloatValue((float)p_value, p_inMinValue, p_inMaxValue, p_outMinValue, p_outMaxValue, p_isInversionNeeded);
+}
+
+int32_t  UTI_normalizeFloatValue(float p_value, int32_t p_inMinValue, int32_t p_inMaxValue, int32_t p_outMinValue, int32_t    p_outMaxValue, bool p_isInversionNeeded)
+{
   float l_returnValue;
   float l_ratio;
 

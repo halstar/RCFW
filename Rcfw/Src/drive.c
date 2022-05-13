@@ -32,7 +32,12 @@ typedef struct T_DRV_Context
 
 static T_DRV_Context g_DRV_context;
 
-static void DVR_getSpeedFromCommand(char *p_string, uint32_t *p_speed);
+static void DRV_getSpeedFromCommand(char *p_string, uint32_t *p_speed);
+static void DRV_getSpeedsFromCommand(char    *p_string,
+                                     int32_t *p_frontRightSpeed,
+                                     int32_t *p_frontLeftSpeed,
+                                     int32_t *p_rearRightSpeed,
+                                     int32_t *p_rearLeftSpeed);
 
 static void DRV_toggleMotorsState          (void);
 static void DRV_setDirectionsStop          (void);
@@ -46,6 +51,10 @@ static void DRV_setDirectionsTurnLeft      (void);
 static void DRV_setDirectionsTurnRight     (void);
 static void DRV_setDirectionsTranslateLeft (void);
 static void DRV_setDirectionsTranslateRight(void);
+static void DRV_setDirectionsCustom        (int32_t p_frontRightSpeed,
+                                            int32_t p_frontLeftSpeed,
+                                            int32_t p_rearRightSpeed,
+                                            int32_t p_rearLeftSpeed);
 
 static void DRV_stop             (void            );
 static void DRV_moveForward      (uint32_t p_speed);
@@ -361,6 +370,10 @@ void DRV_updateFromCommands(T_SFO_Handle *p_commandsFifo, bool p_logInfo)
 {
   T_SFO_data l_command;
   uint32_t   l_speed;
+  int32_t    l_frontRightSpeed;
+  int32_t    l_frontLeftSpeed;
+  int32_t    l_rearRightSpeed;
+  int32_t    l_rearLeftSpeed;
   float      l_value;
 
   /* Ignore master board data when a manual mode is selected */
@@ -391,7 +404,7 @@ void DRV_updateFromCommands(T_SFO_Handle *p_commandsFifo, bool p_logInfo)
       /* Forward Straight */
       else if ((l_command[0] == 'F') && (l_command[1] == 'S'))
       {
-        DVR_getSpeedFromCommand(&l_command[2], &l_speed);
+        DRV_getSpeedFromCommand(&l_command[2], &l_speed);
 
         DRV_setDirectionsForward();
 
@@ -403,7 +416,7 @@ void DRV_updateFromCommands(T_SFO_Handle *p_commandsFifo, bool p_logInfo)
       /* Move Backward */
       else if ((l_command[0] == 'B') && (l_command[1] == 'S'))
       {
-        DVR_getSpeedFromCommand(&l_command[2], &l_speed);
+        DRV_getSpeedFromCommand(&l_command[2], &l_speed);
 
         DRV_setDirectionsBackward();
 
@@ -415,7 +428,7 @@ void DRV_updateFromCommands(T_SFO_Handle *p_commandsFifo, bool p_logInfo)
       /* TuRn (i.e. Rotate) Left */
       else if ((l_command[0] == 'R') && (l_command[1] == 'L'))
       {
-        DVR_getSpeedFromCommand(&l_command[2], &l_speed);
+        DRV_getSpeedFromCommand(&l_command[2], &l_speed);
 
         DRV_setDirectionsTurnLeft();
 
@@ -427,7 +440,7 @@ void DRV_updateFromCommands(T_SFO_Handle *p_commandsFifo, bool p_logInfo)
       /* TuRn (i.e. Rotate) Right */
       else if ((l_command[0] == 'R') && (l_command[1] == 'R'))
       {
-        DVR_getSpeedFromCommand(&l_command[2], &l_speed);
+        DRV_getSpeedFromCommand(&l_command[2], &l_speed);
 
         DRV_setDirectionsTurnRight();
 
@@ -439,7 +452,7 @@ void DRV_updateFromCommands(T_SFO_Handle *p_commandsFifo, bool p_logInfo)
       /* Translate Left */
       else if ((l_command[0] == 'T') && (l_command[1] == 'L'))
       {
-        DVR_getSpeedFromCommand(&l_command[2], &l_speed);
+        DRV_getSpeedFromCommand(&l_command[2], &l_speed);
 
         DRV_setDirectionsTranslateLeft();
 
@@ -451,7 +464,7 @@ void DRV_updateFromCommands(T_SFO_Handle *p_commandsFifo, bool p_logInfo)
       /* Translate Right */
       else if ((l_command[0] == 'T') && (l_command[1] == 'R'))
       {
-        DVR_getSpeedFromCommand(&l_command[2], &l_speed);
+        DRV_getSpeedFromCommand(&l_command[2], &l_speed);
 
         DRV_setDirectionsTranslateRight();
 
@@ -463,7 +476,7 @@ void DRV_updateFromCommands(T_SFO_Handle *p_commandsFifo, bool p_logInfo)
       /* Forward Left */
       else if ((l_command[0] == 'F') && (l_command[1] == 'L'))
       {
-        DVR_getSpeedFromCommand(&l_command[2], &l_speed);
+        DRV_getSpeedFromCommand(&l_command[2], &l_speed);
 
         DRV_setDirectionsForwardLeft();
 
@@ -475,7 +488,7 @@ void DRV_updateFromCommands(T_SFO_Handle *p_commandsFifo, bool p_logInfo)
       /* Forward Right */
       else if ((l_command[0] == 'F') && (l_command[1] == 'R'))
       {
-        DVR_getSpeedFromCommand(&l_command[2], &l_speed);
+        DRV_getSpeedFromCommand(&l_command[2], &l_speed);
 
         DRV_setDirectionsForwardRight();
 
@@ -487,7 +500,7 @@ void DRV_updateFromCommands(T_SFO_Handle *p_commandsFifo, bool p_logInfo)
       /* Backward Left */
       else if ((l_command[0] == 'B') && (l_command[1] == 'L'))
       {
-        DVR_getSpeedFromCommand(&l_command[2], &l_speed);
+        DRV_getSpeedFromCommand(&l_command[2], &l_speed);
 
         DRV_setDirectionsBackwardLeft();
 
@@ -496,10 +509,10 @@ void DRV_updateFromCommands(T_SFO_Handle *p_commandsFifo, bool p_logInfo)
         WHL_setPidTarget(&g_DRV_context.wheelRearRight , l_speed);
         WHL_setPidTarget(&g_DRV_context.wheelRearLeft  ,       0);
       }
-      /* Forward Right */
+      /* Backward Right */
       else if ((l_command[0] == 'B') && (l_command[1] == 'R'))
       {
-        DVR_getSpeedFromCommand(&l_command[2], &l_speed);
+        DRV_getSpeedFromCommand(&l_command[2], &l_speed);
 
         DRV_setDirectionsBackwardRight();
 
@@ -507,6 +520,25 @@ void DRV_updateFromCommands(T_SFO_Handle *p_commandsFifo, bool p_logInfo)
         WHL_setPidTarget(&g_DRV_context.wheelFrontLeft ,       0);
         WHL_setPidTarget(&g_DRV_context.wheelRearRight ,       0);
         WHL_setPidTarget(&g_DRV_context.wheelRearLeft  , l_speed);
+      }
+      /* Custom */
+      else if (l_command[0] == 'C')
+      {
+        DRV_getSpeedsFromCommand(&l_command[1],
+                                 &l_frontRightSpeed,
+                                 &l_frontLeftSpeed,
+                                 &l_rearRightSpeed,
+                                 &l_rearLeftSpeed);
+
+        DRV_setDirectionsCustom(l_frontRightSpeed,
+                                l_frontLeftSpeed,
+                                l_rearRightSpeed,
+                                l_rearLeftSpeed);
+
+        WHL_setPidTarget(&g_DRV_context.wheelFrontRight, abs(l_frontRightSpeed));
+        WHL_setPidTarget(&g_DRV_context.wheelFrontLeft , abs(l_frontLeftSpeed ));
+        WHL_setPidTarget(&g_DRV_context.wheelRearRight , abs(l_rearRightSpeed ));
+        WHL_setPidTarget(&g_DRV_context.wheelRearLeft  , abs(l_rearLeftSpeed  ));
       }
       else if ((l_command[0] == 'K') && (l_command[1] == 'P'))
       {
@@ -635,7 +667,7 @@ void DRV_logInfo(bool p_compactLog)
   return;
 }
 
-static void DVR_getSpeedFromCommand(char *p_string, uint32_t *p_speed)
+static void DRV_getSpeedFromCommand(char *p_string, uint32_t *p_speed)
 {
   uint32_t l_speed;
 
@@ -654,6 +686,76 @@ static void DVR_getSpeedFromCommand(char *p_string, uint32_t *p_speed)
                                      STP_DRIVE_MIN_SPEED,
                                      STP_DRIVE_MAX_SPEED,
                                      false);
+  }
+
+  return;
+}
+
+
+static void DRV_getSpeedsFromCommand(char    *p_string,
+                                     int32_t *p_frontRightSpeed,
+                                     int32_t *p_frontLeftSpeed,
+                                     int32_t *p_rearRightSpeed,
+                                     int32_t *p_rearLeftSpeed)
+{
+  int32_t l_frontRightSpeed = 0;
+  int32_t l_frontLeftSpeed  = 0;
+  int32_t l_rearRightSpeed  = 0;
+  int32_t l_rearLeftSpeed   = 0;
+
+  *p_frontRightSpeed = 0;
+  *p_frontLeftSpeed  = 0;
+  *p_rearRightSpeed  = 0;
+  *p_rearLeftSpeed   = 0;
+
+  (void)sscanf(p_string,
+               "%ld %ld %ld %ld",
+               &l_frontRightSpeed,
+               &l_frontLeftSpeed,
+               &l_rearRightSpeed,
+               &l_rearLeftSpeed);
+
+  /* Check that speed is in allowed range */
+  if ((l_frontRightSpeed < -STP_MASTER_MAX_SPEED) || (l_frontRightSpeed > STP_MASTER_MAX_SPEED)
+   || (l_frontLeftSpeed  < -STP_MASTER_MAX_SPEED) || (l_frontLeftSpeed  > STP_MASTER_MAX_SPEED)
+   || (l_rearRightSpeed  < -STP_MASTER_MAX_SPEED) || (l_rearRightSpeed  > STP_MASTER_MAX_SPEED)
+   || (l_rearLeftSpeed   < -STP_MASTER_MAX_SPEED) || (l_rearLeftSpeed   > STP_MASTER_MAX_SPEED))
+  {
+    LOG_error("Drive got out of range speed(s): %d %d %d %d",
+              l_frontRightSpeed,
+              l_frontLeftSpeed,
+              l_rearRightSpeed,
+              l_rearLeftSpeed);
+  }
+  else
+  {
+    *p_frontRightSpeed = UTI_normalizeIntValue(abs(l_frontRightSpeed),
+                                               STP_MASTER_MIN_SPEED,
+                                               STP_MASTER_MAX_SPEED,
+                                               STP_DRIVE_MIN_SPEED,
+                                               STP_DRIVE_MAX_SPEED,
+                                               l_frontRightSpeed > 0 ? false : true);
+
+    *p_frontLeftSpeed  = UTI_normalizeIntValue(abs(l_frontLeftSpeed),
+                                               STP_MASTER_MIN_SPEED,
+                                               STP_MASTER_MAX_SPEED,
+                                               STP_DRIVE_MIN_SPEED,
+                                               STP_DRIVE_MAX_SPEED,
+                                               l_frontLeftSpeed > 0 ? false : true);
+
+    *p_rearRightSpeed  = UTI_normalizeIntValue(abs(l_rearRightSpeed),
+                                               STP_MASTER_MIN_SPEED,
+                                               STP_MASTER_MAX_SPEED,
+                                               STP_DRIVE_MIN_SPEED,
+                                               STP_DRIVE_MAX_SPEED,
+                                               l_rearRightSpeed > 0 ? false : true);
+
+    *p_rearLeftSpeed   = UTI_normalizeIntValue(abs(l_rearLeftSpeed),
+                                               STP_MASTER_MIN_SPEED,
+                                               STP_MASTER_MAX_SPEED,
+                                               STP_DRIVE_MIN_SPEED,
+                                               STP_DRIVE_MAX_SPEED,
+                                               l_rearLeftSpeed > 0 ? false : true);
   }
 
   return;
@@ -788,6 +890,51 @@ static void DRV_setDirectionsTranslateRight(void)
 
   return;
 }
+
+static void DRV_setDirectionsCustom(int32_t p_frontRightSpeed,
+                                    int32_t p_frontLeftSpeed,
+                                    int32_t p_rearRightSpeed,
+                                    int32_t p_rearLeftSpeed)
+{
+  if (p_frontRightSpeed >= 0)
+  {
+    WHL_setDirection(&g_DRV_context.wheelFrontRight, MTR_DIRECTION_FORWARD);
+  }
+  else
+  {
+    WHL_setDirection(&g_DRV_context.wheelFrontRight, MTR_DIRECTION_BACKWARD);
+  }
+
+  if (p_frontLeftSpeed >= 0)
+  {
+    WHL_setDirection(&g_DRV_context.wheelFrontLeft, MTR_DIRECTION_FORWARD);
+  }
+  else
+  {
+    WHL_setDirection(&g_DRV_context.wheelFrontLeft, MTR_DIRECTION_BACKWARD);
+  }
+
+  if (p_rearRightSpeed >= 0)
+  {
+    WHL_setDirection(&g_DRV_context.wheelRearRight, MTR_DIRECTION_FORWARD);
+  }
+  else
+  {
+    WHL_setDirection(&g_DRV_context.wheelRearRight, MTR_DIRECTION_BACKWARD);
+  }
+
+  if (p_rearLeftSpeed >= 0)
+  {
+    WHL_setDirection(&g_DRV_context.wheelRearLeft, MTR_DIRECTION_FORWARD);
+  }
+  else
+  {
+    WHL_setDirection(&g_DRV_context.wheelRearLeft, MTR_DIRECTION_BACKWARD);
+  }
+
+  return;
+}
+
 
 static void DRV_stop(void)
 {
