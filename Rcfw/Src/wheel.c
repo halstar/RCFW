@@ -141,7 +141,7 @@ void WHL_updateAverageSpeed(T_WHL_Handle *p_handle)
 
   l_elapsedTimeInUs = CHR_getTimeUs();
 
-  l_measuredSpeed = fabs((float)ENC_getCount(&p_handle->encoder) / (float)l_elapsedTimeInUs * STP_DRIVE_PID_ENCODER_TO_SPEED_FACTOR);
+  l_measuredSpeed = fabs((float)ENC_getCount(&p_handle->encoder) / (float)l_elapsedTimeInUs * (float)STP_DRIVE_PID_ENCODER_TO_SPEED_FACTOR);
 
   CBU_push(&p_handle->speedBuffer, l_measuredSpeed);
 
@@ -171,7 +171,7 @@ float WHL_getAverageSpeed(T_WHL_Handle *p_handle)
 
   l_direction = MTR_getDirection(&p_handle->motor);
 
-  l_speed = l_direction == MTR_DIRECTION_FORWARD ? p_handle->averageSpeed  : p_handle->averageSpeed;
+  l_speed = l_direction == MTR_DIRECTION_FORWARD ? p_handle->averageSpeed  : -p_handle->averageSpeed;
 
   return l_speed;
 }

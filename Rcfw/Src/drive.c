@@ -1,6 +1,7 @@
 #include <stdbool.h>
 #include <stdlib.h>
 #include <stdio.h>
+#include <string.h>
 
 #include "drive.h"
 
@@ -607,6 +608,8 @@ void DRV_reportVelocity(void)
   }
   else
   {
+    (void)memset((void *)l_buffer, 0, CST_MASTER_VELOCITY_STRING_LENGTH);
+
     l_averageSpeedFrontRight = WHL_getAverageSpeed(&g_DRV_context.wheelFrontRight);
     l_averageSpeedFrontLeft  = WHL_getAverageSpeed(&g_DRV_context.wheelFrontLeft );
     l_averageSpeedRearRight  = WHL_getAverageSpeed(&g_DRV_context.wheelRearRight );
@@ -614,13 +617,13 @@ void DRV_reportVelocity(void)
 
     (void)snprintf(l_buffer,
                    CST_MASTER_VELOCITY_STRING_LENGTH,
-                   "FR%2d FL%2d RR%2d RL%2d\r",
+                   "S%2d %2d %2d %2d\r",
               (int)l_averageSpeedFrontRight,
               (int)l_averageSpeedFrontLeft ,
               (int)l_averageSpeedRearRight ,
               (int)l_averageSpeedRearLeft  );
 
-    MAS_sendString(l_buffer, CST_MASTER_VELOCITY_STRING_LENGTH);
+    MAS_sendString(l_buffer, strnlen(l_buffer, CST_MASTER_VELOCITY_STRING_LENGTH));
   }
 
   return;
@@ -715,13 +718,18 @@ static void DRV_getSpeedsFromCommand(char    *p_string,
                &l_rearRightSpeed,
                &l_rearLeftSpeed);
 
-  /* Check that speed is in allowed range */
+  /* Make sure that all speed is in allowed range */
+  UTI_clampIntValue(l_frontRightSpeed, -STP_MASTER_MAX_SPEED, STP_MASTER_MAX_SPEED, true, 0);
+  UTI_clampIntValue(l_frontLeftSpeed , -STP_MASTER_MAX_SPEED, STP_MASTER_MAX_SPEED, true, 0);
+  UTI_clampIntValue(l_rearRightSpeed , -STP_MASTER_MAX_SPEED, STP_MASTER_MAX_SPEED, true, 0);
+  UTI_clampIntValue(l_rearLeftSpeed  , -STP_MASTER_MAX_SPEED, STP_MASTER_MAX_SPEED, true, 0);
+
   if ((l_frontRightSpeed < -STP_MASTER_MAX_SPEED) || (l_frontRightSpeed > STP_MASTER_MAX_SPEED)
    || (l_frontLeftSpeed  < -STP_MASTER_MAX_SPEED) || (l_frontLeftSpeed  > STP_MASTER_MAX_SPEED)
    || (l_rearRightSpeed  < -STP_MASTER_MAX_SPEED) || (l_rearRightSpeed  > STP_MASTER_MAX_SPEED)
    || (l_rearLeftSpeed   < -STP_MASTER_MAX_SPEED) || (l_rearLeftSpeed   > STP_MASTER_MAX_SPEED))
   {
-    LOG_error("Drive got out of range speed(s): %d %d %d %d",
+    LOG_error("Got out of range speed(s) / clamped speed(s): %d %d %d %d",
               l_frontRightSpeed,
               l_frontLeftSpeed,
               l_rearRightSpeed,
@@ -729,34 +737,36 @@ static void DRV_getSpeedsFromCommand(char    *p_string,
   }
   else
   {
-    *p_frontRightSpeed = UTI_normalizeIntValue(abs(l_frontRightSpeed),
-                                               STP_MASTER_MIN_SPEED,
-                                               STP_MASTER_MAX_SPEED,
-                                               STP_DRIVE_MIN_SPEED,
-                                               STP_DRIVE_MAX_SPEED,
-                                               l_frontRightSpeed > 0 ? false : true);
-
-    *p_frontLeftSpeed  = UTI_normalizeIntValue(abs(l_frontLeftSpeed),
-                                               STP_MASTER_MIN_SPEED,
-                                               STP_MASTER_MAX_SPEED,
-                                               STP_DRIVE_MIN_SPEED,
-                                               STP_DRIVE_MAX_SPEED,
-                                               l_frontLeftSpeed > 0 ? false : true);
-
-    *p_rearRightSpeed  = UTI_normalizeIntValue(abs(l_rearRightSpeed),
-                                               STP_MASTER_MIN_SPEED,
-                                               STP_MASTER_MAX_SPEED,
-                                               STP_DRIVE_MIN_SPEED,
-                                               STP_DRIVE_MAX_SPEED,
-                                               l_rearRightSpeed > 0 ? false : true);
-
-    *p_rearLeftSpeed   = UTI_normalizeIntValue(abs(l_rearLeftSpeed),
-                                               STP_MASTER_MIN_SPEED,
-                                               STP_MASTER_MAX_SPEED,
-                                               STP_DRIVE_MIN_SPEED,
-                                               STP_DRIVE_MAX_SPEED,
-                                               l_rearLeftSpeed > 0 ? false : true);
+    /* Nothing to do */
   }
+
+  *p_frontRightSpeed = UTI_normalizeIntValue(abs(l_frontRightSpeed),
+                                             STP_MASTER_MIN_SPEED,
+                                             STP_MASTER_MAX_SPEED,
+                                             STP_DRIVE_MIN_SPEED,
+                                             STP_DRIVE_MAX_SPEED,
+                                             l_frontRightSpeed > 0 ? false : true);
+
+  *p_frontLeftSpeed  = UTI_normalizeIntValue(abs(l_frontLeftSpeed),
+                                             STP_MASTER_MIN_SPEED,
+                                             STP_MASTER_MAX_SPEED,
+                                             STP_DRIVE_MIN_SPEED,
+                                             STP_DRIVE_MAX_SPEED,
+                                             l_frontLeftSpeed > 0 ? false : true);
+
+  *p_rearRightSpeed  = UTI_normalizeIntValue(abs(l_rearRightSpeed),
+                                             STP_MASTER_MIN_SPEED,
+                                             STP_MASTER_MAX_SPEED,
+                                             STP_DRIVE_MIN_SPEED,
+                                             STP_DRIVE_MAX_SPEED,
+                                             l_rearRightSpeed > 0 ? false : true);
+
+  *p_rearLeftSpeed   = UTI_normalizeIntValue(abs(l_rearLeftSpeed),
+                                             STP_MASTER_MIN_SPEED,
+                                             STP_MASTER_MAX_SPEED,
+                                             STP_DRIVE_MIN_SPEED,
+                                             STP_DRIVE_MAX_SPEED,
+                                             l_rearLeftSpeed > 0 ? false : true);
 
   return;
 }
