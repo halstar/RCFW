@@ -719,10 +719,10 @@ static void DRV_getSpeedsFromCommand(char    *p_string,
                &l_rearLeftSpeed);
 
   /* Make sure that all speed is in allowed range */
-  UTI_clampIntValue(l_frontRightSpeed, -STP_MASTER_MAX_SPEED, STP_MASTER_MAX_SPEED, true, 0);
-  UTI_clampIntValue(l_frontLeftSpeed , -STP_MASTER_MAX_SPEED, STP_MASTER_MAX_SPEED, true, 0);
-  UTI_clampIntValue(l_rearRightSpeed , -STP_MASTER_MAX_SPEED, STP_MASTER_MAX_SPEED, true, 0);
-  UTI_clampIntValue(l_rearLeftSpeed  , -STP_MASTER_MAX_SPEED, STP_MASTER_MAX_SPEED, true, 0);
+  l_frontRightSpeed = UTI_clampIntValue(l_frontRightSpeed, -STP_MASTER_MAX_SPEED, STP_MASTER_MAX_SPEED, true, 0);
+  l_frontLeftSpeed  = UTI_clampIntValue(l_frontLeftSpeed , -STP_MASTER_MAX_SPEED, STP_MASTER_MAX_SPEED, true, 0);
+  l_rearRightSpeed  = UTI_clampIntValue(l_rearRightSpeed , -STP_MASTER_MAX_SPEED, STP_MASTER_MAX_SPEED, true, 0);
+  l_rearLeftSpeed   = UTI_clampIntValue(l_rearLeftSpeed  , -STP_MASTER_MAX_SPEED, STP_MASTER_MAX_SPEED, true, 0);
 
   if ((l_frontRightSpeed < -STP_MASTER_MAX_SPEED) || (l_frontRightSpeed > STP_MASTER_MAX_SPEED)
    || (l_frontLeftSpeed  < -STP_MASTER_MAX_SPEED) || (l_frontLeftSpeed  > STP_MASTER_MAX_SPEED)

@@ -34,7 +34,7 @@ typedef struct T_RCF_Context
   uint32_t     batteryPollingLastTimeInS;
   uint32_t     ledModeUpdateLastTimeInS;
   uint32_t     driveLogInfoLastTimeInS;
-  uint32_t     velocityReportLastTimeInS;
+  uint32_t     velocityReportLastTimeInMs;
 } T_RCF_Context;
 
 static T_RCF_Context g_RCF_context;
@@ -98,7 +98,7 @@ void RCF_init(T_RCF_Handle       *p_handle,
   g_RCF_context.batteryPollingLastTimeInS   = 0;
   g_RCF_context.ledModeUpdateLastTimeInS    = 0;
   g_RCF_context.driveLogInfoLastTimeInS     = 0;
-  g_RCF_context.velocityReportLastTimeInS   = 0;
+  g_RCF_context.velocityReportLastTimeInMs  = 0;
   g_RCF_printOutput                         = RCF_PRINT_OUTPUT_TO_CONSOLE;
 
   /* Setup console */
@@ -204,16 +204,18 @@ void RCF_update(T_RCF_Handle *p_handle)
 {
   T_DRV_MODE l_driveMode;
   uint32_t   l_currentTimeInS;
+  uint32_t   l_currentTimeInMs;
   uint32_t   l_voltageInMv;
 
   /* Setup local variables */
-  l_driveMode      = STP_DEFAULT_DRIVE_MODE;
-  l_currentTimeInS = 0;
-  l_voltageInMv    = 0;
+  l_driveMode       = STP_DEFAULT_DRIVE_MODE;
+  l_currentTimeInS  = 0;
+  l_currentTimeInMs = 0;
+  l_voltageInMv     = 0;
 
-  l_driveMode = DRV_getMode();
-
-  l_currentTimeInS = UTI_getTimeS();
+  l_driveMode       = DRV_getMode  ();
+  l_currentTimeInS  = UTI_getTimeS ();
+  l_currentTimeInMs = UTI_getTimeMs();
 
   if ((STP_SW_RESET_POLLING_PERIOD_IN_S != 0) &&
       (l_currentTimeInS - g_RCF_context.swResetPollingLastTimeInS >= STP_SW_RESET_POLLING_PERIOD_IN_S))
@@ -276,12 +278,12 @@ void RCF_update(T_RCF_Handle *p_handle)
     DRV_updateFromCommands(&g_RCF_context.commandsFifo  , false);
   }
 
-  if ((STP_VELOCITY_REPORT_PERIOD_IN_S != 0) &&
-      (l_currentTimeInS - g_RCF_context.velocityReportLastTimeInS >= STP_VELOCITY_REPORT_PERIOD_IN_S))
+  if ((STP_VELOCITY_REPORT_PERIOD_IN_MS != 0) &&
+      (l_currentTimeInMs - g_RCF_context.velocityReportLastTimeInMs >= STP_VELOCITY_REPORT_PERIOD_IN_MS))
   {
     DRV_reportVelocity();
 
-    g_RCF_context.velocityReportLastTimeInS = l_currentTimeInS;
+    g_RCF_context.velocityReportLastTimeInMs = l_currentTimeInMs;
   }
   else
   {

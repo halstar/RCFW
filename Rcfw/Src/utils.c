@@ -66,6 +66,11 @@ void UTI_delayMs(uint32_t p_delay)
   return;
 }
 
+uint32_t UTI_getTimeMs(void)
+{
+  return HAL_GetTick();
+}
+
 uint32_t UTI_getTimeS(void)
 {
   RTC_TimeTypeDef l_rtcTime;
@@ -115,36 +120,7 @@ void UTI_getTimeRtc(RTC_TimeTypeDef *p_time)
 
 int32_t UTI_clampIntValue(int32_t p_value, int32_t p_minValue, int32_t p_maxValue, bool p_clampToNearest, int32_t p_clampValue)
 {
-  int32_t l_returnValue;
-
-  if (p_value < p_minValue)
-  {
-    if (p_clampToNearest == true)
-    {
-      l_returnValue = p_minValue;
-    }
-    else
-    {
-      l_returnValue = p_clampValue;
-    }
-  }
-  else if (p_value > p_maxValue)
-  {
-    if (p_clampToNearest == true)
-    {
-      l_returnValue = p_maxValue;
-    }
-    else
-    {
-      l_returnValue = p_clampValue;
-    }
-  }
-  else
-  {
-    l_returnValue = p_value;
-  }
-
-  return l_returnValue;
+  return (int32_t)UTI_clampFloatValue(p_value, p_minValue, p_maxValue, p_clampToNearest, p_clampValue);
 }
 
 float UTI_clampFloatValue(float p_value, float p_minValue, float p_maxValue, bool p_clampToNearest, float p_clampValue)
@@ -183,16 +159,16 @@ float UTI_clampFloatValue(float p_value, float p_minValue, float p_maxValue, boo
 
 int32_t UTI_normalizeIntValue(int32_t p_value, int32_t p_inMinValue, int32_t p_inMaxValue, int32_t p_outMinValue, int32_t p_outMaxValue, bool p_isInversionNeeded)
 {
-  return UTI_normalizeFloatValue((float)p_value, p_inMinValue, p_inMaxValue, p_outMinValue, p_outMaxValue, p_isInversionNeeded);
+  return (int32_t)UTI_normalizeFloatValue(p_value, p_inMinValue, p_inMaxValue, p_outMinValue, p_outMaxValue, p_isInversionNeeded);
 }
 
-int32_t  UTI_normalizeFloatValue(float p_value, int32_t p_inMinValue, int32_t p_inMaxValue, int32_t p_outMinValue, int32_t    p_outMaxValue, bool p_isInversionNeeded)
+float UTI_normalizeFloatValue(float p_value, float p_inMinValue, float p_inMaxValue, float p_outMinValue, float p_outMaxValue, bool p_isInversionNeeded)
 {
   float l_returnValue;
   float l_ratio;
 
-  l_ratio       = ((float)p_outMaxValue - (float)p_outMinValue) / ((float)p_inMaxValue - (float)p_inMinValue);
-  l_returnValue =  (float)(p_value - p_inMinValue) * l_ratio + p_outMinValue;
+  l_ratio       = (p_outMaxValue - p_outMinValue) / (p_inMaxValue - p_inMinValue);
+  l_returnValue =  (p_value - p_inMinValue) * l_ratio + p_outMinValue;
 
   if (p_isInversionNeeded == true)
   {
@@ -203,7 +179,7 @@ int32_t  UTI_normalizeFloatValue(float p_value, int32_t p_inMinValue, int32_t p_
     ; /* Nothing to do */
   }
 
-  return (int32_t)l_returnValue;
+  return l_returnValue;
 }
 
 static void UTI_resetRtcTime(RTC_TimeTypeDef *p_time)
