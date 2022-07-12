@@ -134,6 +134,13 @@ void WHL_setPidTarget(T_WHL_Handle *p_handle, uint32_t p_speed)
   return;
 }
 
+void  WHL_setDirectTarget(T_WHL_Handle *p_handle, uint32_t p_speed)
+{
+  WHL_setSpeed(p_handle, p_speed);
+
+  return;
+}
+
 void WHL_updateAverageSpeed(T_WHL_Handle *p_handle)
 {
   uint32_t l_elapsedTimeInUs;

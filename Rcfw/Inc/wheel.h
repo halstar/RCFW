@@ -39,6 +39,7 @@ void  WHL_setPidKp          (T_WHL_Handle *p_handle, float           p_kp       
 void  WHL_setPidKi          (T_WHL_Handle *p_handle, float           p_ki       );
 void  WHL_setPidKd          (T_WHL_Handle *p_handle, float           p_kd       );
 void  WHL_setPidTarget      (T_WHL_Handle *p_handle, uint32_t        p_speed    );
+void  WHL_setDirectTarget   (T_WHL_Handle *p_handle, uint32_t        p_speed    );
 void  WHL_updateAverageSpeed(T_WHL_Handle *p_handle                             );
 void  WHL_updatePidSpeed    (T_WHL_Handle *p_handle                             );
 float WHL_getAverageSpeed   (T_WHL_Handle *p_handle                             );

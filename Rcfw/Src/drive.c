@@ -24,6 +24,7 @@ typedef struct T_DRV_Context
   uint32_t     selectPressedStartTimeInS;
   bool         isBluetoothOn;
   bool         areMotorsOn;
+  bool         isPidModeOn;
   T_DRV_MODE   mode;
   T_WHL_Handle wheelFrontRight;
   T_WHL_Handle wheelFrontLeft;
@@ -133,6 +134,9 @@ void DRV_init(TIM_HandleTypeDef *p_pwmTimerHandle,
 
   /* Activate motors or not by default (de-activating them is used for debug) */
   g_DRV_context.areMotorsOn = STP_DEFAULT_MOTORS_MODE;
+
+  /* Use wheels PIDs by default */
+  g_DRV_context.isPidModeOn = true;
 
   /* Start with default drive mode (different in debug and in release) */
   g_DRV_context.mode = STP_DEFAULT_DRIVE_MODE;
@@ -392,6 +396,9 @@ void DRV_updateFromCommands(T_SFO_Handle *p_commandsFifo, bool p_logInfo)
       SFO_pop    (p_commandsFifo         , &l_command);
       LOG_info   ("Drive got command: %s",  l_command);
 
+      /* Most commands expect PID mode */
+      g_DRV_context.isPidModeOn = true;
+
       /* Stop */
       if ((l_command[0] == 'S') && (l_command[1] == 'T'))
       {
@@ -525,6 +532,8 @@ void DRV_updateFromCommands(T_SFO_Handle *p_commandsFifo, bool p_logInfo)
       /* Custom */
       else if (l_command[0] == 'C')
       {
+        g_DRV_context.isPidModeOn = false;
+
         DRV_getSpeedsFromCommand(&l_command[1],
                                  &l_frontRightSpeed,
                                  &l_frontLeftSpeed,
@@ -536,10 +545,10 @@ void DRV_updateFromCommands(T_SFO_Handle *p_commandsFifo, bool p_logInfo)
                                 l_rearRightSpeed,
                                 l_rearLeftSpeed);
 
-        WHL_setPidTarget(&g_DRV_context.wheelFrontRight, abs(l_frontRightSpeed));
-        WHL_setPidTarget(&g_DRV_context.wheelFrontLeft , abs(l_frontLeftSpeed ));
-        WHL_setPidTarget(&g_DRV_context.wheelRearRight , abs(l_rearRightSpeed ));
-        WHL_setPidTarget(&g_DRV_context.wheelRearLeft  , abs(l_rearLeftSpeed  ));
+        WHL_setDirectTarget(&g_DRV_context.wheelFrontRight, abs(l_frontRightSpeed));
+        WHL_setDirectTarget(&g_DRV_context.wheelFrontLeft , abs(l_frontLeftSpeed ));
+        WHL_setDirectTarget(&g_DRV_context.wheelRearRight , abs(l_rearRightSpeed ));
+        WHL_setDirectTarget(&g_DRV_context.wheelRearLeft  , abs(l_rearLeftSpeed  ));
       }
       else if ((l_command[0] == 'K') && (l_command[1] == 'P'))
       {
@@ -574,11 +583,18 @@ void DRV_updateFromCommands(T_SFO_Handle *p_commandsFifo, bool p_logInfo)
       }
     }
 
-    /* Update all 4 wheels PIDs, adjusting speeds, to reach targets */
-    WHL_updatePidSpeed(&g_DRV_context.wheelFrontRight);
-    WHL_updatePidSpeed(&g_DRV_context.wheelFrontLeft );
-    WHL_updatePidSpeed(&g_DRV_context.wheelRearRight );
-    WHL_updatePidSpeed(&g_DRV_context.wheelRearLeft  );
+    if (g_DRV_context.isPidModeOn == true)
+    {
+      /* Update all 4 wheels PIDs, adjusting speeds, to reach targets */
+      WHL_updatePidSpeed(&g_DRV_context.wheelFrontRight);
+      WHL_updatePidSpeed(&g_DRV_context.wheelFrontLeft );
+      WHL_updatePidSpeed(&g_DRV_context.wheelRearRight );
+      WHL_updatePidSpeed(&g_DRV_context.wheelRearLeft  );
+    }
+    else
+    {
+      /* Nothing to do */
+    }
 
     if (p_logInfo == true)
     {

@@ -24,7 +24,7 @@ typedef struct T_PID_Handle
   float lastError;
 } T_PID_Handle;
 
-void  PID_init(T_PID_Handle *p_handle,
+void PID_init(T_PID_Handle *p_handle,
                char         *p_name,
                float         p_kp,
                float         p_ki,
