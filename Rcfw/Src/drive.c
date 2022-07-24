@@ -617,30 +617,22 @@ void DRV_reportVelocity(void)
   float l_averageSpeedRearLeft;
   char  l_buffer[CST_MASTER_VELOCITY_STRING_LENGTH];
 
-  /* Ignore velocity reporting when a manual mode is selected */
-  if (g_DRV_context.mode != DRV_MODE_MASTER_BOARD_CONTROL)
-  {
-    ; /* Nothing to do */
-  }
-  else
-  {
-    (void)memset((void *)l_buffer, 0, CST_MASTER_VELOCITY_STRING_LENGTH);
+  (void)memset((void *)l_buffer, 0, CST_MASTER_VELOCITY_STRING_LENGTH);
 
-    l_averageSpeedFrontRight = WHL_getAverageSpeed(&g_DRV_context.wheelFrontRight);
-    l_averageSpeedFrontLeft  = WHL_getAverageSpeed(&g_DRV_context.wheelFrontLeft );
-    l_averageSpeedRearRight  = WHL_getAverageSpeed(&g_DRV_context.wheelRearRight );
-    l_averageSpeedRearLeft   = WHL_getAverageSpeed(&g_DRV_context.wheelRearLeft  );
+  l_averageSpeedFrontRight = WHL_getAverageSpeed(&g_DRV_context.wheelFrontRight);
+  l_averageSpeedFrontLeft  = WHL_getAverageSpeed(&g_DRV_context.wheelFrontLeft );
+  l_averageSpeedRearRight  = WHL_getAverageSpeed(&g_DRV_context.wheelRearRight );
+  l_averageSpeedRearLeft   = WHL_getAverageSpeed(&g_DRV_context.wheelRearLeft  );
 
-    (void)snprintf(l_buffer,
-                   CST_MASTER_VELOCITY_STRING_LENGTH,
-                   "S%2d %2d %2d %2d\r",
-              (int)l_averageSpeedFrontRight,
-              (int)l_averageSpeedFrontLeft ,
-              (int)l_averageSpeedRearRight ,
-              (int)l_averageSpeedRearLeft  );
+  (void)snprintf(l_buffer,
+                 CST_MASTER_VELOCITY_STRING_LENGTH,
+                 "S%2d %2d %2d %2d\r",
+            (int)l_averageSpeedFrontRight,
+            (int)l_averageSpeedFrontLeft ,
+            (int)l_averageSpeedRearRight ,
+            (int)l_averageSpeedRearLeft  );
 
-    MAS_sendString(l_buffer, strnlen(l_buffer, CST_MASTER_VELOCITY_STRING_LENGTH));
-  }
+  MAS_sendString(l_buffer, strnlen(l_buffer, CST_MASTER_VELOCITY_STRING_LENGTH));
 
   return;
 }
